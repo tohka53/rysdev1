@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { AuthService, Profile } from '../../services/auth.service';
 import { SupabaseService } from '../../services/supabase.service';
 
 @Component({

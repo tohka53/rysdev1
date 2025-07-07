@@ -1,186 +1,325 @@
-<div class="min-h-screen bg-gray-50">
-  <!-- Navbar -->
-  <nav class="bg-white shadow-sm border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between h-16">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <h1 class="text-xl font-semibold text-gray-900">RysDev Dashboard</h1>
-          </div>
-        </div>
-        
-        <div class="flex items-center space-x-4">
-          <div class="flex items-center space-x-2">
-            <div class="h-8 w-8 bg-indigo-600 rounded-full flex items-center justify-center">
-              <span class="text-xs font-medium text-white">
-                {{ currentUser?.full_name?.charAt(0)?.toUpperCase() || '' }}
-              </span>
+<!-- src/app/dashboard/dashboard/dashboard.component.html -->
+<div class="min-h-screen bg-gray-50 flex">
+  <!-- Sidebar -->
+  <div [class]="'bg-gray-900 text-white transition-all duration-300 ease-in-out ' + (isSidebarCollapsed ? 'w-16' : 'w-64')">
+    <!-- Sidebar Header -->
+    <div class="flex items-center justify-between p-4 border-b border-gray-700">
+      <div [class]="isSidebarCollapsed ? 'hidden' : 'block'">
+        <h1 class="text-xl font-bold">RysDev</h1>
+        <p class="text-sm text-gray-300">Sistema de Gestión</p>
+      </div>
+      <button 
+        (click)="toggleSidebar()"
+        class="p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                [attr.d]="isSidebarCollapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'">
+          </path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="mt-4 px-2">
+      <div class="space-y-1">
+        <!-- Dashboard Link -->
+        <a 
+          href="/dashboard" 
+          [class]="'group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ' + 
+                   (isRouteActive('/dashboard') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white')"
+        >
+          <svg class="flex-shrink-0 w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v14l-6-3-6 3V5z"></path>
+          </svg>
+          <span [class]="isSidebarCollapsed ? 'hidden' : 'block'">Dashboard</span>
+        </a>
+
+        <!-- Dynamic Menu Items -->
+        <div *ngFor="let module of getFilteredMenuItems()" class="space-y-1">
+          <!-- Módulo padre con hijos -->
+          <div *ngIf="module.es_padre && getFilteredChildren(module).length > 0">
+            <button 
+              class="group w-full flex items-center px-3 py-2 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors duration-200"
+              (click)="toggleModuleExpansion(module)"
+            >
+              <i [class]="'flex-shrink-0 w-5 h-5 mr-3 ' + module.icono" *ngIf="module.icono"></i>
+              <svg *ngIf="!module.icono" class="flex-shrink-0 w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2m0 0h14"></path>
+              </svg>
+              <span [class]="isSidebarCollapsed ? 'hidden' : 'flex-1 text-left'">{{ module.nombre }}</span>
+              <svg 
+                *ngIf="!isSidebarCollapsed" 
+                [class]="'w-4 h-4 transition-transform duration-200 ' + (module.expanded ? 'transform rotate-90' : '')" 
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+
+            <!-- Submódulos -->
+            <div *ngIf="module.expanded && !isSidebarCollapsed" class="ml-6 space-y-1">
+              <a 
+                *ngFor="let child of getFilteredChildren(module)"
+                [href]="child.ruta"
+                [class]="'group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ' + 
+                         (isRouteActive(child.ruta) ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white')"
+              >
+                <i [class]="'flex-shrink-0 w-4 h-4 mr-3 ' + child.icono" *ngIf="child.icono"></i>
+                <svg *ngIf="!child.icono" class="flex-shrink-0 w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m3 5.197H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                {{ child.nombre }}
+              </a>
             </div>
-            <span class="text-sm font-medium text-gray-700">
-              {{ currentUser?.full_name }}
+
+            <!-- Tooltip para sidebar colapsado -->
+            <div *ngIf="isSidebarCollapsed" class="nav-tooltip" [attr.data-tooltip]="module.nombre">
+              <div class="tooltip-child">
+                <div *ngFor="let child of getFilteredChildren(module)" class="tooltip-child-item">
+                  <a [href]="child.ruta" class="block px-3 py-2 text-sm hover:bg-gray-700 rounded">
+                    {{ child.nombre }}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Módulo simple (sin hijos) -->
+          <a 
+            *ngIf="!module.es_padre || getFilteredChildren(module).length === 0"
+            [href]="module.ruta"
+            [class]="'group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ' + 
+                     (isRouteActive(module.ruta) ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white')"
+            [attr.title]="isSidebarCollapsed ? module.nombre : null"
+          >
+            <i [class]="'flex-shrink-0 w-5 h-5 mr-3 ' + module.icono" *ngIf="module.icono"></i>
+            <svg *ngIf="!module.icono" class="flex-shrink-0 w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2m0 0h14"></path>
+            </svg>
+            <span [class]="isSidebarCollapsed ? 'hidden' : 'block'">{{ module.nombre }}</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- User Menu (Bottom) -->
+    <div class="absolute bottom-0 w-full p-4 border-t border-gray-700">
+      <div [class]="'flex items-center ' + (isSidebarCollapsed ? 'justify-center' : '')">
+        <div class="flex-shrink-0">
+          <div class="h-8 w-8 bg-indigo-600 rounded-full flex items-center justify-center">
+            <span class="text-xs font-medium text-white">
+              {{ currentUser?.full_name?.charAt(0)?.toUpperCase() || 'U' }}
             </span>
           </div>
-          
-          <button
-            (click)="logout()"
-            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
-          >
-            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Cerrar Sesión
-          </button>
         </div>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Contenido Principal -->
-  <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <!-- Header -->
-    <div class="px-4 py-6 sm:px-0">
-      <div class="border-4 border-dashed border-gray-200 rounded-lg p-8">
-        <div class="text-center">
-          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-          </svg>
-          <h2 class="mt-2 text-lg font-medium text-gray-900">¡Bienvenido, {{ currentUser?.full_name }}!</h2>
-          <p class="mt-1 text-sm text-gray-500">
-            Has iniciado sesión exitosamente en el sistema RysDev
+        <div [class]="isSidebarCollapsed ? 'hidden' : 'ml-3 flex-1'">
+          <p class="text-sm font-medium text-white truncate">
+            {{ currentUser?.full_name || 'Usuario' }}
+          </p>
+          <p class="text-xs text-gray-400 truncate">
+            {{ currentUser?.username }}
           </p>
         </div>
+        <button
+          (click)="logout()"
+          [class]="'ml-2 p-1 rounded-lg hover:bg-gray-800 transition-colors duration-200 ' + (isSidebarCollapsed ? 'hidden' : '')"
+          title="Cerrar Sesión"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+          </svg>
+        </button>
       </div>
     </div>
+  </div>
 
-    <!-- Información del Usuario -->
-    <div class="px-4 py-6 sm:px-0">
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
-            Información del Usuario
-          </h3>
+  <!-- Main Content Area -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Top Navigation -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <h1 class="text-xl font-semibold text-gray-900">Dashboard</h1>
+          </div>
           
-          <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Nombre Completo</dt>
-              <dd class="mt-1 text-sm text-gray-900">{{ currentUser?.full_name }}</dd>
-            </div>
-            
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Nombre de Usuario</dt>
-              <dd class="mt-1 text-sm text-gray-900">{{ currentUser?.username }}</dd>
-            </div>
-            
-            <div>
-              <dt class="text-sm font-medium text-gray-500">ID de Usuario</dt>
-              <dd class="mt-1 text-sm text-gray-900">{{ currentUser?.id }}</dd>
-            </div>
-            
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Estado</dt>
-              <dd class="mt-1">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  <svg class="w-2 h-2 mr-1" fill="currentColor" viewBox="0 0 8 8">
-                    <circle cx="4" cy="4" r="3" />
+          <div class="flex items-center space-x-4">
+            <button
+              (click)="logout()"
+              class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+            >
+              <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+              </svg>
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto">
+      <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Loading State -->
+        <div *ngIf="loading" class="flex justify-center items-center h-64">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div *ngIf="!loading">
+          <!-- Welcome Section -->
+          <div class="mb-8">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <svg class="h-12 w-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
                   </svg>
-                  Activo
-                </span>
-              </dd>
+                </div>
+                <div class="ml-4">
+                  <h2 class="text-2xl font-bold">¡Bienvenido, {{ currentUser?.full_name }}!</h2>
+                  <p class="text-indigo-100">Has iniciado sesión exitosamente en el sistema RysDev</p>
+                </div>
+              </div>
             </div>
-            
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Fecha de Registro</dt>
-              <dd class="mt-1 text-sm text-gray-900">
-                {{ currentUser?.created_at | date:'dd/MM/yyyy HH:mm' }}
-              </dd>
+          </div>
+
+          <!-- Stats Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Users -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+              <div class="p-5">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m3 5.197H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <div class="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt class="text-sm font-medium text-gray-500 truncate">Usuarios Totales</dt>
+                      <dd class="text-lg font-medium text-gray-900">1,247</dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
             </div>
-          </dl>
+
+            <!-- Active Projects -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+              <div class="p-5">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                  </div>
+                  <div class="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt class="text-sm font-medium text-gray-500 truncate">Proyectos Activos</dt>
+                      <dd class="text-lg font-medium text-gray-900">23</dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending Tasks -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+              <div class="p-5">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <div class="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt class="text-sm font-medium text-gray-500 truncate">Tareas Pendientes</dt>
+                      <dd class="text-lg font-medium text-gray-900">47</dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reports -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+              <div class="p-5">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                  </div>
+                  <div class="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt class="text-sm font-medium text-gray-500 truncate">Reportes</dt>
+                      <dd class="text-lg font-medium text-gray-900">156</dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- User Information -->
+          <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+              <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                Información del Usuario
+              </h3>
+              
+              <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Nombre Completo</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ currentUser?.full_name }}</dd>
+                </div>
+                
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Nombre de Usuario</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ currentUser?.username }}</dd>
+                </div>
+                
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">ID de Usuario</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ currentUser?.id }}</dd>
+                </div>
+                
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Estado</dt>
+                  <dd class="mt-1">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <svg class="w-2 h-2 mr-1" fill="currentColor" viewBox="0 0 8 8">
+                        <circle cx="4" cy="4" r="3" />
+                      </svg>
+                      Activo
+                    </span>
+                  </dd>
+                </div>
+                
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Fecha de Registro</dt>
+                  <dd class="mt-1 text-sm text-gray-900">
+                    {{ currentUser?.created_at | date:'dd/MM/yyyy HH:mm' }}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Perfil</dt>
+                  <dd class="mt-1 text-sm text-gray-900">
+                    ID Perfil: {{ currentUser?.id_perfil || 'No asignado' }}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-
-    <!-- Cards de Acciones -->
-    <div class="px-4 py-6 sm:px-0">
-      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <!-- Card 1 -->
-        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow duration-200">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m3 5.197H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">Perfil</dt>
-                  <dd class="text-lg font-medium text-gray-900">Gestionar</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-          <div class="bg-gray-50 px-5 py-3">
-            <div class="text-sm">
-              <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500">
-                Ver detalles
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 2 -->
-        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow duration-200">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">Proyectos</dt>
-                  <dd class="text-lg font-medium text-gray-900">0</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-          <div class="bg-gray-50 px-5 py-3">
-            <div class="text-sm">
-              <a href="#" class="font-medium text-green-600 hover:text-green-500">
-                Crear proyecto
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 3 -->
-        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow duration-200">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">Configuración</dt>
-                  <dd class="text-lg font-medium text-gray-900">Sistema</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-          <div class="bg-gray-50 px-5 py-3">
-            <div class="text-sm">
-              <a href="#" class="font-medium text-yellow-600 hover:text-yellow-500">
-                Configurar
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
+    </main>
+  </div>
 </div>

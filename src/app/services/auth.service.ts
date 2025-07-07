@@ -1,21 +1,7 @@
-// src/app/services/auth.service.ts
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Router } from '@angular/router';
-
-export interface Profile {
-  id?: number;
-  username: string;
-  full_name: string;
-  password: string;
-  status: number;
-  created_at?: string;
-}
-
-export interface LoginCredentials {
-  username: string;
-  password: string;
-}
+import { Profile, LoginCredentials, AuthResponse, RegisterData } from '../interfaces/user.interfaces';
 
 @Injectable({
   providedIn: 'root'
@@ -43,7 +29,7 @@ export class AuthService {
     }
   }
 
-  async login(credentials: LoginCredentials): Promise<{ success: boolean; message: string; user?: Profile }> {
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
       console.log('Intentando login con:', credentials.username);
       
@@ -72,12 +58,23 @@ export class AuthService {
         return { success: false, message: 'Contraseña incorrecta' };
       }
 
+      // Convertir el usuario de Supabase al formato Profile
+      const profileUser: Profile = {
+        id: user.id,
+        username: user.username,
+        full_name: user.full_name,
+        password: user.password,
+        status: user.status,
+        id_perfil: user.id_perfil,
+        created_at: user.created_at
+      };
+
       // Guardar usuario
-      this.currentUser = user;
-      localStorage.setItem('currentUser', JSON.stringify(user));
+      this.currentUser = profileUser;
+      localStorage.setItem('currentUser', JSON.stringify(profileUser));
       
-      console.log('Login exitoso para:', user.username);
-      return { success: true, message: 'Login exitoso', user: user };
+      console.log('Login exitoso para:', profileUser.username);
+      return { success: true, message: 'Login exitoso', user: profileUser };
 
     } catch (error) {
       console.error('Error en login:', error);
@@ -85,7 +82,7 @@ export class AuthService {
     }
   }
 
-  async register(profile: Omit<Profile, 'id' | 'created_at'>): Promise<{ success: boolean; message: string; user?: Profile }> {
+  async register(profile: RegisterData): Promise<AuthResponse> {
     try {
       console.log('Intentando registrar usuario:', profile.username);
 
@@ -106,12 +103,13 @@ export class AuthService {
         return { success: false, message: 'El nombre de usuario ya existe' };
       }
 
-      // Crear nuevo usuario
+      // Crear nuevo usuario - asignar perfil básico por defecto
       const dataToInsert = {
         username: profile.username,
         full_name: profile.full_name,
         password: profile.password,
-        status: 1
+        status: 1,
+        id_perfil: profile.id_perfil || 2 // Asignar perfil "Usuario" por defecto
       };
 
       console.log('Datos a insertar:', dataToInsert);
@@ -130,7 +128,19 @@ export class AuthService {
 
       if (newUser && newUser.length > 0) {
         console.log('Usuario creado exitosamente:', newUser[0]);
-        return { success: true, message: 'Usuario creado exitosamente', user: newUser[0] };
+        
+        // Convertir el resultado al formato Profile
+        const createdUser: Profile = {
+          id: newUser[0].id,
+          username: newUser[0].username,
+          full_name: newUser[0].full_name,
+          password: newUser[0].password,
+          status: newUser[0].status,
+          id_perfil: newUser[0].id_perfil,
+          created_at: newUser[0].created_at
+        };
+        
+        return { success: true, message: 'Usuario creado exitosamente', user: createdUser };
       } else {
         return { success: false, message: 'Error al crear usuario - no se recibieron datos' };
       }
@@ -145,6 +155,10 @@ export class AuthService {
     console.log('Cerrando sesión');
     this.currentUser = null;
     localStorage.removeItem('currentUser');
+    
+    // Nota: No inyectamos PermissionsService directamente para evitar dependencias circulares
+    // El componente que llame a logout debe limpiar los datos de permisos si es necesario
+    
     this.router.navigate(['/login']);
   }
 
@@ -154,5 +168,22 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     return this.getCurrentUser() !== null;
+  }
+
+  // Método para obtener el perfil del usuario actual
+  getCurrentUserProfile(): number | null {
+    const user = this.getCurrentUser();
+    return user?.id_perfil || null;
+  }
+
+  // Método para verificar si el usuario tiene un perfil específico
+  hasProfile(profileId: number): boolean {
+    const userProfile = this.getCurrentUserProfile();
+    return userProfile === profileId;
+  }
+
+  // Método para verificar si es administrador
+  isAdmin(): boolean {
+    return this.hasProfile(1); // Asumiendo que perfil 1 es Administrador
   }
 }

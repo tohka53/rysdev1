@@ -1,0 +1,140 @@
+<!-- src/app/sidebar/sidebar/sidebar.component.html -->
+<div [class]="'bg-gray-900 text-white transition-all duration-300 ease-in-out ' + (isCollapsed ? 'w-16' : 'w-64')">
+  <!-- Sidebar Header -->
+  <div class="flex items-center justify-between p-4 border-b border-gray-700">
+    <div [class]="isCollapsed ? 'hidden' : 'block'">
+      <h1 class="text-xl font-bold">S</h1>
+      <p class="text-sm text-gray-300">Sistema de Gestión</p>
+    </div>
+    <button 
+      (click)="onToggleSidebar()"
+      class="p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              [attr.d]="isCollapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'">
+        </path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="flex justify-center items-center py-8">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav *ngIf="!loading" class="mt-4 px-2">
+    <div class="space-y-1">
+      <!-- Dashboard Link -->
+      <a 
+        href="/dashboard" 
+        [class]="'group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ' + 
+                 (isRouteActive('/dashboard') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white')"
+      >
+        <svg class="flex-shrink-0 w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v14l-6-3-6 3V5z"></path>
+        </svg>
+        <span [class]="isCollapsed ? 'hidden' : 'block'">Dashboard</span>
+      </a>
+
+      <!-- Dynamic Menu Items -->
+      <div *ngFor="let module of getFilteredMenuItems()" class="space-y-1">
+        <!-- Módulo padre con hijos -->
+        <div *ngIf="module.es_padre && getFilteredChildren(module).length > 0">
+          <button 
+            class="group w-full flex items-center px-3 py-2 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors duration-200"
+            (click)="toggleModule(module.id_modulo)"
+          >
+            <i [class]="'flex-shrink-0 w-5 h-5 mr-3 ' + module.icono" *ngIf="module.icono"></i>
+            <svg *ngIf="!module.icono" class="flex-shrink-0 w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2m0 0h14"></path>
+            </svg>
+            <span [class]="isCollapsed ? 'hidden' : 'flex-1 text-left'">{{ module.nombre }}</span>
+            <svg 
+              *ngIf="!isCollapsed" 
+              [class]="'w-4 h-4 transition-transform duration-200 ' + (isModuleExpanded(module.id_modulo) ? 'transform rotate-90' : '')" 
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
+
+          <!-- Submódulos -->
+          <div *ngIf="isModuleExpanded(module.id_modulo) && !isCollapsed" class="ml-6 space-y-1">
+            <a 
+              *ngFor="let child of getFilteredChildren(module)"
+              [href]="child.ruta"
+              [class]="'group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ' + 
+                       (isRouteActive(child.ruta) ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white')"
+            >
+              <i [class]="'flex-shrink-0 w-4 h-4 mr-3 ' + child.icono" *ngIf="child.icono"></i>
+              <svg *ngIf="!child.icono" class="flex-shrink-0 w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m3 5.197H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              {{ child.nombre }}
+            </a>
+          </div>
+
+          <!-- Tooltip para sidebar colapsado -->
+          <div *ngIf="isCollapsed" class="nav-tooltip" [attr.data-tooltip]="module.nombre">
+            <div class="tooltip-child">
+              <div *ngFor="let child of getFilteredChildren(module)" class="tooltip-child-item">
+                <a [href]="child.ruta" class="block px-3 py-2 text-sm hover:bg-gray-700 rounded">
+                  {{ child.nombre }}
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Módulo simple (sin hijos) -->
+        <a 
+          *ngIf="!module.es_padre || getFilteredChildren(module).length === 0"
+          [href]="module.ruta"
+          [class]="'group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ' + 
+                   (isRouteActive(module.ruta) ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white')"
+          [attr.title]="isCollapsed ? module.nombre : null"
+        >
+          <i [class]="'flex-shrink-0 w-5 h-5 mr-3 ' + module.icono" *ngIf="module.icono"></i>
+          <svg *ngIf="!module.icono" class="flex-shrink-0 w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2m0 0h14"></path>
+          </svg>
+          <span [class]="isCollapsed ? 'hidden' : 'block'">{{ module.nombre }}</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- User Menu (Bottom) -->
+  <div class="absolute bottom-0 w-full p-4 border-t border-gray-700">
+    <div [class]="'flex items-center ' + (isCollapsed ? 'justify-center' : '')">
+      <div class="flex-shrink-0">
+        <div class="h-8 w-8 bg-indigo-600 rounded-full flex items-center justify-center">
+          <span class="text-xs font-medium text-white">
+            {{ getUserInitials() }}
+          </span>
+        </div>
+      </div>
+      <div [class]="isCollapsed ? 'hidden' : 'ml-3 flex-1'">
+        <p class="text-sm font-medium text-white truncate">
+          {{ currentUser?.full_name || 'Usuario' }}
+        </p>
+        <p class="text-xs text-gray-400 truncate">
+          {{ getUserRole() }}
+        </p>
+      </div>
+      <button
+        (click)="logout()"
+        [class]="'ml-2 p-1 rounded-lg hover:bg-gray-800 transition-colors duration-200 ' + (isCollapsed ? 'hidden' : '')"
+        title="Cerrar Sesión"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>

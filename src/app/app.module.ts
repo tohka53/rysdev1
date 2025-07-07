@@ -11,9 +11,10 @@ import { LoginComponent } from './login/login/login.component';
 import { RegisterComponent } from './register/register/register.component';
 import { DashboardComponent } from './dashboard/dashboard/dashboard.component'; // Asegúrate de que la ruta sea correcta
 
-
+import { Analytics } from "@vercel/analytics/next"
 // Servicios
 import { AuthService } from './services/auth.service';
+import { SidebarComponent } from './sidebar/sidebar/sidebar.component';
 
 
 @NgModule({
@@ -22,16 +23,19 @@ import { AuthService } from './services/auth.service';
     UsuariosComponent,
     LoginComponent,
     RegisterComponent,
-    DashboardComponent
+    DashboardComponent,
+    SidebarComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     FormsModule,
     ReactiveFormsModule,  
-    FormsModule,          
+    FormsModule            
+    
+     
   ],
-  providers: [SupabaseService], // Añade esto si no está
+  providers: [SupabaseService,AuthService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

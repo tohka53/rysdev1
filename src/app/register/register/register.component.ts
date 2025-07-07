@@ -1,7 +1,8 @@
 // src/app/components/register/register.component.ts
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService, Profile } from '../../services/auth.service';
+import { AuthService } from '../../services/auth.service';
+import { RegisterData } from '../../interfaces/user.interfaces';
 
 @Component({
   selector: 'app-register',
@@ -10,11 +11,12 @@ import { AuthService, Profile } from '../../services/auth.service';
   styleUrls: ['./register.component.css']
 })
 export class RegisterComponent {
-  user: Omit<Profile, 'id' | 'created_at'> = {
+  user: RegisterData = {
     username: '',
     full_name: '',
     password: '',
-    status: 1
+    status: 1,
+    id_perfil: 2 // Perfil "Usuario" por defecto
   };
   
   confirmPassword = '';
@@ -71,6 +73,14 @@ export class RegisterComponent {
       return;
     }
 
+    // Validar caracteres especiales en username
+    const usernamePattern = /^[a-zA-Z0-9_.-]+$/;
+    if (!usernamePattern.test(this.user.username)) {
+      this.errorMessage = 'El nombre de usuario solo puede contener letras, números, guiones, puntos y guiones bajos';
+      console.log('Error: Username con caracteres inválidos');
+      return;
+    }
+
     this.loading = true;
     console.log('Iniciando proceso de registro...');
 
@@ -87,7 +97,8 @@ export class RegisterComponent {
           username: '',
           full_name: '',
           password: '',
-          status: 1
+          status: 1,
+          id_perfil: 2
         };
         this.confirmPassword = '';
 
