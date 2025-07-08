@@ -86,13 +86,13 @@ export class LandingComponent implements OnInit {
 
   // Datos del equipo - Solo un fisioterapeuta
   team = [
-    {
-      name: 'Dra. María González',
-      role: 'Fisioterapeuta Principal',
-      specialization: 'Especialista en Rehabilitación Neurológica',
-      image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop&crop=face',
-      experience: '15 años de experiencia'
-    }
+  {
+    name: 'Lic. Estuardo Godoy',
+    role: 'Fisioterapeuta Principal',
+    specialization: 'Especialista en Rehabilitación y Fisioterapia',
+   image: '/lucciuki.png', // Opción 3
+    experience: '5 años de experiencia'
+  }
   ];
 
   constructor(private router: Router) {}
