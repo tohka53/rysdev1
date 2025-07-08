@@ -1,0 +1,421 @@
+<!-- src/app/landing/landing.component.html -->
+<div class="min-h-screen bg-white">
+  <!-- Navigation -->
+  <nav class="fixed top-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 flex items-center">
+            <div class="h-8 w-8 bg-red-600 rounded-lg flex items-center justify-center mr-3">
+              <i class="fas fa-heartbeat text-white"></i>
+            </div>
+            <span class="text-xl font-bold text-gray-900">RehabiMovement</span>
+          </div>
+        </div>
+        
+        <div class="hidden md:block">
+          <div class="ml-10 flex items-baseline space-x-8">
+            <a (click)="scrollToSection('inicio')" class="text-gray-900 hover:text-red-600 cursor-pointer transition-colors">Inicio</a>
+            <a (click)="scrollToSection('servicios')" class="text-gray-700 hover:text-red-600 cursor-pointer transition-colors">Servicios</a>
+            <a (click)="scrollToSection('nosotros')" class="text-gray-700 hover:text-red-600 cursor-pointer transition-colors">Nosotros</a>
+            <a (click)="scrollToSection('precios')" class="text-gray-700 hover:text-red-600 cursor-pointer transition-colors">Precios</a>
+            <a (click)="scrollToSection('contacto')" class="text-gray-700 hover:text-red-600 cursor-pointer transition-colors">Contacto</a>
+          </div>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+          <button (click)="goToLogin()" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors">
+            <i class="fas fa-sign-in-alt mr-2"></i>Login
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="inicio" class="pt-16 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <h1 class="text-4xl md:text-6xl font-bold text-white mb-6">
+            Recupera tu
+            <span class="text-red-500">Movimiento</span>
+          </h1>
+          <p class="text-xl text-gray-300 mb-8">
+            Fisioterapia especializada en Guatemala. Devolvemos la movilidad y calidad de vida a nuestros pacientes con tratamientos personalizados y tecnología de vanguardia.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <button (click)="bookAppointment()" class="bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center">
+              <i class="fas fa-calendar-check mr-2"></i>
+              Reservar Cita
+            </button>
+            <button (click)="scrollToSection('servicios')" class="border border-red-600 text-red-500 px-8 py-3 rounded-lg hover:bg-red-600 hover:text-white transition-colors">
+              Conocer Servicios
+            </button>
+          </div>
+        </div>
+        
+        <div class="relative">
+          <div class="bg-white rounded-2xl shadow-2xl p-8 transform rotate-3 hover:rotate-0 transition-transform duration-300">
+            <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop" 
+                 alt="Fisioterapia" 
+                 class="rounded-xl w-full h-64 object-cover">
+            <div class="mt-4">
+              <h3 class="text-lg font-semibold text-gray-900">Tratamiento Profesional</h3>
+              <p class="text-gray-600">Con equipos de última generación</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  <section id="servicios" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          Nuestros Servicios
+        </h2>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          Ofrecemos una amplia gama de servicios especializados para tu recuperación y bienestar
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div *ngFor="let service of services" class="bg-gray-50 rounded-xl p-6 hover:shadow-lg transition-shadow duration-300 hover:border-red-200 border border-transparent">
+          <div class="text-center">
+            <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i [class]="service.icon + ' text-white text-2xl'"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-3">{{ service.title }}</h3>
+            <p class="text-gray-600 mb-4">{{ service.description }}</p>
+            <ul class="text-sm text-gray-500 space-y-1">
+              <li *ngFor="let feature of service.features">
+                <i class="fas fa-check text-red-600 mr-2"></i>{{ feature }}
+              </li>
+            </ul>
+            <button (click)="showMoreInfo(service)" class="mt-4 text-red-600 hover:text-red-800 font-medium">
+              Más información →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<!-- About Section -->
+  <section id="nosotros" class="py-20 bg-gray-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+            Quiénes Somos
+          </h2>
+          <p class="text-lg text-gray-600 mb-6">
+            RehabiMovement es una clínica especializada en fisioterapia y rehabilitación ubicada en Guatemala. 
+            Contamos con más de 15 años de experiencia ayudando a pacientes a recuperar su movilidad y mejorar su calidad de vida.
+          </p>
+          <div class="space-y-4">
+            <div class="flex items-start">
+              <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center mr-4 mt-1">
+                <i class="fas fa-award text-white text-sm"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-900">Profesionales Certificados</h4>
+                <p class="text-gray-600">Nuestro equipo cuenta con las mejores certificaciones internacionales</p>
+              </div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center mr-4 mt-1">
+                <i class="fas fa-heart text-white text-sm"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-900">Atención Personalizada</h4>
+                <p class="text-gray-600">Cada paciente recibe un plan de tratamiento único y personalizado</p>
+              </div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center mr-4 mt-1">
+                <i class="fas fa-cogs text-white text-sm"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-900">Tecnología Avanzada</h4>
+                <p class="text-gray-600">Utilizamos equipos de última generación para mejores resultados</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="relative">
+          <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=600&h=500&fit=crop" 
+               alt="Equipo médico" 
+               class="rounded-2xl shadow-2xl">
+          <div class="absolute -bottom-6 -left-6 bg-white rounded-xl p-6 shadow-lg">
+            <div class="flex items-center">
+              <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                <i class="fas fa-users text-red-600 text-xl"></i>
+              </div>
+              <div>
+                <p class="text-2xl font-bold text-gray-900">500+</p>
+                <p class="text-sm text-gray-600">Pacientes Satisfechos</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Team Section -->
+      <div class="mt-20">
+        <h3 class="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-12">
+          Nuestro Equipo
+        </h3>
+        
+        <!-- Grid que se adapta al número de miembros -->
+        <div class="flex justify-center">
+          <div [ngClass]="getTeamGridClasses()" class="gap-8 max-w-4xl">
+            <div *ngFor="let member of team" class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow border border-gray-200 hover:border-red-200">
+              <div class="text-center">
+                <img [src]="member.image" 
+                     [alt]="member.name" 
+                     class="w-32 h-32 rounded-full mx-auto mb-6 object-cover border-4 border-red-100">
+                <h4 class="text-2xl font-semibold text-gray-900 mb-2">{{ member.name }}</h4>
+                <p class="text-red-600 font-medium text-lg mb-3">{{ member.role }}</p>
+                <p class="text-gray-600 mb-2">{{ member.specialization }}</p>
+                <p class="text-gray-500 text-sm bg-gray-50 px-4 py-2 rounded-full inline-block">
+                  {{ member.experience }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Section -->
+  <section id="precios" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          Nuestros Precios
+        </h2>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          Planes accesibles para todos los presupuestos. Inversión en tu salud y bienestar.
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div *ngFor="let plan of pricingPlans" 
+             [class]="'relative bg-white rounded-2xl shadow-lg border ' + (plan.popular ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-200')">
+          
+          <div *ngIf="plan.popular" class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+            <span class="bg-red-600 text-white px-4 py-1 rounded-full text-sm font-medium">
+              Más Popular
+            </span>
+          </div>
+          
+          <div class="p-8">
+            <div class="text-center">
+              <h3 class="text-2xl font-bold text-gray-900 mb-4">{{ plan.name }}</h3>
+              <div class="mb-6">
+                <span class="text-4xl font-bold text-red-600">{{ plan.price }}</span>
+                <span class="text-gray-600 ml-2">{{ plan.period }}</span>
+              </div>
+              
+              <ul class="space-y-3 mb-8">
+                <li *ngFor="let feature of plan.features" class="flex items-start">
+                  <i class="fas fa-check text-red-600 mr-3 mt-1"></i>
+                  <span class="text-gray-700">{{ feature }}</span>
+                </li>
+              </ul>
+              
+              <button (click)="bookAppointment()" 
+                      [class]="'w-full py-3 px-6 rounded-lg font-medium transition-colors ' + 
+                               (plan.popular ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-100 text-gray-900 hover:bg-gray-200')">
+                {{ plan.buttonText }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="text-center mt-12">
+        <p class="text-gray-600 mb-4">
+          ¿Necesitas un plan personalizado?
+        </p>
+        <button (click)="contactUs()" class="text-red-600 hover:text-red-800 font-medium">
+          Contáctanos para una consulta gratuita →
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contacto" class="py-20 bg-gray-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          Contáctenos
+        </h2>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          Estamos aquí para ayudarte. Contáctanos para programar tu consulta inicial.
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div>
+          <div class="space-y-8">
+            <div class="flex items-start">
+              <div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center mr-4">
+                <i class="fas fa-map-marker-alt text-white"></i>
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold text-gray-900 mb-2">Dirección</h4>
+                <p class="text-gray-600">
+                  Zona 15, Ciudad de Guatemala<br>
+                  19 avenida, 4-02 Vista Hermosa I<br>
+                  Guatemala, Guatemala
+                </p>
+              </div>
+            </div>
+            
+            <div class="flex items-start">
+              <div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center mr-4">
+                <i class="fas fa-phone text-white"></i>
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold text-gray-900 mb-2">Teléfono</h4>
+                <p class="text-gray-600">
+                  +502 5412-1199<br>
+                  +502 5879-5979
+                </p>
+              </div>
+            </div>
+            
+            <div class="flex items-start">
+              <div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center mr-4">
+                <i class="fas fa-envelope text-white"></i>
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold text-gray-900 mb-2">Email</h4>
+                <p class="text-gray-600">
+                  inforehabimovement.com<br>
+                  citasrehabimovement.com
+                </p>
+              </div>
+            </div>
+            
+            <div class="flex items-start">
+              <div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center mr-4">
+                <i class="fas fa-clock text-white"></i>
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold text-gray-900 mb-2">Horarios</h4>
+                <p class="text-gray-600">
+                  Lunes a Viernes: 7:00 AM - 7:00 PM<br>
+                  Sábados: 8:00 AM - 2:00 PM<br>
+                  Domingos: Cerrado
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+          <h3 class="text-2xl font-bold text-gray-900 mb-6">Envíanos un mensaje</h3>
+          <form class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+                <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Apellido</label>
+                <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+              </div>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <input type="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+              <input type="tel" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Mensaje</label>
+              <textarea rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"></textarea>
+            </div>
+            
+            <button type="submit" class="w-full bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 transition-colors">
+              <i class="fas fa-paper-plane mr-2"></i>
+              Enviar Mensaje
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <div class="flex items-center mb-4">
+            <div class="h-8 w-8 bg-red-600 rounded-lg flex items-center justify-center mr-3">
+              <i class="fas fa-heartbeat text-white"></i>
+            </div>
+            <span class="text-xl font-bold">RehabiMovement</span>
+          </div>
+          <p class="text-gray-400">
+            Recupera tu movimiento y mejora tu calidad de vida con nuestros tratamientos especializados.
+          </p>
+        </div>
+        
+        <div>
+          <h4 class="font-semibold mb-4">Servicios</h4>
+          <ul class="space-y-2 text-gray-400">
+            <li><a href="#" class="hover:text-red-400 transition-colors">Rehabilitación Motora</a></li>
+            <li><a href="#" class="hover:text-red-400 transition-colors">Fisioterapia Deportiva</a></li>
+            <li><a href="#" class="hover:text-red-400 transition-colors">Terapia Personalizada</a></li>
+            <li><a href="#" class="hover:text-red-400 transition-colors">Terapias Alternativas</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h4 class="font-semibold mb-4">Enlaces</h4>
+          <ul class="space-y-2 text-gray-400">
+            <li><a (click)="scrollToSection('inicio')" class="hover:text-red-400 transition-colors cursor-pointer">Inicio</a></li>
+            <li><a (click)="scrollToSection('nosotros')" class="hover:text-red-400 transition-colors cursor-pointer">Nosotros</a></li>
+            <li><a (click)="scrollToSection('precios')" class="hover:text-red-400 transition-colors cursor-pointer">Precios</a></li>
+            <li><a (click)="scrollToSection('contacto')" class="hover:text-red-400 transition-colors cursor-pointer">Contacto</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h4 class="font-semibold mb-4">Síguenos</h4>
+          <div class="flex space-x-4">
+            <a href="#" class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="#" class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors">
+              <i class="fab fa-whatsapp"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
+        <p>&copy; 2024 RehabiMovement. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </footer>
+</div>

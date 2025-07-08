@@ -15,6 +15,7 @@ import { Analytics } from "@vercel/analytics/next"
 // Servicios
 import { AuthService } from './services/auth.service';
 import { SidebarComponent } from './sidebar/sidebar/sidebar.component';
+import { LandingComponent } from './landing/landing/landing.component';
 
 
 @NgModule({
@@ -24,7 +25,8 @@ import { SidebarComponent } from './sidebar/sidebar/sidebar.component';
     LoginComponent,
     RegisterComponent,
     DashboardComponent,
-    SidebarComponent
+    SidebarComponent,
+    LandingComponent
   ],
   imports: [
     BrowserModule,
