@@ -159,7 +159,7 @@ export class AuthService {
     // Nota: No inyectamos PermissionsService directamente para evitar dependencias circulares
     // El componente que llame a logout debe limpiar los datos de permisos si es necesario
     
-    this.router.navigate(['/login']);
+    this.router.navigate(['/langing']);
   }
 
   getCurrentUser(): Profile | null {

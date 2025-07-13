@@ -6,13 +6,15 @@ import { LoginComponent } from './login/login/login.component';
 import { RegisterComponent } from './register/register/register.component';
 import { DashboardComponent } from './dashboard/dashboard/dashboard.component';
 import { UsuariosComponent } from './usuarios/usuarios/usuarios.component';
+import { LandingComponent } from './landing/landing/landing.component';
 
-// Crear un componente layout compartido
+// Componente layout compartido para rutas protegidas
 import { LayoutComponent } from './layout/layout/layout.component';
 
 const routes: Routes = [
-  // Ruta principal - Landing page (si tienes LandingComponent)
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  // Ruta principal - Landing page
+  { path: '', component: LandingComponent },
+  { path: 'home', component: LandingComponent }, // Alias alternativo
   
   // Rutas de autenticación (sin layout)
   { path: 'login', component: LoginComponent },
@@ -43,11 +45,8 @@ const routes: Routes = [
     ]
   },
   
-  // Rutas de landing page alternativa (si tienes LandingComponent)
-  // { path: 'home', component: LandingComponent },
-  
-  // Ruta wildcard - redirige a login
-  { path: '**', redirectTo: '/login' }
+  // Ruta wildcard - redirige al landing page
+  { path: '**', redirectTo: '/' }
 ];
 
 @NgModule({
@@ -55,7 +54,9 @@ const routes: Routes = [
     // Configuraciones adicionales
     enableTracing: false, // Set to true for debugging
     scrollPositionRestoration: 'top',
-    anchorScrolling: 'enabled'
+    anchorScrolling: 'enabled',
+    // Opcional: precargar módulos lazy-loaded
+    preloadingStrategy: undefined
   })],
   exports: [RouterModule]
 })
