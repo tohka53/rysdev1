@@ -1,82 +1,74 @@
-// src/app/dashboard/dashboard/dashboard.component.ts
+// src/app/shared/layout/layout.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 import { PermissionsService, MenuModule } from '../../services/permissions.service';
+import { SupabaseService } from '../../services/supabase.service';
 import { Profile } from '../../interfaces/user.interfaces';
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'app-layout',
   standalone: false,
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css']
+  templateUrl: './layout.component.html',
+  styleUrls: ['./layout.component.css']
 })
-export class DashboardComponent implements OnInit, OnDestroy {
+export class LayoutComponent implements OnInit, OnDestroy {
   currentUser: Profile | null = null;
   menuItems: MenuModule[] = [];
   isSidebarCollapsed = false;
-  loading = true;
-  error = '';
   currentRoute = '';
   expandedModules: Set<number> = new Set();
-
-  // Stats data
+  loading = false;
+  
+  // Stats para el dashboard
   stats = {
     totalUsers: 0,
-    activeProjects: 0,
-    pendingTasks: 0,
-    totalReports: 0
+    activeProjects: 23,
+    pendingTasks: 47,
+    totalReports: 156
   };
-
+  
   private subscriptions: Subscription = new Subscription();
 
   constructor(
     private authService: AuthService,
     private permissionsService: PermissionsService,
+    private supabaseService: SupabaseService,
     private router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
-    console.log('Dashboard inicializado');
+    console.log('Layout inicializado');
     
-    try {
-      // Obtener usuario actual
-      this.currentUser = this.authService.getCurrentUser();
-      console.log('Usuario actual:', this.currentUser);
-
-      if (!this.currentUser) {
-        console.log('No hay usuario autenticado, redirigiendo a login');
-        this.router.navigate(['/login']);
-        return;
-      }
-
-      // Cargar menú del usuario
-      await this.loadUserMenu();
-      
-      // Cargar estadísticas
-      await this.loadDashboardStats();
-
-      // Suscribirse a cambios de ruta
-      this.subscriptions.add(
-        this.router.events
-          .pipe(filter(event => event instanceof NavigationEnd))
-          .subscribe((event: NavigationEnd) => {
-            this.currentRoute = event.urlAfterRedirects;
-            console.log('Ruta actual:', this.currentRoute);
-          })
-      );
-
-      // Obtener ruta actual
-      this.currentRoute = this.router.url;
-
-    } catch (error) {
-      console.error('Error inicializando dashboard:', error);
-      this.error = 'Error cargando el dashboard';
-    } finally {
-      this.loading = false;
+    // Obtener usuario actual
+    this.currentUser = this.authService.getCurrentUser();
+    
+    if (!this.currentUser) {
+      console.log('No hay usuario autenticado, redirigiendo a login');
+      this.router.navigate(['/login']);
+      return;
     }
+
+    // Cargar menú del usuario
+    await this.loadUserMenu();
+    
+    // Cargar estadísticas si estamos en dashboard
+    await this.loadDashboardStats();
+
+    // Suscribirse a cambios de ruta
+    this.subscriptions.add(
+      this.router.events
+        .pipe(filter(event => event instanceof NavigationEnd))
+        .subscribe((event: NavigationEnd) => {
+          this.currentRoute = event.urlAfterRedirects;
+          console.log('Ruta actual en layout:', this.currentRoute);
+        })
+    );
+
+    // Obtener ruta actual
+    this.currentRoute = this.router.url;
   }
 
   ngOnDestroy(): void {
@@ -85,7 +77,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   async loadUserMenu(): Promise<void> {
     try {
-      console.log('Cargando menú del usuario...');
+      console.log('Cargando menú del usuario en layout...');
       this.menuItems = await this.permissionsService.loadUserMenu();
       
       if (!this.menuItems || this.menuItems.length === 0) {
@@ -94,7 +86,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
       
       this.updateExpandedModules();
-      console.log('Menú cargado:', this.menuItems);
+      console.log('Menú cargado en layout:', this.menuItems);
     } catch (error) {
       console.error('Error cargando menú:', error);
       this.menuItems = this.createDefaultMenu();
@@ -155,6 +147,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     ];
   }
 
+  async loadDashboardStats(): Promise<void> {
+    try {
+      // Obtener número total de usuarios reales de la base de datos
+      const usersData = await this.supabaseService.getData('profiles');
+      this.stats.totalUsers = usersData?.length || 0;
+    } catch (error) {
+      console.error('Error cargando estadísticas:', error);
+    }
+  }
+
   private updateExpandedModules(): void {
     this.menuItems.forEach(module => {
       if (module.expanded === undefined) {
@@ -168,20 +170,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         });
       }
     });
-  }
-
-  async loadDashboardStats(): Promise<void> {
-    try {
-      // Aquí puedes hacer llamadas a servicios para obtener estadísticas reales
-      this.stats = {
-        totalUsers: 1247,
-        activeProjects: 23,
-        pendingTasks: 47,
-        totalReports: 156
-      };
-    } catch (error) {
-      console.error('Error cargando estadísticas:', error);
-    }
   }
 
   toggleSidebar(): void {
@@ -199,7 +187,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const module = this.menuItems.find(m => m.id_modulo === moduleId);
     if (module) {
       module.expanded = this.expandedModules.has(moduleId);
-      console.log(`Módulo ${module.nombre} ${module.expanded ? 'expandido' : 'colapsado'}`);
     }
   }
 
@@ -207,15 +194,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.expandedModules.has(moduleId);
   }
 
-  logout(): void {
-    console.log('Cerrando sesión desde dashboard');
-    this.permissionsService.clearUserData();
-    this.currentUser = null;
-    this.menuItems = [];
-    this.authService.logout();
-  }
-
-  // Métodos para el menú
   getFilteredMenuItems(): MenuModule[] {
     return this.menuItems.filter(item => !item.modulo_padre_id);
   }
@@ -241,7 +219,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Métodos de utilidad
   getUserInitials(): string {
     if (!this.currentUser?.full_name) {
       return 'U';
@@ -263,42 +240,43 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
+  logout(): void {
+    console.log('Cerrando sesión desde layout');
+    this.permissionsService.clearUserData();
+    this.currentUser = null;
+    this.menuItems = [];
+    this.expandedModules.clear();
+    this.authService.logout();
+  }
+
   getPageTitle(): string {
     switch (this.currentRoute) {
       case '/dashboard': return 'Dashboard';
       case '/usuarios': return 'Gestión de Usuarios';
       case '/reportes': return 'Reportes';
       case '/configuracion': return 'Configuración';
-      default: return 'Dashboard';
+      default: return 'Sistema de Gestión';
     }
   }
 
-  // Verificar si estamos en la página principal del dashboard
-  isDashboardHome(): boolean {
+  // Verificar si estamos en dashboard para mostrar las estadísticas
+  isDashboardRoute(): boolean {
     return this.currentRoute === '/dashboard';
-  }
-
-  // Verificar si estamos en la página de usuarios
-  isUsersPage(): boolean {
-    return this.currentRoute === '/usuarios';
   }
 
   formatDate(dateString: string | undefined): string {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
-  getCurrentTime(): string {
-    return new Date().toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      return new Date(dateString).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Fecha inválida';
+    }
   }
 
   async refreshDashboard(): Promise<void> {

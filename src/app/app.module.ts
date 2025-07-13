@@ -16,6 +16,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { AuthService } from './services/auth.service';
 import { SidebarComponent } from './sidebar/sidebar/sidebar.component';
 import { LandingComponent } from './landing/landing/landing.component';
+import { LayoutComponent } from './layout/layout/layout.component';
 
 
 @NgModule({
@@ -26,7 +27,8 @@ import { LandingComponent } from './landing/landing/landing.component';
     RegisterComponent,
     DashboardComponent,
     SidebarComponent,
-    LandingComponent
+    LandingComponent,
+    LayoutComponent
   ],
   imports: [
     BrowserModule,

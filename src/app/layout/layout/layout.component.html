@@ -1,0 +1,160 @@
+<!-- src/app/shared/layout/layout.component.html -->
+<div class="min-h-screen bg-gray-50 flex">
+  <!-- Sidebar -->
+  <div [class]="'bg-gray-900 text-white transition-all duration-300 ease-in-out ' + (isSidebarCollapsed ? 'w-16' : 'w-64')">
+    <!-- Sidebar Header -->
+    <div class="flex items-center justify-between p-4 border-b border-gray-700">
+      <div [class]="isSidebarCollapsed ? 'hidden' : 'block'">
+        <h1 class="text-xl font-bold">Rehabimovementgt</h1>
+        <p class="text-sm text-gray-300">Sistema de Gestión</p>
+      </div>
+      <button 
+        (click)="toggleSidebar()"
+        class="p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                [attr.d]="isSidebarCollapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'">
+          </path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="mt-4 px-2">
+      <div class="space-y-1">
+        <!-- Dashboard Link -->
+        <a 
+          [routerLink]="['/dashboard']"
+          routerLinkActive="bg-gray-800 text-white"
+          [routerLinkActiveOptions]="{exact: true}"
+          class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-gray-300 hover:bg-gray-800 hover:text-white"
+        >
+          <svg class="flex-shrink-0 w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v14l-6-3-6 3V5z"></path>
+          </svg>
+          <span [class]="isSidebarCollapsed ? 'hidden' : 'block'">Dashboard</span>
+        </a>
+
+        <!-- Dynamic Menu Items -->
+        <div *ngFor="let module of getFilteredMenuItems()" class="space-y-1">
+          <!-- Módulo padre con hijos -->
+          <div *ngIf="module.es_padre && getFilteredChildren(module).length > 0">
+            <button 
+              class="group w-full flex items-center px-3 py-2 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors duration-200"
+              (click)="toggleModule(module.id_modulo)"
+            >
+              <i [class]="'flex-shrink-0 w-5 h-5 mr-3 ' + module.icono" *ngIf="module.icono"></i>
+              <svg *ngIf="!module.icono" class="flex-shrink-0 w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2m0 0h14"></path>
+              </svg>
+              <span [class]="isSidebarCollapsed ? 'hidden' : 'flex-1 text-left'">{{ module.nombre }}</span>
+              <svg 
+                *ngIf="!isSidebarCollapsed" 
+                [class]="'w-4 h-4 transition-transform duration-200 ' + (isModuleExpanded(module.id_modulo) ? 'transform rotate-90' : '')" 
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+
+            <!-- Submódulos -->
+            <div *ngIf="isModuleExpanded(module.id_modulo) && !isSidebarCollapsed" class="ml-6 space-y-1">
+              <a 
+                *ngFor="let child of getFilteredChildren(module)"
+                [routerLink]="[child.ruta]"
+                routerLinkActive="bg-indigo-600 text-white"
+                class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-gray-400 hover:bg-gray-800 hover:text-white"
+              >
+                <i [class]="'flex-shrink-0 w-4 h-4 mr-3 ' + child.icono" *ngIf="child.icono"></i>
+                <svg *ngIf="!child.icono" class="flex-shrink-0 w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m3 5.197H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                {{ child.nombre }}
+              </a>
+            </div>
+          </div>
+
+          <!-- Módulo simple (sin hijos) -->
+          <a 
+            *ngIf="!module.es_padre || getFilteredChildren(module).length === 0"
+            [routerLink]="[module.ruta]"
+            routerLinkActive="bg-indigo-600 text-white"
+            class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-gray-300 hover:bg-gray-800 hover:text-white"
+            [attr.title]="isSidebarCollapsed ? module.nombre : null"
+          >
+            <i [class]="'flex-shrink-0 w-5 h-5 mr-3 ' + module.icono" *ngIf="module.icono"></i>
+            <svg *ngIf="!module.icono" class="flex-shrink-0 w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2m0 0h14"></path>
+            </svg>
+            <span [class]="isSidebarCollapsed ? 'hidden' : 'block'">{{ module.nombre }}</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- User Menu (Bottom) -->
+    <div class="absolute bottom-0 w-full p-4 border-t border-gray-700">
+      <div [class]="'flex items-center ' + (isSidebarCollapsed ? 'justify-center' : '')">
+        <div class="flex-shrink-0">
+          <div class="h-8 w-8 bg-indigo-600 rounded-full flex items-center justify-center">
+            <span class="text-xs font-medium text-white">
+              {{ getUserInitials() }}
+            </span>
+          </div>
+        </div>
+        <div [class]="isSidebarCollapsed ? 'hidden' : 'ml-3 flex-1'">
+          <p class="text-sm font-medium text-white truncate">
+            {{ currentUser?.full_name || 'Usuario' }}
+          </p>
+          <p class="text-xs text-gray-400 truncate">
+            {{ getUserRole() }}
+          </p>
+        </div>
+        <button
+          (click)="logout()"
+          [class]="'ml-2 p-1 rounded-lg hover:bg-gray-800 transition-colors duration-200 ' + (isSidebarCollapsed ? 'hidden' : '')"
+          title="Cerrar Sesión"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Top Navigation -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <h1 class="text-xl font-semibold text-gray-900">{{ getPageTitle() }}</h1>
+          </div>
+          
+          <div class="flex items-center space-x-4">
+            <button
+              (click)="logout()"
+              class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+            >
+              <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+              </svg>
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto">
+      <!-- El contenido específico de cada página se renderiza aquí -->
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
