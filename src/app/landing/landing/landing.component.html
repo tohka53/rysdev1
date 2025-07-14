@@ -37,12 +37,14 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div>
-          <h1 class="text-4xl md:text-6xl font-bold text-white mb-6">
-            Recupera tu
-            <span class="text-red-500">Movimiento</span>
+          <h1 class="text-3xl md:text-6xl font-bold text-white mb-6">
+            Recupera y optimiza 
+            <span class="text-red-500">Tu Movimiento</span>
           </h1>
           <p class="text-xl text-gray-300 mb-8">
-            Fisioterapia especializada en Guatemala. Devolvemos la movilidad y calidad de vida a nuestros pacientes con tratamientos personalizados y tecnología de vanguardia.
+              Fisioterapia especializada en Guatemala. El movimiento es vida. Nosotros te ayudamos a recuperarlo.
+              Devolvemos calidad de vida a nuestros pacientes a través de tratamientos personalizados que combinan ejercicio terapéutico, atención cercana y rehabilitación basada en evidencia.
+              Diseñamos planes únicos para cada etapa de la vida, enfocándonos en el movimiento, la funcionalidad y tu bienestar integral.
           </p>
           <div class="flex flex-col sm:flex-row gap-4">
             <button (click)="bookAppointment()" class="bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center">
@@ -72,17 +74,17 @@
 
   <!-- Services Section -->
   <section id="servicios" class="py-20 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
       <div class="text-center mb-16">
         <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
           Nuestros Servicios
         </h2>
         <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-          Ofrecemos una amplia gama de servicios especializados para tu recuperación y bienestar
+          Ofrecemos una amplia gama de servicios especializaos para tu recuperación y bienestar
         </p>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <div *ngFor="let service of services" class="bg-gray-50 rounded-xl p-6 hover:shadow-lg transition-shadow duration-300 hover:border-red-200 border border-transparent">
           <div class="text-center">
             <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -113,9 +115,16 @@
             Quiénes Somos
           </h2>
           <p class="text-lg text-gray-600 mb-6">
-            RehabiMovement es una clínica especializada en fisioterapia y rehabilitación ubicada en Guatemala. 
-            Contamos con más de 5 años de experiencia ayudando a pacientes a recuperar su movilidad y mejorar su calidad de vida.
+           RehabiMovement es una clínica de fisioterapia ubicada en zona 15, Ciudad de Guatemala, comprometida con devolver el movimiento y la calidad de vida a nuestros pacientes. Nos especializamos en la atención personalizada a través del ejercicio terapéutico, siendo este el pilar fundamental de nuestros tratamientos.
           </p>
+           <p class="text-lg text-gray-600 mb-6">
+            Con más de 5 años de experiencia clínica, hemos acompañado a cientos de personas en su proceso de rehabilitación, desde adultos mayores hasta deportistas, ayudándoles a recuperar su funcionalidad, reducir el dolor y alcanzar sus objetivos de salud.
+          </p>
+           <p class="text-lg text-gray-600 mb-6">
+            Creemos firmemente en el poder del movimiento, el trato humano y la planificación basada en evidencia científica. Nuestro equipo está en constante formación para ofrecerte lo mejor de la fisioterapia actual, adaptada a tus necesidades específicas.
+          </p>
+
+
           <div class="space-y-4">
             <div class="flex items-start">
               <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center mr-4 mt-1">
@@ -300,8 +309,7 @@
               <div>
                 <h4 class="text-lg font-semibold text-gray-900 mb-2">Email</h4>
                 <p class="text-gray-600">
-                  info&#64;rehabimovement.com<br>
-                  citas&#64;rehabimovement.com
+                  rehabimovementgt&#64;gmail.com<br>
                 </p>
               </div>
             </div>
@@ -313,8 +321,8 @@
               <div>
                 <h4 class="text-lg font-semibold text-gray-900 mb-2">Horarios</h4>
                 <p class="text-gray-600">
-                  Lunes a Viernes: 7:00 AM - 7:00 PM<br>
-                  Sábados: 8:00 AM - 2:00 PM<br>
+                  Lunes a Viernes: 7:00 AM - 8:00 PM<br>
+                  Sábados: 8:00 AM - 4:00 PM<br>
                   Domingos: Cerrado
                 </p>
               </div>

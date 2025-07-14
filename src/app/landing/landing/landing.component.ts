@@ -14,26 +14,33 @@ export class LandingComponent implements OnInit {
   services = [
     {
       icon: 'fas fa-walking',
-      title: 'Rehabilitación Motora',
-      description: 'Recuperación de movilidad y fortalecimiento muscular con técnicas especializadas.',
+      title: 'Evaluación fisioterapéutica personalizada',
+      description: 'Realizamos una valoración integral mediante test ortopédicos, análisis de rangos de movimiento, patrones de marcha y pruebas funcionales. Nuestro objetivo es identificar tu condición actual, emitir un diagnóstico fisioterapéutico preciso y establecer el mejor plan de tratamiento basado en tus necesidades.',
       features: ['Terapia manual', 'Ejercicios terapéuticos', 'Reeducación postural']
     },
     {
       icon: 'fas fa-heartbeat',
       title: 'Fisioterapia Deportiva',
-      description: 'Tratamiento especializado para lesiones deportivas y mejora del rendimiento.',
+      description: 'Tratamiento especializado para la prevención, recuperación y readaptación de lesiones deportivas. Nos enfocamos en restaurar el movimiento funcional, reducir el dolor y optimizar el rendimiento físico mediante ejercicio terapéutico, técnicas manuales y programación específica según tu disciplina deportiva.',
       features: ['Prevención de lesiones', 'Recuperación deportiva', 'Acondicionamiento físico']
     },
     {
       icon: 'fas fa-user-md',
-      title: 'Terapia Personalizada',
-      description: 'Planes de tratamiento individualizados según las necesidades de cada paciente.',
+      title: 'Fisioterapia geriátrica',
+      description: 'Diseñamos programas de ejercicio seguros y eficaces para personas mayores, basados en herramientas de evaluación clínica y funcional. Nuestro enfoque está en mejorar fuerza, equilibrio, resistencia y capacidad aeróbica, promoviendo una vejez activa, autónoma y con propósito desde etapas tempranas.',
       features: ['Evaluación completa', 'Seguimiento continuo', 'Planes personalizados']
     },
     {
       icon: 'fas fa-spa',
-      title: 'Terapias Alternativas',
-      description: 'Tratamientos complementarios para el bienestar integral del paciente.',
+      title: 'Programación de movilidad',
+      description: 'A través de ejercicios de movilidad articular, control motor y fuerza, buscamos aumentar tu rango de movimiento y mejorar la calidad del mismo. Ideal para personas con rigidez, dolor, sobrecargas o para quienes desean moverse mejor en su día a día o actividad física.',
+      features: ['Masoterapia', 'Electroterapia', 'Termoterapia']
+    }
+    ,
+    {
+      icon: 'fas fa-spa',
+      title: 'Programación de ejercicios funcionales',
+      description: 'Creamos un plan de entrenamiento adaptado a tus objetivos individuales: ya sea ganar fuerza, mejorar la postura, prevenir lesiones o aumentar tu rendimiento. Utilizamos movimientos funcionales y progresiones terapéuticas para que alcances tus metas de forma segura, eficiente y sostenible.',
       features: ['Masoterapia', 'Electroterapia', 'Termoterapia']
     }
   ];
@@ -42,12 +49,11 @@ export class LandingComponent implements OnInit {
   pricingPlans = [
     {
       name: 'Básico',
-      price: 'Q250',
+      price: 'Q275',
       period: 'por sesión',
       features: [
-        'Evaluación inicial',
-        'Sesión de 45 minutos',
-        'Ejercicios básicos',
+        'Guía de ejercicios',
+        'Sesión de 45 a 60 minutos',
         'Seguimiento personalizado'
       ],
       popular: false,
@@ -55,29 +61,25 @@ export class LandingComponent implements OnInit {
     },
     {
       name: 'Profesional',
-      price: 'Q1,200',
+      price: 'Q1,125',
       period: 'paquete 5 sesiones',
       features: [
-        'Evaluación completa',
-        'Sesiones de 60 minutos',
-        'Ejercicios especializados',
-        'Plan de ejercicios para casa',
-        'Seguimiento semanal'
+        'Guía de ejercicios',
+        'Sesiones de 45 a 60 minutos',
+        'Seguimiento personalizado',
+        
       ],
       popular: true,
       buttonText: 'Más Popular'
     },
     {
       name: 'Premium',
-      price: 'Q2,200',
+      price: 'Q2,250',
       period: 'paquete 10 sesiones',
       features: [
-        'Evaluación integral',
-        'Sesiones de 60 minutos',
-        'Terapias complementarias',
-        'Plan nutricional básico',
-        'Seguimiento 24/7',
-        'Acceso a app móvil'
+        'Guía de ejercicios',
+        'Sesiones de 45 a 60 minutos',
+        'Seguimiento personalizado',
       ],
       popular: false,
       buttonText: 'Mejor Valor'
@@ -87,9 +89,9 @@ export class LandingComponent implements OnInit {
   // Datos del equipo - Solo un fisioterapeuta
   team = [
   {
-    name: 'Lic. Estuardo Godoy',
+    name: 'Lic. Estuardo Ponciano',
     role: 'Fisioterapeuta Principal',
-    specialization: 'Especialista en Rehabilitación y Fisioterapia',
+    specialization: 'Licenciado en fisioterapia',
    image: '/lucciuki.png', // Opción 3
     experience: '5 años de experiencia'
   }
