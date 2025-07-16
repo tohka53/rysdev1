@@ -10,6 +10,7 @@ import { LandingComponent } from './landing/landing/landing.component';
 
 // Componente layout compartido para rutas protegidas
 import { LayoutComponent } from './layout/layout/layout.component';
+import { RutinasComponent } from './rutinas/rutinas/rutinas.component';
 
 const routes: Routes = [
   // Ruta principal - Landing page
@@ -37,6 +38,15 @@ const routes: Routes = [
         data: { 
           permissions: ['view', 'admin'],
           profiles: [1, 3] // Solo admin y supervisor
+        }
+      },
+      { 
+        path: 'rutinas', 
+        component: RutinasComponent,
+        canActivate: [PermissionGuard],
+        data: { 
+          permissions: ['view'],
+          profiles: [1, 2, 3] // Admin, Usuario, Supervisor
         }
       },
       // Aquí puedes agregar más rutas protegidas

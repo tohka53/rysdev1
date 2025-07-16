@@ -1,0 +1,286 @@
+/* src/app/rutinas/rutinas/rutinas.component.css */
+
+/* Animaciones personalizadas */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(20px); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+}
+
+/* Transiciones suaves para cards */
+.rutina-card {
+  transition: all 0.3s ease;
+}
+
+.rutina-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Efectos para botones */
+.btn-floating {
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+  transition: all 0.3s ease;
+}
+
+.btn-floating:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 25px rgba(239, 68, 68, 0.6);
+}
+
+/* Scroll personalizado para modal */
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #dc2626;
+  border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: #b91c1c;
+}
+
+/* Efectos para tags */
+.tag {
+  animation: tagAppear 0.2s ease-out;
+}
+
+@keyframes tagAppear {
+  from { 
+    transform: scale(0.8); 
+    opacity: 0; 
+  }
+  to { 
+    transform: scale(1); 
+    opacity: 1; 
+  }
+}
+
+/* Loading spinner personalizado */
+.custom-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #dc2626;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Efectos para inputs focus */
+.form-input:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  border-color: #dc2626;
+}
+
+/* Grid responsive mejorado */
+.rutinas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .rutinas-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Efectos para checkboxes */
+.checkbox-seccion {
+  transform: scale(1.2);
+  transition: transform 0.2s ease;
+}
+
+.checkbox-seccion:checked {
+  transform: scale(1.3);
+}
+
+/* Animación para empty state */
+.empty-state {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Gradientes personalizados */
+.gradient-red {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.gradient-gray {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+/* Badge styles */
+.badge-status {
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-status::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.badge-status:hover::before {
+  left: 100%;
+}
+
+/* Modal backdrop mejorado */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Efectos para botones de acción */
+.action-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.action-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Tooltip personalizado */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: #374151;
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 12px;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .modal-content {
+    max-height: 90vh;
+  }
+  
+  .grid-responsive {
+    grid-template-columns: 1fr;
+  }
+  
+  .text-responsive {
+    font-size: 0.875rem;
+  }
+}
+
+/* Dark mode support (si decides implementarlo) */
+@media (prefers-color-scheme: dark) {
+  .card-dark {
+    background-color: #1f2937;
+    border-color: #374151;
+  }
+  
+  .text-dark {
+    color: #f9fafb;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+}
+
+/* Accessibility improvements */
+.focus-visible:focus {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .btn-primary {
+    border: 2px solid #000;
+  }
+  
+  .card {
+    border: 2px solid #000;
+  }
+}

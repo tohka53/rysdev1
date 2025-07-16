@@ -1,0 +1,779 @@
+<!-- src/app/rutinas/rutinas/rutinas.component.html -->
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+  
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Gestión de Rutinas</h1>
+        <p class="mt-2 text-sm text-gray-600">
+          Crea y administra rutinas de entrenamiento - Total: {{ rutinas.length }}
+        </p>
+      </div>
+      <div class="flex space-x-2">
+        <button
+          (click)="refreshRutinas()"
+          class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Refrescar
+        </button>
+        <button
+          *ngIf="canEditRutina()"
+          (click)="openCreateModal()"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          Nueva Rutina
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="bg-white rounded-lg shadow mb-6 p-6">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <!-- Búsqueda -->
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          placeholder="Buscar rutinas..."
+          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+        />
+      </div>
+
+      <!-- Filtro por Estado -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+        <select
+          [(ngModel)]="statusFilter"
+          (change)="onFilterChange()"
+          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+        >
+          <option value="all">Todos</option>
+          <option value="active">Activos</option>
+          <option value="inactive">Inactivos</option>
+        </select>
+      </div>
+
+      <!-- Filtro por Tipo -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+        <select
+          [(ngModel)]="tipoFilter"
+          (change)="onFilterChange()"
+          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+        >
+          <option value="all">Todos</option>
+          <option value="entrenamiento">Entrenamiento</option>
+          <option value="recuperacion">Recuperación</option>
+          <option value="evaluacion">Evaluación</option>
+        </select>
+      </div>
+
+      <!-- Filtro por Nivel -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
+        <select
+          [(ngModel)]="nivelFilter"
+          (change)="onFilterChange()"
+          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+        >
+          <option value="all">Todos</option>
+          <option value="principiante">Principiante</option>
+          <option value="intermedio">Intermedio</option>
+          <option value="avanzado">Avanzado</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="mt-4 flex justify-end">
+      <button
+        (click)="clearFilters()"
+        class="text-sm text-red-600 hover:text-red-800"
+      >
+        Limpiar filtros
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error && !showModal && !showViewModal" class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+    <div class="flex">
+      <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div class="ml-3">
+        <p class="text-sm text-red-700">{{ error }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="flex justify-center items-center h-64">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+  </div>
+
+  <!-- Grid de Rutinas -->
+  <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div
+      *ngFor="let rutina of filteredRutinas; trackBy: trackByRutinaId"
+      class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+      [class.opacity-50]="rutina.status === 0"
+    >
+      <!-- Header de la tarjeta -->
+      <div [class]="'px-6 py-4 ' + (rutina.status === 1 ? 'bg-gradient-to-r from-red-500 to-red-600' : 'bg-gradient-to-r from-gray-400 to-gray-500')">
+        <div class="flex justify-between items-start">
+          <div class="flex-1">
+            <h3 class="text-xl font-bold text-white">{{ rutina.nombre }}</h3>
+            <p class="text-red-100 text-sm">{{ rutina.descripcion }}</p>
+          </div>
+          <span [class]="'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ' + 
+                          (rutina.status === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')">
+            {{ rutina.status === 1 ? 'Activo' : 'Inactivo' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Contenido de la tarjeta -->
+      <div class="p-6">
+        <!-- Información básica -->
+        <div class="flex justify-between items-center mb-4">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            {{ rutina.nivel }}
+          </span>
+          <span class="text-sm text-gray-500">{{ formatDuracion(rutina.duracion_estimada) }}</span>
+        </div>
+
+        <!-- Secciones -->
+        <div class="space-y-2 mb-4" *ngIf="getSeccionesConEjercicios(rutina).length > 0">
+          <div class="text-sm font-medium text-gray-900">Secciones:</div>
+          <div class="flex flex-wrap gap-1">
+            <span
+              *ngFor="let seccionInfo of getSeccionesConEjercicios(rutina)"
+              class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800"
+            >
+              {{ seccionInfo.nombre }} ({{ seccionInfo.seccion.ejercicios.length }})
+            </span>
+          </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="text-sm text-gray-600 mb-4">
+          Total de ejercicios: {{ getTotalEjercicios(rutina) }}
+        </div>
+
+        <!-- Tags -->
+        <div *ngIf="rutina.tags && rutina.tags.length > 0" class="mb-4">
+          <div class="flex flex-wrap gap-1">
+            <span
+              *ngFor="let tag of rutina.tags"
+              class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800"
+            >
+              #{{ tag }}
+            </span>
+          </div>
+        </div>
+
+        <!-- ACCIONES ACTUALIZADAS CON BOTÓN VER -->
+        <div class="flex justify-end space-x-2">
+          <!-- Botón Ver (visible para todos los usuarios autenticados) -->
+          <button
+            *ngIf="canViewRutina()"
+            (click)="openViewModal(rutina)"
+            class="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-blue-50 transition-colors duration-150"
+            title="Ver rutina completa"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+          </button>
+          
+          <!-- Botón Editar (solo para admin/supervisor) -->
+          <button
+            *ngIf="rutina.status === 1 && canEditRutina()"
+            (click)="openEditModal(rutina)"
+            class="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50 transition-colors duration-150"
+            title="Editar rutina"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+          </button>
+
+          <!-- Botón Exportar (visible para todos) -->
+          <button
+            (click)="exportarRutina(rutina)"
+            class="text-green-600 hover:text-green-900 p-2 rounded-full hover:bg-green-50 transition-colors duration-150"
+            title="Descargar rutina"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </button>
+
+          <!-- Botón Eliminar (solo para admin/supervisor) -->
+          <button
+            *ngIf="rutina.status === 1 && canEditRutina()"
+            (click)="deleteRutina(rutina)"
+            class="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50 transition-colors duration-150"
+            title="Desactivar rutina"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </button>
+
+          <!-- Botón Reactivar (solo para admin/supervisor) -->
+          <button
+            *ngIf="rutina.status === 0 && canEditRutina()"
+            (click)="reactivateRutina(rutina)"
+            class="text-green-600 hover:text-green-900 p-2 rounded-full hover:bg-green-50 transition-colors duration-150"
+            title="Reactivar rutina"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredRutinas.length === 0" class="text-center py-12">
+    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+    </svg>
+    <h3 class="mt-2 text-sm font-medium text-gray-900">No hay rutinas</h3>
+    <p class="mt-1 text-sm text-gray-500">
+      {{ rutinas.length === 0 ? 'No se encontraron rutinas en la base de datos.' : 'No se encontraron rutinas con los filtros aplicados.' }}
+    </p>
+    <div class="mt-6">
+      <button
+        *ngIf="rutinas.length === 0 && canEditRutina()"
+        (click)="openCreateModal()"
+        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+      >
+        Crear primera rutina
+      </button>
+      <button
+        *ngIf="rutinas.length > 0"
+        (click)="clearFilters()"
+        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+      >
+        Limpiar filtros
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Crear/Editar Rutina (MODAL ORIGINAL) -->
+<div *ngIf="showModal" class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeModal()"></div>
+
+    <!-- Modal Panel -->
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full">
+      <!-- Modal Header -->
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+              {{ modalMode === 'create' ? 'Crear Nueva Rutina' : 'Editar Rutina' }}
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="bg-white px-4 pb-4 sm:px-6 max-h-96 overflow-y-auto">
+        
+        <!-- Información básica -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Nombre <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              [(ngModel)]="rutinaForm.nombre"
+              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+              placeholder="Nombre de la rutina"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Duración (minutos)</label>
+            <input
+              type="number"
+              [(ngModel)]="rutinaForm.duracion_estimada"
+              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+              placeholder="60"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+            <select
+              [(ngModel)]="rutinaForm.tipo"
+              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+            >
+              <option value="entrenamiento">Entrenamiento</option>
+              <option value="recuperacion">Recuperación</option>
+              <option value="evaluacion">Evaluación</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
+            <select
+              [(ngModel)]="rutinaForm.nivel"
+              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+            >
+              <option value="principiante">Principiante</option>
+              <option value="intermedio">Intermedio</option>
+              <option value="avanzado">Avanzado</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+            <textarea
+              [(ngModel)]="rutinaForm.descripcion"
+              rows="3"
+              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+              placeholder="Descripción de la rutina"
+            ></textarea>
+          </div>
+
+          <!-- Tags -->
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+            <div class="flex flex-wrap gap-2 mb-2">
+              <span
+                *ngFor="let tag of rutinaForm.tags; let i = index"
+                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800"
+              >
+                #{{ tag }}
+                <button
+                  type="button"
+                  (click)="removeTag(i)"
+                  class="ml-1 text-blue-600 hover:text-blue-800"
+                >
+                  ×
+                </button>
+              </span>
+            </div>
+            <input
+              type="text"
+              (keydown)="addTag($event)"
+              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+              placeholder="Agregar tag (presiona Enter)"
+            />
+          </div>
+        </div>
+
+        <!-- Secciones de la rutina -->
+        <div class="border-t pt-6">
+          <h4 class="text-lg font-medium text-gray-900 mb-4">Secciones de la Rutina</h4>
+          
+          <!-- Toggle de secciones -->
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
+            <label
+              *ngFor="let seccion of seccionesDisponibles"
+              class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+              [class.bg-red-50]="isSeccionActiva(seccion.key)"
+              [class.border-red-300]="isSeccionActiva(seccion.key)"
+            >
+              <input
+                type="checkbox"
+                [checked]="isSeccionActiva(seccion.key)"
+                (change)="toggleSeccion(seccion.key)"
+                class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+              />
+              <span class="ml-2 text-sm font-medium text-gray-900">{{ seccion.nombre }}</span>
+            </label>
+          </div>
+
+          <!-- Contenido de cada sección -->
+          <div class="space-y-6">
+            <div 
+              *ngFor="let seccion of seccionesDisponibles" 
+              class="border border-gray-200 rounded-lg p-4" 
+              [class.hidden]="!isSeccionActiva(seccion.key)"
+            >
+              
+              <h5 class="text-md font-medium text-gray-900 mb-3 flex items-center">
+                <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-sm mr-2">{{ seccion.nombre }}</span>
+                {{ seccion.descripcion }}
+              </h5>
+
+              <!-- Descripción de la sección -->
+              <div class="mb-4" *ngIf="getSeccionData(rutinaForm, seccion.key)">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Descripción de {{ seccion.nombre }}</label>
+                <input
+                  type="text"
+                  [value]="getSeccionData(rutinaForm, seccion.key)?.descripcion || ''"
+                  (input)="updateSeccionDescripcion(seccion.key, $event)"
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+                  placeholder="Ej: AMRAP 20:00, 3 Series, etc."
+                />
+              </div>
+
+              <!-- Campos adicionales según la sección -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4" *ngIf="getSeccionData(rutinaForm, seccion.key)">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Tiempo Total</label>
+                  <input
+                    type="text"
+                    [value]="getSeccionData(rutinaForm, seccion.key)?.tiempo_total || ''"
+                    (input)="updateSeccionTiempoTotal(seccion.key, $event)"
+                    class="block w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                    placeholder="20:00"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Series</label>
+                  <input
+                    type="number"
+                    [value]="getSeccionData(rutinaForm, seccion.key)?.series || ''"
+                    (input)="updateSeccionSeries(seccion.key, $event)"
+                    class="block w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                    placeholder="3"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Time Cap</label>
+                  <input
+                    type="text"
+                    [value]="getSeccionData(rutinaForm, seccion.key)?.time_cap || ''"
+                    (input)="updateSeccionTimeCap(seccion.key, $event)"
+                    class="block w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                    placeholder="10:00"
+                  />
+                </div>
+              </div>
+
+              <!-- Lista de ejercicios -->
+              <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                  <h6 class="text-sm font-medium text-gray-900">Ejercicios</h6>
+                  <button
+                    type="button"
+                    (click)="addEjercicio(seccion.key)"
+                    class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200"
+                  >
+                    + Agregar Ejercicio
+                  </button>
+                </div>
+
+                <div
+                  *ngFor="let ejercicio of getSeccionData(rutinaForm, seccion.key)?.ejercicios; let i = index; trackBy: trackByEjercicioOrden"
+                  class="border border-gray-200 rounded-lg p-3 bg-gray-50"
+                >
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <!-- Nombre del ejercicio -->
+                    <div class="lg:col-span-2">
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Ejercicio</label>
+                      <input
+                        type="text"
+                        [(ngModel)]="ejercicio.nombre"
+                        class="block w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                        placeholder="Nombre del ejercicio"
+                      />
+                    </div>
+
+                    <!-- Tipo -->
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Tipo</label>
+                      <select
+                        [(ngModel)]="ejercicio.tipo"
+                        class="block w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                      >
+                        <option value="cardio">Cardio</option>
+                        <option value="fuerza">Fuerza</option>
+                        <option value="funcional">Funcional</option>
+                        <option value="core">Core</option>
+                        <option value="movilidad">Movilidad</option>
+                        <option value="activacion">Activación</option>
+                      </select>
+                    </div>
+
+                    <!-- Botón eliminar -->
+                    <div class="flex items-end">
+                      <button
+                        type="button"
+                        (click)="removeEjercicio(seccion.key, i)"
+                        class="text-red-600 hover:text-red-800 p-1"
+                        title="Eliminar ejercicio"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Detalles del ejercicio -->
+                  <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mt-3">
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Reps</label>
+                      <input
+                        type="number"
+                        [(ngModel)]="ejercicio.repeticiones"
+                        class="block w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                        placeholder="12"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Series</label>
+                      <input
+                        type="number"
+                        [(ngModel)]="ejercicio.series"
+                        class="block w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                        placeholder="3"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Duración</label>
+                      <input
+                        type="text"
+                        [(ngModel)]="ejercicio.duracion"
+                        class="block w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                        placeholder="2:00"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Distancia</label>
+                      <input
+                        type="text"
+                        [(ngModel)]="ejercicio.distancia"
+                        class="block w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                        placeholder="800m"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">RPE</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="10"
+                        [(ngModel)]="ejercicio.rpe"
+                        class="block w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                        placeholder="7"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Peso</label>
+                      <input
+                        type="text"
+                        [(ngModel)]="ejercicio.peso"
+                        class="block w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                        placeholder="20kg"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Observaciones -->
+                  <div class="mt-3">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Observaciones</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="ejercicio.observaciones"
+                      class="block w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                      placeholder="Notas adicionales sobre el ejercicio"
+                    />
+                  </div>
+                </div>
+
+                <!-- Mensaje cuando no hay ejercicios -->
+                <div *ngIf="!(getSeccionData(rutinaForm, seccion.key)?.ejercicios?.length ?? 0)" class="text-center py-8 text-gray-500">
+                  <svg class="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  </svg>
+                  <p class="text-sm">No hay ejercicios en esta sección</p>
+                  <button
+                    type="button"
+                    (click)="addEjercicio(seccion.key)"
+                    class="mt-2 text-red-600 hover:text-red-800 text-sm"
+                  >
+                    Agregar primer ejercicio
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="error" class="mt-4 bg-red-50 border border-red-200 rounded-md p-3">
+          <div class="flex">
+            <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div class="ml-3">
+              <p class="text-sm text-red-700">{{ error }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button
+          type="button"
+          (click)="saveRutina()"
+          [disabled]="loading"
+          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg *ngIf="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          {{ modalMode === 'create' ? 'Crear Rutina' : 'Guardar Cambios' }}
+        </button>
+        <button
+          type="button"
+          (click)="closeModal()"
+          [disabled]="loading"
+          class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Action Button (móvil) -->
+<button
+  *ngIf="!showModal && !showViewModal && canEditRutina()"
+  (click)="openCreateModal()"
+  class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-red-600 text-white rounded-full shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 z-40"
+  title="Crear nueva rutina"
+>
+  <svg class="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+  </svg>
+</button>
+
+<!-- NUEVO MODAL PARA VER RUTINA -->
+<div *ngIf="showViewModal" class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeViewModal()"></div>
+
+    <!-- Modal Panel -->
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full">
+      <!-- Modal Header -->
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+              {{ selectedViewRutina?.nombre }}
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500">
+                Visualización completa de la rutina en formato de entrenamiento
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="bg-white px-4 pb-4 sm:px-6">
+        <!-- Terminal-style display -->
+        <div class="bg-gray-900 text-green-400 rounded-lg p-6 font-mono text-sm overflow-auto max-h-96 relative" 
+             style="font-family: 'Courier New', monospace; line-height: 1.6;">
+          
+          <!-- Terminal header -->
+          <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-700">
+            <div class="flex space-x-2">
+              <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+              <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+              <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+            </div>
+            <div class="text-gray-400 text-xs">
+              {{ getFileName(selectedViewRutina) }}
+            </div>
+          </div>
+          
+          <!-- Contenido de la rutina -->
+          <pre class="whitespace-pre-wrap text-green-400">{{ getFormattedRutina(selectedViewRutina) }}</pre>
+        </div>
+        
+        <!-- Mensaje de éxito al copiar -->
+        <div *ngIf="copySuccess" class="mt-4 bg-green-50 border border-green-200 rounded-md p-3">
+          <div class="flex">
+            <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div class="ml-3">
+              <p class="text-sm text-green-700">¡Rutina copiada al portapapeles!</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Botones de acción -->
+        <div class="mt-4 flex justify-between">
+          <button
+            (click)="copyToClipboard(getFormattedRutina(selectedViewRutina))"
+            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            Copiar
+          </button>
+          
+          <button
+            (click)="exportarRutina(selectedViewRutina!)"
+            class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Descargar
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button
+          type="button"
+          (click)="closeViewModal()"
+          class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

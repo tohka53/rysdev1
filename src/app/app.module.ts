@@ -17,6 +17,8 @@ import { AuthService } from './services/auth.service';
 import { SidebarComponent } from './sidebar/sidebar/sidebar.component';
 import { LandingComponent } from './landing/landing/landing.component';
 import { LayoutComponent } from './layout/layout/layout.component';
+import { RutinasComponent } from './rutinas/rutinas/rutinas.component';
+import { TiposSeccionComponent } from './tipos-seccion/tipos-seccion/tipos-seccion.component';
 
 
 @NgModule({
@@ -28,7 +30,9 @@ import { LayoutComponent } from './layout/layout/layout.component';
     DashboardComponent,
     SidebarComponent,
     LandingComponent,
-    LayoutComponent
+    LayoutComponent,
+    RutinasComponent,
+    TiposSeccionComponent
   ],
   imports: [
     BrowserModule,
