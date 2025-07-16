@@ -11,6 +11,7 @@ import { LandingComponent } from './landing/landing/landing.component';
 // Componente layout compartido para rutas protegidas
 import { LayoutComponent } from './layout/layout/layout.component';
 import { RutinasComponent } from './rutinas/rutinas/rutinas.component';
+import { TiposSeccionComponent } from './tipos-seccion/tipos-seccion/tipos-seccion.component';
 
 const routes: Routes = [
   // Ruta principal - Landing page
@@ -49,6 +50,16 @@ const routes: Routes = [
           profiles: [1, 2, 3] // Admin, Usuario, Supervisor
         }
       },
+
+      { 
+        path: 'tipos-seccion', 
+        component: TiposSeccionComponent,
+        canActivate: [RoleGuard],
+        data: { 
+          profiles: [1] // Solo administradores
+        }
+      },
+      
       // Aquí puedes agregar más rutas protegidas
       // { path: 'reportes', component: ReportesComponent },
       // { path: 'configuracion', component: ConfiguracionComponent },

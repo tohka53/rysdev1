@@ -1,309 +1,192 @@
 /* src/app/tipos-seccion/tipos-seccion.component.css */
 
-.icon-grid {
-  @apply grid grid-cols-5 gap-2 max-h-48 overflow-y-auto;
-  @apply border border-gray-200 rounded-md p-3;
+/* Estilo para las tarjetas de tipos de sección */
+.tipo-card {
+  transition: all 0.3s ease;
 }
 
-.icon-button {
-  @apply p-2 rounded-md border transition-colors duration-150;
-  @apply hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500;
+.tipo-card:hover {
+  transform: translateY(-2px);
 }
 
-.icon-button.selected {
-  @apply border-red-500 bg-red-50;
-}
-
-.icon-button:not(.selected) {
-  @apply border-gray-200;
-}
-
-.icon-preview {
-  @apply mb-3 p-3 border border-gray-200 rounded-md bg-gray-50;
-}
-
-.table-responsive {
-  @apply overflow-x-auto;
-}
-
-.table-row {
-  @apply hover:bg-gray-50 transition-colors duration-150;
-}
-
-.table-row.inactive {
-  @apply opacity-50;
-}
-
-.action-button {
-  @apply p-1 rounded hover:bg-red-50 transition-colors duration-150;
-  @apply text-red-600 hover:text-red-900;
-}
-
-.action-button.green {
-  @apply hover:bg-green-50 text-green-600 hover:text-green-900;
-}
-
-.card-mobile {
-  @apply bg-gray-50 rounded-lg p-4 shadow-sm;
-}
-
-.card-mobile.inactive {
-  @apply opacity-50;
-}
-
-.status-dot {
-  @apply w-2 h-2 mr-1;
-}
-
-.modal-backdrop {
-  @apply fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity;
-}
-
-.modal-panel {
-  @apply inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl;
-  @apply transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full;
-}
-
-.form-input {
-  @apply mt-1 block w-full border border-gray-300 rounded-md shadow-sm;
-  @apply py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm;
-}
-
-.form-label {
-  @apply block text-sm font-medium text-gray-700;
-}
-
-.form-help {
-  @apply mt-1 text-xs text-gray-500;
-}
-
-.btn-primary {
-  @apply w-full inline-flex justify-center rounded-md border border-transparent;
-  @apply shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white;
-  @apply hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500;
-  @apply sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-.btn-secondary {
-  @apply mt-3 w-full inline-flex justify-center rounded-md border border-gray-300;
-  @apply shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700;
-  @apply hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500;
-  @apply sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm;
-}
-
-.error-message {
-  @apply mt-4 bg-red-50 border border-red-200 rounded-md p-3;
-}
-
-.success-message {
-  @apply mt-4 bg-green-50 border border-green-200 rounded-md p-3;
-}
-
-.empty-state {
-  @apply text-center py-12;
-}
-
-.loading-container {
-  @apply flex justify-center items-center h-64;
-}
-
+/* Animación de carga */
 .loading-spinner {
-  @apply animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto;
+  animation: spin 1s linear infinite;
 }
 
-/* Icon grid scrollbar */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Estilo para el grid de iconos */
+.icon-grid {
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb #f9fafb;
+}
+
 .icon-grid::-webkit-scrollbar {
   width: 6px;
 }
 
 .icon-grid::-webkit-scrollbar-track {
-  @apply bg-gray-100 rounded-full;
+  background: #f9fafb;
+  border-radius: 3px;
 }
 
 .icon-grid::-webkit-scrollbar-thumb {
-  @apply bg-red-400 rounded-full;
+  background: #e5e7eb;
+  border-radius: 3px;
 }
 
 .icon-grid::-webkit-scrollbar-thumb:hover {
-  @apply bg-red-500;
+  background: #d1d5db;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-  .icon-grid {
-    @apply grid-cols-4;
-  }
-  
-  .modal-panel {
-    @apply max-w-full mx-4;
-  }
+/* Estilo para botones de iconos */
+.icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  transition: all 0.2s ease;
 }
 
-@media (max-width: 640px) {
-  .icon-grid {
-    @apply grid-cols-3;
-  }
-}
-
-/* Focus styles for accessibility */
-.icon-button:focus {
-  @apply ring-2 ring-red-500 ring-offset-2;
-}
-
-.form-input:focus {
-  @apply ring-red-500 border-red-500;
-}
-
-/* Animations */
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOutRight {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* Modal animations */
-.modal-enter {
-  animation: fadeIn 0.2s ease-out;
-}
-
-.modal-content-enter {
-  animation: scaleIn 0.2s ease-out;
-}
-
-/* Toast notification styles */
-.toast-notification {
-  animation: slideInRight 0.3s ease-out;
-}
-
-/* Floating Action Button */
-.fab {
-  @apply fixed bottom-6 right-6 w-14 h-14 bg-red-600 text-white rounded-full shadow-lg;
-  @apply hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
-  @apply transition-all duration-200 z-40;
-}
-
-.fab:hover {
+.icon-button:hover {
   transform: scale(1.1);
 }
 
-.fab:active {
-  transform: scale(0.95);
+.icon-button.selected {
+  box-shadow: 0 0 0 2px #dc2626;
 }
 
-/* Custom scrollbar for the entire component */
-.tipos-seccion-container {
-  scrollbar-width: thin;
-  scrollbar-color: #ef4444 #f1f5f9;
+/* Animaciones para las tarjetas */
+.card-enter {
+  animation: cardEnter 0.3s ease-out;
 }
 
-.tipos-seccion-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.tipos-seccion-container::-webkit-scrollbar-track {
-  @apply bg-gray-100;
-}
-
-.tipos-seccion-container::-webkit-scrollbar-thumb {
-  @apply bg-red-400 rounded-full;
-}
-
-.tipos-seccion-container::-webkit-scrollbar-thumb:hover {
-  @apply bg-red-500;
-}
-
-/* Card hover effects */
-.hover-lift {
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Status indicators */
-.status-indicator {
-  @apply inline-flex items-center;
-}
-
-.status-indicator.active {
-  @apply text-green-600;
-}
-
-.status-indicator.inactive {
-  @apply text-red-600;
-}
-
-/* Form validation styles */
-.form-field.invalid input {
-  @apply border-red-500 ring-red-500;
-}
-
-.form-field.valid input {
-  @apply border-green-500;
-}
-
-/* Loading overlay */
-.loading-overlay {
-  @apply fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50;
-}
-
-/* Icon selection feedback */
-.icon-selected-feedback {
-  @apply absolute -top-1 -right-1 w-4 h-4 bg-red-600 text-white rounded-full flex items-center justify-center text-xs;
-}
-
-/* Responsive table adjustments */
-@media (max-width: 1024px) {
-  .table-responsive {
-    @apply text-sm;
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Dark mode support (if needed in the future) */
-@media (prefers-color-scheme: dark) {
-  .dark-mode .modal-panel {
-    @apply bg-gray-800 text-white;
+/* Estilo para badges de estado */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.status-active {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-inactive {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* Efecto hover para botones de acción */
+.action-button {
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .icon-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
   
-  .dark-mode .form-input {
-    @apply bg-gray-700 border-gray-600 text-white;
+  .icon-button {
+    width: 36px;
+    height: 36px;
   }
+}
+
+/* Focus styles para accesibilidad */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #dc2626;
+}
+
+/* Estilo para el preview del icono seleccionado */
+.icon-preview {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 0.375rem;
+  margin-bottom: 0.75rem;
+}
+
+.icon-preview i {
+  margin-right: 0.75rem;
+  font-size: 1.5rem;
+  color: #dc2626;
+}
+
+/* Estilo para mensajes de error */
+.error-message {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  margin-top: 1rem;
+}
+
+/* Estilo para tooltips */
+.tooltip {
+  position: relative;
+}
+
+.tooltip:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1f2937;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 10;
+  margin-bottom: 0.25rem;
+}
+
+/* Estilo para el estado de carga de botones */
+.button-loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.button-loading::before {
+  content: '';
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+  display: inline-block;
 }
