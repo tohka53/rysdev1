@@ -19,6 +19,7 @@ import { LandingComponent } from './landing/landing/landing.component';
 import { LayoutComponent } from './layout/layout/layout.component';
 import { RutinasComponent } from './rutinas/rutinas/rutinas.component';
 import { TiposSeccionComponent } from './tipos-seccion/tipos-seccion/tipos-seccion.component';
+import { RutinasUsuarioComponent } from './rutinas-usuario/rutinas-usuario/rutinas-usuario.component';
 
 
 @NgModule({
@@ -32,7 +33,8 @@ import { TiposSeccionComponent } from './tipos-seccion/tipos-seccion/tipos-secci
     LandingComponent,
     LayoutComponent,
     RutinasComponent,
-    TiposSeccionComponent
+    TiposSeccionComponent,
+    RutinasUsuarioComponent
   ],
   imports: [
     BrowserModule,

@@ -12,6 +12,7 @@ import { LandingComponent } from './landing/landing/landing.component';
 import { LayoutComponent } from './layout/layout/layout.component';
 import { RutinasComponent } from './rutinas/rutinas/rutinas.component';
 import { TiposSeccionComponent } from './tipos-seccion/tipos-seccion/tipos-seccion.component';
+import { RutinasUsuarioComponent } from './rutinas-usuario/rutinas-usuario/rutinas-usuario.component';
 
 const routes: Routes = [
   // Ruta principal - Landing page
@@ -59,7 +60,15 @@ const routes: Routes = [
           profiles: [1] // Solo administradores
         }
       },
-      
+      {
+        path: 'rutinas-usuario',
+        component: RutinasUsuarioComponent,
+        canActivate: [RoleGuard], // Usar RoleGuard para validar solo por perfil
+        data: { 
+          profiles: [1] // Solo administradores (id_perfil = 1)
+        }
+      },
+
       // Aquí puedes agregar más rutas protegidas
       // { path: 'reportes', component: ReportesComponent },
       // { path: 'configuracion', component: ConfiguracionComponent },

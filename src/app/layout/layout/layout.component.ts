@@ -1,4 +1,4 @@
-// src/app/shared/layout/layout.component.ts
+// src/app/shared/layout/layout.component.ts - Actualizado con Rutinas
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -110,10 +110,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
       },
       {
         id_modulo: 2,
-        nombre: 'Usuarios',
-        descripcion: 'Gestión de usuarios',
-        icono: 'fas fa-users',
-        ruta: '/usuarios',
+        nombre: 'Mis Rutinas',
+        descripcion: 'Gestión de rutinas de entrenamiento',
+        icono: 'fas fa-dumbbell',
+        ruta: '/rutinas',
         orden: 2,
         es_padre: false,
         modulo_padre_id: null,
@@ -122,10 +122,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
       },
       {
         id_modulo: 3,
-        nombre: 'Reportes',
-        descripcion: 'Sistema de reportes',
-        icono: 'fas fa-chart-bar',
-        ruta: '/reportes',
+        nombre: 'Usuarios',
+        descripcion: 'Gestión de usuarios',
+        icono: 'fas fa-users',
+        ruta: '/usuarios',
         orden: 3,
         es_padre: false,
         modulo_padre_id: null,
@@ -134,11 +134,23 @@ export class LayoutComponent implements OnInit, OnDestroy {
       },
       {
         id_modulo: 4,
+        nombre: 'Reportes',
+        descripcion: 'Sistema de reportes',
+        icono: 'fas fa-chart-bar',
+        ruta: '/reportes',
+        orden: 4,
+        es_padre: false,
+        modulo_padre_id: null,
+        permisos: ['view'],
+        expanded: false
+      },
+      {
+        id_modulo: 5,
         nombre: 'Configuración',
         descripcion: 'Configuración del sistema',
         icono: 'fas fa-cog',
         ruta: '/configuracion',
-        orden: 4,
+        orden: 5,
         es_padre: false,
         modulo_padre_id: null,
         permisos: ['view'],
@@ -252,6 +264,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   getPageTitle(): string {
     switch (this.currentRoute) {
       case '/dashboard': return 'Dashboard';
+      case '/rutinas': return 'Mis Rutinas';
       case '/usuarios': return 'Gestión de Usuarios';
       case '/reportes': return 'Reportes';
       case '/configuracion': return 'Configuración';
@@ -262,6 +275,11 @@ export class LayoutComponent implements OnInit, OnDestroy {
   // Verificar si estamos en dashboard para mostrar las estadísticas
   isDashboardRoute(): boolean {
     return this.currentRoute === '/dashboard';
+  }
+
+  // Verificar si estamos en rutinas
+  isRutinasRoute(): boolean {
+    return this.currentRoute === '/rutinas';
   }
 
   formatDate(dateString: string | undefined): string {
