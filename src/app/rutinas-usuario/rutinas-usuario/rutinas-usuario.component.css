@@ -1,304 +1,281 @@
-/* src/app/rutinas/rutinas-usuario/rutinas-usuario.component.css */
+/* src/app/rutinas-usuario/rutinas-usuario.component.css */
 
-/* Animaciones para las tarjetas */
-.rutina-card {
+/* Animaciones para modales */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-panel {
+  animation: slideInUp 0.3s ease-out;
+}
+
+/* Efectos hover para las tarjetas */
+.asignacion-card {
   transition: all 0.3s ease;
 }
 
-.rutina-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+.asignacion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-/* Estilos para las barras de progreso */
+/* Estilos para checkboxes personalizados */
+.checkbox-usuario {
+  transition: all 0.2s ease;
+}
+
+.checkbox-usuario:checked {
+  transform: scale(1.1);
+}
+
+/* Barra de progreso animada */
 .progress-bar {
-  transition: width 0.6s ease;
+  transition: width 0.8s ease-in-out;
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
 }
 
-.progress-bar.bg-red-500 {
-  background: linear-gradient(90deg, #ef4444, #dc2626);
-}
-
-.progress-bar.bg-orange-500 {
-  background: linear-gradient(90deg, #f97316, #ea580c);
-}
-
-.progress-bar.bg-yellow-500 {
-  background: linear-gradient(90deg, #eab308, #ca8a04);
-}
-
-.progress-bar.bg-blue-500 {
-  background: linear-gradient(90deg, #3b82f6, #2563eb);
-}
-
-.progress-bar.bg-green-500 {
-  background: linear-gradient(90deg, #22c55e, #16a34a);
-}
-
-/* Animaciones para los iconos */
-.icon-bounce:hover {
-  animation: bounce 0.5s;
-}
-
-@keyframes bounce {
-  0%, 20%, 60%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
-  80% {
-    transform: translateY(-5px);
-  }
-}
-
-/* Estilos para los badges de estado */
-.badge-estado {
-  position: relative;
+.progress-container {
+  background-color: #f3f4f6;
+  border-radius: 9999px;
   overflow: hidden;
 }
 
-.badge-estado::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
+/* Estados de asignación */
+.estado-activa {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
 }
 
-.badge-estado:hover::before {
-  left: 100%;
+.estado-completada {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
 }
 
-/* Estilos para el input range personalizado */
-input[type="range"] {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 8px;
-  border-radius: 5px;
-  background: #e5e7eb;
-  outline: none;
-  opacity: 0.7;
-  -webkit-transition: .2s;
-  transition: opacity .2s;
+.estado-pausada {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
 }
 
-input[type="range"]:hover {
-  opacity: 1;
+.estado-cancelada {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
 }
 
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #4f46e5;
-  cursor: pointer;
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
-  transition: all 0.2s ease;
-}
-
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 0 6px rgba(79, 70, 229, 0.3);
-}
-
-input[type="range"]::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #4f46e5;
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
-  transition: all 0.2s ease;
-}
-
-input[type="range"]::-moz-range-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 0 6px rgba(79, 70, 229, 0.3);
-}
-
-/* Estilos para las estadísticas */
-.stat-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
-  background-size: 200% 100%;
-  animation: gradientShift 3s ease infinite;
-}
-
-@keyframes gradientShift {
-  0% {
-    background-position: 0% 0%;
-  }
-  50% {
-    background-position: 100% 0%;
-  }
-  100% {
-    background-position: 0% 0%;
-  }
-}
-
-/* Efectos hover para botones */
+/* Efectos de hover para botones */
 .btn-action {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.btn-action::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.btn-action:hover::before {
-  left: 100%;
+  transition: all 0.2s ease;
 }
 
 .btn-action:hover {
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Estilos para estados temporales */
-.estado-vigente {
-  animation: pulse-green 2s infinite;
+/* Indicadores de estado en tiempo real */
+.estado-badge {
+  position: relative;
+  overflow: hidden;
 }
 
-.estado-vencida {
-  animation: pulse-red 2s infinite;
+.estado-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
 }
 
-@keyframes pulse-green {
-  0% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
-  }
+.estado-badge:hover::before {
+  left: 100%;
 }
 
-@keyframes pulse-red {
-  0% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-  }
+/* Animación para el loading spinner */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-/* Loading skeleton */
-.skeleton {
-  animation: skeleton-loading 1s linear infinite alternate;
+.loading-spinner {
+  animation: spin 1s linear infinite;
 }
 
-@keyframes skeleton-loading {
-  0% {
-    background-color: hsl(200, 20%, 80%);
-  }
-  100% {
-    background-color: hsl(200, 20%, 95%);
-  }
-}
-
-/* Responsive adjustments */
+/* Estilos para la tabla responsive */
 @media (max-width: 768px) {
-  .rutina-card {
-    margin-bottom: 1rem;
+  .tabla-responsive {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
   }
   
-  .stat-card {
-    margin-bottom: 0.5rem;
+  .tabla-responsive table {
+    min-width: 600px;
+  }
+}
+
+/* Efectos de focus mejorados */
+.input-focus:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #ef4444;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Estilo para usuarios seleccionados */
+.usuario-seleccionado {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border: 2px solid #ef4444;
+  transform: scale(1.02);
+}
+
+/* Animaciones de entrada */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos para tooltips */
+.tooltip {
+  position: relative;
+}
+
+.tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+}
+
+/* Mejoras visuales para el modal de seguimiento */
+.seguimiento-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.seguimiento-table th,
+.seguimiento-table td {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.seguimiento-table tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Estilo para input de progreso */
+.progress-input {
+  transition: all 0.2s ease;
+}
+
+.progress-input:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Indicadores de tiempo */
+.tiempo-vigente {
+  color: #059669;
+  font-weight: 600;
+}
+
+.tiempo-vencido {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.tiempo-pendiente {
+  color: #d97706;
+  font-weight: 600;
+}
+
+/* Efectos para cards de estadísticas */
+.stat-card {
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  border-color: #ef4444;
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.1);
+}
+
+/* Responsive design mejorado */
+@media (max-width: 640px) {
+  .modal-panel {
+    margin: 0;
+    max-height: 100vh;
+    border-radius: 0;
   }
   
-  .btn-action {
-    padding: 0.5rem;
-    font-size: 0.875rem;
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .rutina-card {
-    background-color: #1f2937;
-    border-color: #374151;
+  .grid-responsive {
+    grid-template-columns: 1fr;
   }
   
-  .stat-card {
-    background-color: #1f2937;
-    border-color: #374151;
-  }
-  
-  input[type="range"] {
-    background: #374151;
-  }
-  
-  .skeleton {
-    background-color: #374151;
+  .flex-responsive {
+    flex-direction: column;
+    gap: 8px;
   }
 }
 
-/* Focus styles for accessibility */
-.btn-action:focus {
-  outline: 2px solid #4f46e5;
-  outline-offset: 2px;
+/* Animación sutil para elementos que aparecen */
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
 }
 
-input[type="range"]:focus {
-  outline: 2px solid #4f46e5;
-  outline-offset: 2px;
+.slide-in-up {
+  animation: slideInUp 0.5s ease-out;
 }
 
-/* Smooth transitions for all interactive elements */
-* {
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+.slide-in-down {
+  animation: slideInDown 0.5s ease-out;
 }
 
-/* Custom scrollbar for modal content */
-.modal-content {
-  scrollbar-width: thin;
-  scrollbar-color: #4f46e5 #e5e7eb;
+/* Estilos para estados de carga */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
 }
 
-.modal-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.modal-content::-webkit-scrollbar-track {
-  background: #e5e7eb;
-  border-radius: 3px;
-}
-
-.modal-content::-webkit-scrollbar-thumb {
-  background-color: #4f46e5;
-  border-radius: 3px;
-}
-
-.modal-content::-webkit-scrollbar-thumb:hover {
-  background-color: #3730a3;
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
