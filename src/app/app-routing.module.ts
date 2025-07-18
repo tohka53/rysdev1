@@ -13,6 +13,7 @@ import { LayoutComponent } from './layout/layout/layout.component';
 import { RutinasComponent } from './rutinas/rutinas/rutinas.component';
 import { TiposSeccionComponent } from './tipos-seccion/tipos-seccion/tipos-seccion.component';
 import { RutinasUsuarioComponent } from './rutinas-usuario/rutinas-usuario/rutinas-usuario.component';
+import { MisRutinasComponent } from './mis-rutinas/mis-rutinas/mis-rutinas.component';
 
 const routes: Routes = [
   // Ruta principal - Landing page
@@ -48,7 +49,7 @@ const routes: Routes = [
         canActivate: [PermissionGuard],
         data: { 
           permissions: ['view'],
-          profiles: [1, 2, 3] // Admin, Usuario, Supervisor
+          profiles: [1, 3] // Admin, Usuario, Supervisor
         }
       },
 
@@ -67,6 +68,12 @@ const routes: Routes = [
         data: { 
           profiles: [1] // Solo administradores (id_perfil = 1)
         }
+      },
+
+      { 
+        path: 'mis-rutinas', 
+        component: MisRutinasComponent,
+        canActivate: [AuthGuard]
       },
 
       // Aquí puedes agregar más rutas protegidas

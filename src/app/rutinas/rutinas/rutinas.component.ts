@@ -86,6 +86,13 @@ export class RutinasComponent implements OnInit {
     try {
       const data = await this.supabaseService.getData('rutinas');
       this.rutinas = data || [];
+
+      // NUEVO: Ordenar alfabéticamente las rutinas por nombre
+    this.rutinas = this.rutinas.sort((a, b) => {
+      return a.nombre.toLowerCase().localeCompare(b.nombre.toLowerCase());
+    });
+
+    
       this.filteredRutinas = [...this.rutinas];
       this.applyFilters();
       console.log('Rutinas cargadas:', this.rutinas.length);
@@ -126,6 +133,11 @@ export class RutinasComponent implements OnInit {
     if (this.nivelFilter !== 'all') {
       filtered = filtered.filter(rutina => rutina.nivel === this.nivelFilter);
     }
+
+    // NUEVO: Ordenamiento alfabético por nombre
+  filtered = filtered.sort((a, b) => {
+    return a.nombre.toLowerCase().localeCompare(b.nombre.toLowerCase());
+  });
 
     this.filteredRutinas = filtered;
   }

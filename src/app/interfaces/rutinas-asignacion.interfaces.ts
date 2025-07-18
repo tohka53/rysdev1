@@ -112,3 +112,21 @@ export interface AsignacionResponse {
   message: string;
   usuarios_asignados?: number;
 }
+
+
+export interface SeguimientoDetalladoCompleto extends SeguimientoDetallado {
+  rutina_completa?: any; // Rutina completa
+  rutina_duracion?: number;
+  rutina_tags?: string[];
+  rutina_id?: number;
+  rutina_descripcion?: string;
+  rutina_tipo?: string;
+  rutina_nivel?: string;
+}
+
+// Interface para el servicio que puede no estar disponible
+export interface RutinasUsuarioResponse {
+  success: boolean;
+  data: SeguimientoDetalladoCompleto[];
+  message?: string;
+}

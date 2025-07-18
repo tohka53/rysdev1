@@ -20,6 +20,7 @@ import { LayoutComponent } from './layout/layout/layout.component';
 import { RutinasComponent } from './rutinas/rutinas/rutinas.component';
 import { TiposSeccionComponent } from './tipos-seccion/tipos-seccion/tipos-seccion.component';
 import { RutinasUsuarioComponent } from './rutinas-usuario/rutinas-usuario/rutinas-usuario.component';
+import { MisRutinasComponent } from './mis-rutinas/mis-rutinas/mis-rutinas.component';
 
 
 @NgModule({
@@ -34,7 +35,8 @@ import { RutinasUsuarioComponent } from './rutinas-usuario/rutinas-usuario/rutin
     LayoutComponent,
     RutinasComponent,
     TiposSeccionComponent,
-    RutinasUsuarioComponent
+    RutinasUsuarioComponent,
+    MisRutinasComponent
   ],
   imports: [
     BrowserModule,
