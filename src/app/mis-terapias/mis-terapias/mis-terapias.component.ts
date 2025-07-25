@@ -1,34 +1,53 @@
 // src/app/mis-terapias/mis-terapias.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-
+import { Component, OnInit } from '@angular/core';
+import { TerapiasService } from '../../services/terapias.service';
+import { AuthService } from '../../services/auth.service';
 import { 
-  TerapiaAsignadaUsuario as SeguimientoTerapiaDetallado, 
-  EstadisticasTerapias as EstadisticasTerapiasPersonales
+  TerapiaAsignadaUsuario,
+  EstadisticasTerapias
 } from '../../interfaces/terapias.interfaces';
 
-// Interfaces locales para este componente
-interface FiltrosMisTerapias {
-  busqueda?: string;
-  estado_temporal?: 'all' | 'vigente' | 'pendiente' | 'vencida';
-  estado_individual?: 'all' | 'pendiente' | 'en_progreso' | 'completada' | 'abandonada';
-  tipo_terapia?: 'all' | 'fisica' | 'ocupacional' | 'respiratoria' | 'neurologica';
-  nivel?: 'all' | 'principiante' | 'intermedio' | 'avanzado';
-}
-
-interface FormularioProgresoTerapia {
+// Interfaces locales simplificadas
+interface SeguimientoTerapiaSimplificado {
+  seguimiento_id: number;
+  asignacion_id: number;
+  id_profile: number;
+  username: string;
+  full_name: string;
+  terapia_nombre: string;
+  terapia_id: number;
+  terapia_descripcion?: string;
+  terapia_tipo: string;
+  terapia_nivel: string;
+  duracion_estimada?: number;
+  terapia_completa?: any; // La terapia completa cuando la carguemos
   progreso: number;
-  estado: string;
-  notas: string;
+  estado_individual: string;
+  fecha_inicio_real?: string | Date;
+  fecha_fin_real?: string | Date;
+  fecha_inicio_programada: string | Date;
+  fecha_fin_programada: string | Date;
+  notas_individuales?: string;
+  estado_temporal: string;
+  dias_restantes: number;
   sesiones_completadas?: number;
+  sesiones_programadas?: number;
   adherencia_porcentaje?: number;
   nivel_dolor_actual?: number;
   nivel_funcionalidad_actual?: number;
 }
 
-import { TerapiasService } from '../../services/terapias.service';
-import { AuthService } from '../../services/auth.service';
+interface EstadisticasPersonalesTerapias {
+  total_terapias_asignadas: number;
+  terapias_vigentes: number;
+  terapias_completadas: number;
+  terapias_en_progreso: number;
+  terapias_pendientes: number;
+  terapias_vencidas: number;
+  progreso_promedio: number;
+  adherencia_promedio: number;
+  sesiones_completadas_total: number;
+}
 
 @Component({
   selector: 'app-mis-terapias',
@@ -36,22 +55,18 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './mis-terapias.component.html',
   styleUrls: ['./mis-terapias.component.css']
 })
-export class MisTerapiasComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
-
+export class MisTerapiasComponent implements OnInit {
   // Datos principales
-  terapias: SeguimientoTerapiaDetallado[] = [];
-  terapiasFiltradas: SeguimientoTerapiaDetallado[] = [];
-  estadisticasPersonales?: EstadisticasTerapiasPersonales;
+  misTerapias: SeguimientoTerapiaSimplificado[] = [];
+  filteredTerapias: SeguimientoTerapiaSimplificado[] = [];
+  estadisticasPersonales?: EstadisticasPersonalesTerapias;
   
   // Control de UI
   loading = false;
-  updating = false;
   error = '';
   showViewModal = false;
-  showProgresoModal = false;
-  selectedViewTerapia: SeguimientoTerapiaDetallado | null = null;
-  selectedProgresoTerapia: SeguimientoTerapiaDetallado | null = null;
+  selectedTerapia: any = null;
+  selectedSeguimiento: SeguimientoTerapiaSimplificado | null = null;
   copySuccess = false;
 
   // Sistema de notificaciones
@@ -59,25 +74,11 @@ export class MisTerapiasComponent implements OnInit, OnDestroy {
   tipoMensaje: 'success' | 'error' | 'info' | 'warning' = 'info';
   mostrarMensaje = false;
 
-  // Filtros
-  filtros: FiltrosMisTerapias = {
-    busqueda: '',
-    estado_temporal: 'all',
-    estado_individual: 'all',
-    tipo_terapia: 'all',
-    nivel: 'all'
-  };
-
-  // Formulario de progreso
-  progresoForm: FormularioProgresoTerapia = {
-    progreso: 0,
-    estado: 'pendiente',
-    notas: '',
-    sesiones_completadas: 0,
-    adherencia_porcentaje: 0,
-    nivel_dolor_actual: 0,
-    nivel_funcionalidad_actual: 0
-  };
+  // Filtros simplificados
+  searchTerm = '';
+  estadoFilter = 'all'; // all, vigente, vencida, pendiente
+  estadoIndividualFilter = 'all'; // all, pendiente, en_progreso, completada
+  progresoFilter = 'all'; // all, sin_iniciar, en_progreso, completado
 
   constructor(
     private terapiasService: TerapiasService,
@@ -86,339 +87,646 @@ export class MisTerapiasComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     await Promise.all([
-      this.cargarMisTerapias(),
-      this.cargarEstadisticasPersonales()
+      this.loadMisTerapias(),
+      this.loadEstadisticasPersonales()
     ]);
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  // ===== CARGA DE DATOS =====
-  async cargarMisTerapias(): Promise<void> {
+  async loadMisTerapias(): Promise<void> {
     this.loading = true;
     this.error = '';
     try {
       console.log('Cargando terapias asignadas al usuario...');
       
-      // Usar el servicio existente
-      this.terapias = await this.terapiasService.getTerapiasAsignadasUsuarios();
-      
-      // Transformar y calcular estados si es necesario
-      this.terapias = this.terapias.map(terapia => {
-        // Calcular estado temporal y días restantes si no vienen calculados
-        const { estado, diasRestantes } = this.calcularEstadoTemporal(
-          terapia.fecha_inicio_programada instanceof Date ? terapia.fecha_inicio_programada.toISOString() : terapia.fecha_inicio_programada,
-          terapia.fecha_fin_programada instanceof Date ? terapia.fecha_fin_programada.toISOString() : terapia.fecha_fin_programada
-        );
+      // Obtener el usuario actual
+      const currentUser = this.authService.getCurrentUser();
+      if (!currentUser?.id) {
+        throw new Error('No se pudo obtener el usuario actual');
+      }
+
+      console.log('Usuario actual:', currentUser.id);
+
+      let seguimientos: TerapiaAsignadaUsuario[] = [];
+
+      try {
+        // Intentar usar el método general pero filtrar por usuario
+        const todasLasTerapias = await this.terapiasService.getTerapiasAsignadasUsuarios();
         
+        // Filtrar solo las terapias del usuario actual
+        seguimientos = todasLasTerapias.filter(item => item.id_profile === currentUser.id);
+        
+        console.log('Terapias filtradas para el usuario:', seguimientos.length);
+      } catch (serviceError) {
+        console.warn('Error con el servicio principal, intentando método alternativo:', serviceError);
+        
+        // Método de respaldo: usar datos simulados o método alternativo
+        seguimientos = await this.loadTerapiasAlternativo(currentUser.id);
+      }
+      
+      // Transformar datos al formato simplificado
+      this.misTerapias = seguimientos.map((item: TerapiaAsignadaUsuario) => {
+        // Convertir fechas a strings si son Date objects
+        const fechaInicioStr = this.convertirFechaAString(item.fecha_inicio_programada);
+        const fechaFinStr = this.convertirFechaAString(item.fecha_fin_programada);
+        
+        // Calcular estado temporal y días restantes
+        const { estado, diasRestantes } = this.calcularEstadoTemporal(
+          fechaInicioStr,
+          fechaFinStr
+        );
+
         return {
-          ...terapia,
-          estado_temporal: terapia.estado_temporal || estado,
-          dias_restantes: terapia.dias_restantes !== undefined ? terapia.dias_restantes : diasRestantes
+          seguimiento_id: item.seguimiento_id,
+          asignacion_id: item.asignacion_id,
+          id_profile: item.id_profile,
+          username: item.username || currentUser.username || '',
+          full_name: item.full_name || currentUser.full_name || '',
+          terapia_nombre: item.terapia_nombre,
+          terapia_id: item.id_terapia || 0,
+          terapia_descripcion: item.terapia_descripcion,
+          terapia_tipo: item.terapia_tipo,
+          terapia_nivel: item.terapia_nivel,
+          duracion_estimada: item.duracion_estimada,
+          progreso: item.progreso || 0,
+          estado_individual: item.estado_individual || 'pendiente',
+          fecha_inicio_real: this.convertirFechaAString(item.fecha_inicio_real),
+          fecha_fin_real: this.convertirFechaAString(item.fecha_fin_real),
+          fecha_inicio_programada: fechaInicioStr,
+          fecha_fin_programada: fechaFinStr,
+          notas_individuales: item.notas_individuales,
+          estado_temporal: estado,
+          dias_restantes: diasRestantes,
+          sesiones_completadas: item.sesiones_completadas || 0,
+          sesiones_programadas: item.sesiones_programadas || 0,
+          adherencia_porcentaje: item.adherencia_porcentaje || 0,
+          nivel_dolor_actual: item.nivel_dolor_actual || 0,
+          nivel_funcionalidad_actual: item.nivel_funcionalidad_actual || 0
         };
       });
       
-      this.terapiasFiltradas = [...this.terapias];
-      this.aplicarFiltros();
+      this.filteredTerapias = [...this.misTerapias];
+      this.applyFilters();
       
-      console.log('Mis terapias cargadas:', this.terapias.length);
+      console.log('Mis terapias cargadas:', this.misTerapias.length);
     } catch (error) {
       console.error('Error cargando mis terapias:', error);
       this.error = 'Error al cargar tus terapias asignadas';
-      this.terapias = [];
-      this.terapiasFiltradas = [];
+      this.misTerapias = [];
+      this.filteredTerapias = [];
     } finally {
       this.loading = false;
     }
   }
 
-  async cargarEstadisticasPersonales(): Promise<void> {
+  // Método alternativo en caso de que el servicio principal falle
+  private async loadTerapiasAlternativo(userId: number): Promise<TerapiaAsignadaUsuario[]> {
     try {
-      if (this.terapias.length === 0) return;
-
-      const total = this.terapias.length;
-      const vigentes = this.terapias.filter(t => t.estado_temporal === 'vigente').length;
-      const completadas = this.terapias.filter(t => t.estado_individual === 'completada').length;
-      const enProgreso = this.terapias.filter(t => t.estado_individual === 'en_progreso').length;
-      const pendientes = this.terapias.filter(t => t.estado_individual === 'pendiente').length;
-      const vencidas = this.terapias.filter(t => t.estado_temporal === 'vencida').length;
+      console.log('Usando método alternativo para cargar terapias...');
       
-      const progresoTotal = this.terapias.reduce((sum, t) => sum + t.progreso, 0);
+      // Por ahora retornamos una lista vacía, pero aquí podrías:
+      // 1. Hacer una consulta directa a Supabase
+      // 2. Usar datos simulados para desarrollo
+      // 3. Implementar otra lógica de respaldo
+      
+      return [];
+    } catch (error) {
+      console.error('Error en método alternativo:', error);
+      return [];
+    }
+  }
+
+  async loadEstadisticasPersonales(): Promise<void> {
+    try {
+      if (this.misTerapias.length === 0) return;
+
+      const total = this.misTerapias.length;
+      const vigentes = this.misTerapias.filter(t => t.estado_temporal === 'vigente').length;
+      const completadas = this.misTerapias.filter(t => t.estado_individual === 'completada').length;
+      const enProgreso = this.misTerapias.filter(t => t.estado_individual === 'en_progreso').length;
+      const pendientes = this.misTerapias.filter(t => t.estado_individual === 'pendiente').length;
+      const vencidas = this.misTerapias.filter(t => t.estado_temporal === 'vencida').length;
+      
+      const progresoTotal = this.misTerapias.reduce((sum, t) => sum + t.progreso, 0);
       const progresoPromedio = total > 0 ? Math.round(progresoTotal / total) : 0;
+      
+      const adherenciaTotal = this.misTerapias.reduce((sum, t) => sum + (t.adherencia_porcentaje || 0), 0);
+      const adherenciaPromedio = total > 0 ? Math.round(adherenciaTotal / total) : 0;
+      
+      const sesionesCompletadas = this.misTerapias.reduce((sum, t) => sum + (t.sesiones_completadas || 0), 0);
 
       this.estadisticasPersonales = {
-        total_asignaciones: total,
-        asignaciones_activas: vigentes,
-        asignaciones_grupales: 0,
-        asignaciones_individuales: total,
-        usuarios_con_terapias: 1,
-        terapias_mas_asignadas: 0,
-        promedio_progreso: progresoPromedio,
-        promedio_adherencia: 0,
-        sesiones_totales_completadas: 0,
-        sesiones_totales_programadas: 0
+        total_terapias_asignadas: total,
+        terapias_vigentes: vigentes,
+        terapias_completadas: completadas,
+        terapias_en_progreso: enProgreso,
+        terapias_pendientes: pendientes,
+        terapias_vencidas: vencidas,
+        progreso_promedio: progresoPromedio,
+        adherencia_promedio: adherenciaPromedio,
+        sesiones_completadas_total: sesionesCompletadas
       };
     } catch (error) {
       console.error('Error calculando estadísticas personales:', error);
     }
   }
 
-  // ===== GESTIÓN DE MODALES =====
-  async openViewModal(seguimiento: SeguimientoTerapiaDetallado): Promise<void> {
+  applyFilters(): void {
+    let filtered = [...this.misTerapias];
+
+    // Filtro por búsqueda
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(terapia => 
+        terapia.terapia_nombre.toLowerCase().includes(term) ||
+        terapia.terapia_descripcion?.toLowerCase().includes(term) ||
+        terapia.terapia_tipo.toLowerCase().includes(term)
+      );
+    }
+
+    // Filtro por estado temporal
+    if (this.estadoFilter !== 'all') {
+      filtered = filtered.filter(terapia => terapia.estado_temporal === this.estadoFilter);
+    }
+
+    // Filtro por estado individual
+    if (this.estadoIndividualFilter !== 'all') {
+      filtered = filtered.filter(terapia => terapia.estado_individual === this.estadoIndividualFilter);
+    }
+
+    // Filtro por progreso
+    if (this.progresoFilter !== 'all') {
+      switch (this.progresoFilter) {
+        case 'sin_iniciar':
+          filtered = filtered.filter(terapia => terapia.progreso === 0);
+          break;
+        case 'en_progreso':
+          filtered = filtered.filter(terapia => terapia.progreso > 0 && terapia.progreso < 100);
+          break;
+        case 'completado':
+          filtered = filtered.filter(terapia => terapia.progreso === 100);
+          break;
+      }
+    }
+
+    this.filteredTerapias = filtered;
+  }
+
+  // Modal para ver terapia completa
+  async openViewModal(seguimiento: SeguimientoTerapiaSimplificado): Promise<void> {
     console.log('Abriendo modal para ver terapia:', seguimiento.terapia_nombre);
     
-    this.selectedViewTerapia = seguimiento;
+    this.selectedSeguimiento = seguimiento;
+    
+    // Intentar cargar la terapia completa desde el servicio
+    try {
+      // Buscar la terapia completa usando el ID
+      const terapiaCompleta = await this.cargarTerapiaCompleta(seguimiento.terapia_id);
+      
+      if (terapiaCompleta) {
+        this.selectedTerapia = terapiaCompleta;
+      } else {
+        // Si no se puede cargar, crear una terapia básica con la información disponible
+        this.selectedTerapia = this.crearTerapiaBasica(seguimiento);
+      }
+    } catch (error) {
+      console.error('Error cargando terapia completa:', error);
+      // Usar la información básica disponible
+      this.selectedTerapia = this.crearTerapiaBasica(seguimiento);
+    }
+    
     this.showViewModal = true;
+  }
+
+  private async cargarTerapiaCompleta(terapiaId: number): Promise<any> {
+    try {
+      console.log('Cargando terapia completa para ID:', terapiaId);
+      
+      // Cargar la terapia completa desde la base de datos
+      const terapia = await this.terapiasService.getTerapiaById(terapiaId);
+      
+      if (terapia) {
+        console.log('Terapia cargada desde BD:', terapia);
+        return terapia;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error al cargar terapia completa:', error);
+      return null;
+    }
+  }
+
+  private crearTerapiaBasica(seguimiento: SeguimientoTerapiaSimplificado): any {
+    return {
+      id: seguimiento.terapia_id,
+      nombre: seguimiento.terapia_nombre,
+      descripcion: seguimiento.terapia_descripcion || 'Terapia de rehabilitación personalizada',
+      tipo: seguimiento.terapia_tipo,
+      nivel: seguimiento.terapia_nivel,
+      duracion_estimada: seguimiento.duracion_estimada,
+      objetivos: this.generarObjetivosTerapia(seguimiento.terapia_tipo),
+      ejercicios: this.generarEjerciciosBasicos(seguimiento.terapia_tipo),
+      observaciones: seguimiento.notas_individuales || 'Sin observaciones adicionales',
+      area_especializacion: this.obtenerAreaEspecializacion(seguimiento.terapia_tipo)
+    };
+  }
+
+  private generarObjetivosTerapia(tipo: string): string {
+    switch (tipo.toLowerCase()) {
+      case 'fisica':
+        return '• Mejorar la movilidad y flexibilidad\n• Fortalecer grupos musculares específicos\n• Reducir el dolor y la inflamación\n• Recuperar la función normal';
+      case 'ocupacional':
+        return '• Mejorar las actividades de la vida diaria\n• Desarrollar habilidades motoras finas\n• Adaptar el entorno a las necesidades\n• Incrementar la independencia funcional';
+      case 'respiratoria':
+        return '• Mejorar la capacidad pulmonar\n• Fortalecer músculos respiratorios\n• Optimizar técnicas de respiración\n• Reducir la disnea';
+      case 'neurologica':
+        return '• Mejorar el control motor\n• Estimular la neuroplasticidad\n• Desarrollar patrones de movimiento\n• Mejorar el equilibrio y coordinación';
+      default:
+        return '• Objetivos específicos según evaluación inicial\n• Mejora progresiva de la condición\n• Mantenimiento de logros alcanzados\n• Prevención de recaídas';
+    }
+  }
+
+  private generarEjerciciosBasicos(tipo: string): any[] {
+    switch (tipo.toLowerCase()) {
+      case 'fisica':
+        return [
+          { 
+            nombre: 'Pendular suave', 
+            descripcion: 'Movimientos pendulares del brazo',
+            series: '2 series x 10 repeticiones',
+            duracion: '2:00'
+          },
+          { 
+            nombre: 'Rotación externa con banda', 
+            descripcion: 'Ejercicio con banda elástica para fortalecimiento',
+            series: '3 series x 15 repeticiones',
+            observaciones: 'No forzar el movimiento'
+          },
+          { 
+            nombre: 'Flexión anterior asistida', 
+            descripcion: 'Elevación del brazo hacia adelante con ayuda',
+            series: '2 series x 12 repeticiones',
+            duracion: '1:30'
+          }
+        ];
+      case 'ocupacional':
+        return [
+          { 
+            nombre: 'Coordinación fina', 
+            descripcion: 'Ejercicios de precisión con objetos pequeños',
+            duracion: '15:00',
+            observaciones: 'Aumentar dificultad gradualmente'
+          },
+          { 
+            nombre: 'Actividades funcionales', 
+            descripcion: 'Simulación de tareas cotidianas',
+            duracion: '20:00',
+            series: '3 repeticiones de cada actividad'
+          },
+          { 
+            nombre: 'Adaptación del entorno', 
+            descripcion: 'Práctica con ayudas técnicas',
+            duracion: '10:00'
+          }
+        ];
+      case 'respiratoria':
+        return [
+          { 
+            nombre: 'Respiración diafragmática', 
+            descripcion: 'Inspiraciones profundas usando el diafragma',
+            series: '4 series x 10 respiraciones',
+            duracion: '5:00',
+            observaciones: 'Mantener ritmo lento y controlado'
+          },
+          { 
+            nombre: 'Expansión costal', 
+            descripcion: 'Ejercicios para expandir la caja torácica',
+            series: '3 series x 8 repeticiones',
+            duracion: '3:00'
+          },
+          { 
+            nombre: 'Aclaramiento de secreciones', 
+            descripcion: 'Técnicas para movilizar mucosidad',
+            duracion: '10:00',
+            observaciones: 'Realizar después de nebulización si es necesario'
+          }
+        ];
+      case 'neurologica':
+        return [
+          { 
+            nombre: 'Control postural', 
+            descripcion: 'Ejercicios de estabilización y equilibrio',
+            duracion: '15:00',
+            series: '3 series x 5 repeticiones'
+          },
+          { 
+            nombre: 'Coordinación bilateral', 
+            descripcion: 'Movimientos coordinados de ambos lados del cuerpo',
+            series: '4 series x 10 repeticiones',
+            duracion: '8:00'
+          },
+          { 
+            nombre: 'Marcha funcional', 
+            descripcion: 'Práctica de patrones de caminata',
+            duracion: '20:00',
+            observaciones: 'Con asistencia según necesidad'
+          }
+        ];
+      default:
+        return [
+          { 
+            nombre: 'Ejercicio terapéutico personalizado', 
+            descripcion: 'Ejercicio adaptado según evaluación individual',
+            duracion: '15:00',
+            observaciones: 'Ajustar según tolerancia'
+          },
+          { 
+            nombre: 'Técnicas de rehabilitación', 
+            descripcion: 'Aplicación de métodos especializados',
+            duracion: '20:00',
+            series: '2-3 repeticiones según protocolo'
+          }
+        ];
+    }
+  }
+
+  private obtenerAreaEspecializacion(tipo: string): string {
+    switch (tipo.toLowerCase()) {
+      case 'fisica': return 'Fisioterapia';
+      case 'ocupacional': return 'Terapia Ocupacional';
+      case 'respiratoria': return 'Fisioterapia Respiratoria';
+      case 'neurologica': return 'Neurorehabilitación';
+      default: return 'Rehabilitación General';
+    }
   }
 
   closeViewModal(): void {
     console.log('Cerrando modal de vista');
     this.showViewModal = false;
-    this.selectedViewTerapia = null;
+    this.selectedTerapia = null;
+    this.selectedSeguimiento = null;
     this.copySuccess = false;
   }
 
-  openProgresoModal(seguimiento: SeguimientoTerapiaDetallado): void {
-    console.log('Abriendo modal de progreso para:', seguimiento.terapia_nombre);
-    
-    this.selectedProgresoTerapia = seguimiento;
-    this.progresoForm = {
-      progreso: seguimiento.progreso || 0,
-      estado: seguimiento.estado_individual || 'pendiente',
-      notas: seguimiento.notas_individuales || '',
-      sesiones_completadas: seguimiento.sesiones_completadas || 0,
-      adherencia_porcentaje: seguimiento.adherencia_porcentaje || 0,
-      nivel_dolor_actual: seguimiento.nivel_dolor_actual || 0,
-      nivel_funcionalidad_actual: seguimiento.nivel_funcionalidad_actual || 0
-    };
-    
-    this.showProgresoModal = true;
-  }
+  // Actualizar progreso propio
+  async actualizarMiProgreso(seguimiento: SeguimientoTerapiaSimplificado, nuevoProgreso: number): Promise<void> {
+    try {
+      const success = await this.terapiasService.actualizarProgresoTerapia(
+        seguimiento.seguimiento_id,
+        {
+          progreso: nuevoProgreso,
+          estado_individual: this.determinarEstadoPorProgreso(nuevoProgreso),
+          sesiones_completadas: seguimiento.sesiones_completadas || 0,
+          adherencia_porcentaje: seguimiento.adherencia_porcentaje || 0,
+          nivel_dolor_actual: seguimiento.nivel_dolor_actual || 0,
+          nivel_funcionalidad_actual: seguimiento.nivel_funcionalidad_actual || 0,
+          notas_individuales: seguimiento.notas_individuales || ''
+        }
+      );
 
-  closeProgresoModal(): void {
-    console.log('Cerrando modal de progreso');
-    this.showProgresoModal = false;
-    this.selectedProgresoTerapia = null;
-    this.resetProgresoForm();
-  }
-
-  resetProgresoForm(): void {
-    this.progresoForm = {
-      progreso: 0,
-      estado: 'pendiente',
-      notas: '',
-      sesiones_completadas: 0,
-      adherencia_porcentaje: 0,
-      nivel_dolor_actual: 0,
-      nivel_funcionalidad_actual: 0
-    };
-  }
-
-  // ===== ACTUALIZACIÓN DE PROGRESO =====
-  actualizarMiProgreso(seguimiento: SeguimientoTerapiaDetallado, nuevoProgreso: number): Promise<void> {
-    return this.terapiasService.actualizarProgresoTerapia(
-      seguimiento.seguimiento_id,
-      {
-        progreso: nuevoProgreso,
-        estado_individual: this.determinarEstadoPorProgreso(nuevoProgreso),
-        sesiones_completadas: seguimiento.sesiones_completadas || 0,
-        adherencia_porcentaje: seguimiento.adherencia_porcentaje || 0,
-        nivel_dolor_actual: seguimiento.nivel_dolor_actual || 0,
-        nivel_funcionalidad_actual: seguimiento.nivel_funcionalidad_actual || 0,
-        notas_individuales: seguimiento.notas_individuales || ''
-      }
-    ).then(success => {
       if (success) {
         // Actualizar localmente
         seguimiento.progreso = nuevoProgreso;
+        
+        // Determinar nuevo estado basado en progreso
         seguimiento.estado_individual = this.determinarEstadoPorProgreso(nuevoProgreso);
         
         // Actualizar fechas si es necesario
         if (nuevoProgreso > 0 && !seguimiento.fecha_inicio_real) {
-          seguimiento.fecha_inicio_real = new Date().toISOString().split('T')[0] as any;
+          seguimiento.fecha_inicio_real = new Date().toISOString().split('T')[0];
         }
         if (nuevoProgreso === 100) {
-          seguimiento.estado_individual = 'completada';
-          seguimiento.fecha_fin_real = new Date().toISOString().split('T')[0] as any;
+          seguimiento.fecha_fin_real = new Date().toISOString().split('T')[0];
         }
 
         // Recalcular estadísticas
-        this.cargarEstadisticasPersonales();
+        await this.loadEstadisticasPersonales();
         this.mostrarNotificacion('Progreso actualizado correctamente', 'success');
       }
-    }).catch(error => {
-      console.error('Error actualizando progreso:', error);
-      this.error = 'Error al actualizar el progreso';
-      setTimeout(() => this.error = '', 5000);
-    });
-  }
-
-  async actualizarProgreso(): Promise<void> {
-    if (!this.selectedProgresoTerapia) {
-      this.mostrarNotificacion('No hay terapia seleccionada', 'error');
-      return;
-    }
-
-    try {
-      this.updating = true;
-
-      const success = await this.terapiasService.actualizarProgresoTerapia(
-        this.selectedProgresoTerapia.seguimiento_id,
-        {
-          progreso: this.progresoForm.progreso,
-          estado_individual: this.progresoForm.estado,
-          sesiones_completadas: this.progresoForm.sesiones_completadas || 0,
-          adherencia_porcentaje: this.progresoForm.adherencia_porcentaje || 0,
-          nivel_dolor_actual: this.progresoForm.nivel_dolor_actual || 0,
-          nivel_funcionalidad_actual: this.progresoForm.nivel_funcionalidad_actual || 0,
-          notas_individuales: this.progresoForm.notas
-        }
-      );
-
-      if (success) {
-        this.mostrarNotificacion('Progreso actualizado correctamente', 'success');
-        
-        // Actualizar el seguimiento local
-        const index = this.terapias.findIndex(t => 
-          t.seguimiento_id === this.selectedProgresoTerapia!.seguimiento_id
-        );
-        
-        if (index !== -1) {
-          this.terapias[index] = {
-            ...this.terapias[index],
-            progreso: this.progresoForm.progreso,
-            estado_individual: this.progresoForm.estado,
-            notas_individuales: this.progresoForm.notas,
-            sesiones_completadas: this.progresoForm.sesiones_completadas || 0,
-            adherencia_porcentaje: this.progresoForm.adherencia_porcentaje || 0,
-            nivel_dolor_actual: this.progresoForm.nivel_dolor_actual || 0,
-            nivel_funcionalidad_actual: this.progresoForm.nivel_funcionalidad_actual || 0
-          };
-        }
-
-        this.aplicarFiltros();
-        this.cargarEstadisticasPersonales();
-        this.closeProgresoModal();
-        
-      } else {
-        this.mostrarNotificacion('Error al actualizar el progreso', 'error');
-      }
-
     } catch (error) {
       console.error('Error actualizando progreso:', error);
+      this.error = 'Error al actualizar el progreso';
       this.mostrarNotificacion('Error al actualizar el progreso', 'error');
-    } finally {
-      this.updating = false;
+      setTimeout(() => this.error = '', 5000);
     }
   }
 
-  // ===== FILTROS =====
-  aplicarFiltros(): void {
-    let resultado = [...this.terapias];
-
-    // Filtro por búsqueda
-    if (this.filtros.busqueda?.trim()) {
-      const busqueda = this.filtros.busqueda.toLowerCase().trim();
-      resultado = resultado.filter(t => 
-        t.terapia_nombre.toLowerCase().includes(busqueda) ||
-        (t.terapia_descripcion && t.terapia_descripcion.toLowerCase().includes(busqueda))
-      );
+  // Método auxiliar para convertir fechas
+  private convertirFechaAString(fecha: string | Date | undefined): string {
+    if (!fecha) return '';
+    if (fecha instanceof Date) {
+      return fecha.toISOString().split('T')[0];
     }
-
-    // Filtro por estado temporal
-    if (this.filtros.estado_temporal && this.filtros.estado_temporal !== 'all') {
-      resultado = resultado.filter(t => t.estado_temporal === this.filtros.estado_temporal);
-    }
-
-    // Filtro por estado individual
-    if (this.filtros.estado_individual && this.filtros.estado_individual !== 'all') {
-      resultado = resultado.filter(t => t.estado_individual === this.filtros.estado_individual);
-    }
-
-    // Filtro por tipo de terapia
-    if (this.filtros.tipo_terapia && this.filtros.tipo_terapia !== 'all') {
-      resultado = resultado.filter(t => t.terapia_tipo === this.filtros.tipo_terapia);
-    }
-
-    // Filtro por nivel
-    if (this.filtros.nivel && this.filtros.nivel !== 'all') {
-      resultado = resultado.filter(t => t.terapia_nivel === this.filtros.nivel);
-    }
-
-    this.terapiasFiltradas = resultado;
+    return fecha;
   }
 
-  hayFiltrosActivos(): boolean {
-    return !!(
-      this.filtros.busqueda?.trim() ||
-      (this.filtros.estado_temporal && this.filtros.estado_temporal !== 'all') ||
-      (this.filtros.estado_individual && this.filtros.estado_individual !== 'all') ||
-      (this.filtros.tipo_terapia && this.filtros.tipo_terapia !== 'all') ||
-      (this.filtros.nivel && this.filtros.nivel !== 'all')
-    );
+  // Calcular estado temporal
+  calcularEstadoTemporal(fechaInicio: string, fechaFin: string): { estado: string, diasRestantes: number } {
+    const hoy = new Date();
+    const inicio = new Date(fechaInicio);
+    const fin = new Date(fechaFin);
+    
+    // Normalizar fechas para comparación (solo fecha, sin hora)
+    hoy.setHours(0, 0, 0, 0);
+    inicio.setHours(0, 0, 0, 0);
+    fin.setHours(0, 0, 0, 0);
+    
+    const diasRestantes = Math.ceil((fin.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+    
+    let estado: string;
+    if (hoy < inicio) {
+      estado = 'pendiente';
+    } else if (hoy <= fin) {
+      estado = 'vigente';
+    } else {
+      estado = 'vencida';
+    }
+    
+    return { estado, diasRestantes };
   }
 
-  limpiarFiltros(): void {
-    this.filtros = {
-      busqueda: '',
-      estado_temporal: 'all',
-      estado_individual: 'all',
-      tipo_terapia: 'all',
-      nivel: 'all'
-    };
-    this.aplicarFiltros();
+  determinarEstadoPorProgreso(progreso: number): string {
+    if (progreso === 0) return 'pendiente';
+    if (progreso === 100) return 'completada';
+    return 'en_progreso';
   }
 
-  // ===== EXPORTAR Y COPIAR =====
-  getFormattedTerapia(terapia: SeguimientoTerapiaDetallado | null): string {
+  // Formatear terapia para el modal
+  getFormattedTerapia(terapia: any | null, seguimiento?: SeguimientoTerapiaSimplificado): string {
     if (!terapia) return '';
 
-    let texto = `${terapia.terapia_nombre || 'Terapia sin nombre'}\n`;
-    texto += `${terapia.terapia_descripcion || 'Terapia de rehabilitación'}\n`;
-    texto += `Tipo: ${terapia.terapia_tipo || 'N/A'} | Nivel: ${terapia.terapia_nivel || 'N/A'}\n`;
-    texto += `Duración estimada: ${this.formatDuracion(terapia.duracion_estimada)}\n`;
-    
-    // Agregar información de seguimiento
-    texto += `Progreso: ${terapia.progreso || 0}% | Estado: ${this.getEstadoIndividualText(terapia.estado_individual)}\n`;
-    
-    // Formatear fechas correctamente
-    const fechaInicio = this.formatFecha(terapia.fecha_inicio_programada);
-    const fechaFin = this.formatFecha(terapia.fecha_fin_programada);
-    texto += `Período: ${fechaInicio} - ${fechaFin}\n`;
-    
-    if (terapia.estado_temporal === 'vigente' && terapia.dias_restantes !== undefined) {
-      texto += `Días restantes: ${this.formatDiasRestantes(terapia.dias_restantes)}\n`;
+    let texto = `${terapia.nombre}\n`;
+    texto += `${terapia.descripcion || 'Programa de rehabilitación personalizada'}\n`;
+    texto += `Tipo: ${terapia.tipo} | Nivel: ${terapia.nivel}\n`;
+    if (terapia.area_especializacion) {
+      texto += `Área: ${terapia.area_especializacion}\n`;
     }
+    texto += `Duración estimada: ${this.formatDuracion(terapia.duracion_estimada)}\n\n`;
     
-    if (terapia.notas_individuales) {
-      texto += `\nMis notas:\n${terapia.notas_individuales}\n`;
-    }
-
-    if (terapia.fecha_inicio_real) {
-      texto += `\nFecha de inicio real: ${this.formatFecha(terapia.fecha_inicio_real)}\n`;
-    }
-    
-    if (terapia.fecha_fin_real) {
-      texto += `Fecha de finalización: ${this.formatFecha(terapia.fecha_fin_real)}\n`;
-    }
-
-    // Agregar información adicional si está disponible
-    if (terapia.sesiones_completadas !== undefined && terapia.sesiones_programadas !== undefined) {
-      texto += `\nSesiones: ${terapia.sesiones_completadas} / ${terapia.sesiones_programadas} completadas\n`;
-    }
-    
-    if (terapia.adherencia_porcentaje !== undefined) {
-      texto += `Adherencia: ${terapia.adherencia_porcentaje}%\n`;
+    // Agregar información de seguimiento si está disponible
+    if (seguimiento) {
+      texto += `MI PROGRESO:\n`;
+      texto += `Estado: ${this.getEstadoIndividualText(seguimiento.estado_individual)} (${seguimiento.progreso}%)\n`;
+      texto += `Período: ${this.formatDate(seguimiento.fecha_inicio_programada)} - ${this.formatDate(seguimiento.fecha_fin_programada)}\n`;
+      
+      if (seguimiento.estado_temporal === 'vigente' && seguimiento.dias_restantes !== undefined) {
+        texto += `Días restantes: ${this.formatDiasRestantes(seguimiento.dias_restantes)}\n`;
+      }
+      
+      if (seguimiento.fecha_inicio_real) {
+        texto += `Iniciado: ${this.formatDate(seguimiento.fecha_inicio_real)}\n`;
+      }
+      
+      if (seguimiento.sesiones_completadas !== undefined && seguimiento.sesiones_programadas !== undefined) {
+        texto += `Sesiones completadas: ${seguimiento.sesiones_completadas} / ${seguimiento.sesiones_programadas}\n`;
+      }
+      
+      if (seguimiento.adherencia_porcentaje !== undefined) {
+        texto += `Adherencia: ${seguimiento.adherencia_porcentaje}%\n`;
+      }
+      texto += '\n';
     }
 
-    texto += `\nÚltima actualización: ${this.formatFecha(new Date())}\n`;
+    // Agregar objetivo principal si existe
+    if (terapia.objetivo_principal) {
+      texto += `OBJETIVO PRINCIPAL:\n`;
+      texto += `${terapia.objetivo_principal}\n\n`;
+    }
+
+    // Procesar ejercicios de la base de datos (JSONB)
+    if (terapia.ejercicios && typeof terapia.ejercicios === 'object') {
+      texto += `PLAN DE EJERCICIOS:\n\n`;
+      
+      // Las secciones están en el JSONB (calentamiento, fortalecimiento, etc.)
+      const seccionesOrdenadas = ['calentamiento', 'fortalecimiento', 'equilibrio', 'coordinacion', 'estiramiento', 'respiracion'];
+      
+      seccionesOrdenadas.forEach(seccionKey => {
+        const seccion = terapia.ejercicios[seccionKey];
+        
+        if (seccion && seccion.ejercicios && seccion.ejercicios.length > 0) {
+          // Nombre de la sección
+          texto += `${seccionKey.toUpperCase()}\n`;
+          
+          // Descripción de la sección
+          if (seccion.descripcion) {
+            texto += `${seccion.descripcion}\n`;
+          }
+          
+          // Información adicional de la sección
+          const infoSeccion = [];
+          if (seccion.tiempo_total) infoSeccion.push(`Tiempo: ${seccion.tiempo_total}`);
+          if (seccion.objetivos && seccion.objetivos.length > 0) {
+            infoSeccion.push(`Objetivos: ${seccion.objetivos.join(', ')}`);
+          }
+          
+          if (infoSeccion.length > 0) {
+            texto += `${infoSeccion.join(' | ')}\n`;
+          }
+          
+          texto += '\n';
+          
+          // Ejercicios de la sección
+          seccion.ejercicios.forEach((ejercicio: any, index: number) => {
+            texto += `${index + 1}. ${ejercicio.nombre}\n`;
+            
+            if (ejercicio.descripcion) {
+              texto += `   ${ejercicio.descripcion}\n`;
+            }
+            
+            // Detalles del ejercicio
+            const detalles = [];
+            if (ejercicio.series) detalles.push(`${ejercicio.series} series`);
+            if (ejercicio.repeticiones) detalles.push(`${ejercicio.repeticiones} reps`);
+            if (ejercicio.duracion) detalles.push(`${ejercicio.duracion}`);
+            if (ejercicio.resistencia) detalles.push(`Resistencia: ${ejercicio.resistencia}`);
+            if (ejercicio.equipamiento && ejercicio.equipamiento.length > 0) {
+              detalles.push(`Equipo: ${ejercicio.equipamiento.join(', ')}`);
+            }
+            
+            if (detalles.length > 0) {
+              texto += `   ${detalles.join(' | ')}\n`;
+            }
+            
+            // Ejecución
+            if (ejercicio.ejecucion) {
+              texto += `   Ejecución: ${ejercicio.ejecucion}\n`;
+            }
+            
+            // Precauciones
+            if (ejercicio.precauciones) {
+              texto += `   ⚠️  ${ejercicio.precauciones}\n`;
+            }
+            
+            // Modificaciones
+            if (ejercicio.modificaciones) {
+              if (ejercicio.modificaciones.principiante) {
+                texto += `   💡 Principiante: ${ejercicio.modificaciones.principiante}\n`;
+              }
+              if (ejercicio.modificaciones.limitaciones) {
+                texto += `   🔧 Limitaciones: ${ejercicio.modificaciones.limitaciones}\n`;
+              }
+            }
+            
+            texto += '\n';
+          });
+          
+          texto += '\n';
+        }
+      });
+    } else {
+      // Si no hay ejercicios en JSONB, usar el plan genérico anterior
+      texto += `PLAN DE TRATAMIENTO:\n\n`;
+      texto += `1. Evaluación inicial y establecimiento de objetivos\n`;
+      texto += `2. Programa de ejercicios adaptado al nivel del paciente\n`;
+      texto += `3. Progresión gradual según tolerancia y evolución\n`;
+      texto += `4. Reevaluación periódica y ajustes del programa\n`;
+      texto += `5. Educación del paciente y recomendaciones para el hogar\n\n`;
+    }
+
+    // Agregar contraindicaciones si existen
+    if (terapia.contraindicaciones) {
+      texto += `CONTRAINDICACIONES:\n`;
+      texto += `${terapia.contraindicaciones}\n\n`;
+    }
+
+    // Agregar criterios de progresión
+    if (terapia.criterios_progresion) {
+      texto += `CRITERIOS DE PROGRESIÓN:\n`;
+      texto += `${terapia.criterios_progresion}\n\n`;
+    }
+
+    // Agregar mis notas si existen
+    if (seguimiento?.notas_individuales) {
+      texto += `MIS NOTAS PERSONALES:\n`;
+      texto += `${seguimiento.notas_individuales}\n\n`;
+    }
+
+    // Información adicional de seguimiento
+    if (seguimiento) {
+      if (seguimiento.nivel_dolor_actual !== undefined || seguimiento.nivel_funcionalidad_actual !== undefined) {
+        texto += `EVALUACIÓN ACTUAL:\n`;
+        if (seguimiento.nivel_dolor_actual !== undefined) {
+          texto += `Nivel de dolor: ${seguimiento.nivel_dolor_actual}/10\n`;
+        }
+        if (seguimiento.nivel_funcionalidad_actual !== undefined) {
+          texto += `Funcionalidad: ${seguimiento.nivel_funcionalidad_actual}%\n`;
+        }
+        texto += '\n';
+      }
+    }
+
+    // Tags si existen
+    if (terapia.tags && terapia.tags.length > 0) {
+      texto += `Tags: ${terapia.tags.map((tag: string) => `#${tag}`).join(' ')}\n\n`;
+    }
+
+    texto += `Última actualización: ${this.formatDate(new Date().toISOString())}\n`;
+    texto += `Generado por: rehabiMovement - Sistema de Rehabilitación\n`;
 
     return texto;
   }
 
+  // Copiar al portapapeles
   async copyToClipboard(text: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(text);
@@ -461,21 +769,30 @@ export class MisTerapiasComponent implements OnInit, OnDestroy {
     document.body.removeChild(textArea);
   }
 
-  safeExportTerapia(seguimiento: SeguimientoTerapiaDetallado): void {
-    if (seguimiento) {
-      this.exportarTerapia(seguimiento);
+  // Exportar terapia
+  safeExportTerapia(seguimiento: SeguimientoTerapiaSimplificado): void {
+    const terapia = seguimiento.terapia_completa || this.selectedTerapia || {
+      nombre: seguimiento.terapia_nombre,
+      descripcion: seguimiento.terapia_descripcion,
+      tipo: seguimiento.terapia_tipo,
+      nivel: seguimiento.terapia_nivel,
+      duracion_estimada: seguimiento.duracion_estimada
+    };
+    
+    if (terapia) {
+      this.exportarTerapia(terapia, seguimiento);
     } else {
       console.warn('No hay terapia disponible para exportar');
     }
   }
 
-  exportarTerapia(terapia: SeguimientoTerapiaDetallado): void {
+  exportarTerapia(terapia: any, seguimiento?: SeguimientoTerapiaSimplificado): void {
     if (!terapia) {
       console.warn('No hay terapia para exportar');
       return;
     }
-
-    const texto = this.getFormattedTerapia(terapia);
+    
+    const texto = this.getFormattedTerapia(terapia, seguimiento);
     if (!texto) {
       console.warn('No se pudo generar el contenido para exportar');
       return;
@@ -485,23 +802,40 @@ export class MisTerapiasComponent implements OnInit, OnDestroy {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${terapia.terapia_nombre.replace(/\s+/g, '_')}_mi_terapia.txt`;
+    link.download = `${terapia.nombre.replace(/\s+/g, '_')}_mi_terapia.txt`;
     link.click();
     window.URL.revokeObjectURL(url);
     
-    console.log('Mi terapia exportada:', terapia.terapia_nombre);
+    console.log('Mi terapia exportada:', terapia.nombre);
+    this.mostrarNotificacion('Terapia exportada correctamente', 'success');
   }
 
-  // ===== MÉTODOS DE UTILIDAD =====
-  async refrescarTerapias(): Promise<void> {
+  // Métodos de filtrado y utilidad
+  onSearch(): void {
+    this.applyFilters();
+  }
+
+  onFilterChange(): void {
+    this.applyFilters();
+  }
+
+  clearFilters(): void {
+    this.searchTerm = '';
+    this.estadoFilter = 'all';
+    this.estadoIndividualFilter = 'all';
+    this.progresoFilter = 'all';
+    this.applyFilters();
+  }
+
+  async refreshMisTerapias(): Promise<void> {
     await Promise.all([
-      this.cargarMisTerapias(),
-      this.cargarEstadisticasPersonales()
+      this.loadMisTerapias(),
+      this.loadEstadisticasPersonales()
     ]);
     this.mostrarNotificacion('Terapias actualizadas', 'success');
   }
 
-  // ===== SISTEMA DE NOTIFICACIONES =====
+  // Sistema de notificaciones
   mostrarNotificacion(mensaje: string, tipo: 'success' | 'error' | 'info' | 'warning' = 'info'): void {
     this.mensaje = mensaje;
     this.tipoMensaje = tipo;
@@ -517,18 +851,24 @@ export class MisTerapiasComponent implements OnInit, OnDestroy {
     this.mostrarMensaje = false;
   }
 
-  // ===== MÉTODOS DE FORMATEO =====
-  formatFecha(fecha: string | Date | undefined): string {
-    if (!fecha) return 'N/A';
+  // Métodos de formateo
+  formatDuracion(minutos?: number): string {
+    if (!minutos) return 'N/A';
+    const horas = Math.floor(minutos / 60);
+    const mins = minutos % 60;
+    return horas > 0 ? `${horas}h ${mins}m` : `${mins}m`;
+  }
+
+  formatDate(dateString: string | Date | undefined): string {
+    if (!dateString) return 'N/A';
     try {
       let fechaObj: Date;
-      if (fecha instanceof Date) {
-        fechaObj = fecha;
+      if (dateString instanceof Date) {
+        fechaObj = dateString;
       } else {
-        fechaObj = new Date(fecha);
+        fechaObj = new Date(dateString);
       }
       
-      // Verificar si la fecha es válida
       if (isNaN(fechaObj.getTime())) {
         return 'Fecha inválida';
       }
@@ -541,13 +881,6 @@ export class MisTerapiasComponent implements OnInit, OnDestroy {
     } catch (error) {
       return 'Fecha inválida';
     }
-  }
-
-  formatDuracion(minutos?: number): string {
-    if (!minutos || minutos === 0) return 'N/A';
-    const horas = Math.floor(minutos / 60);
-    const mins = minutos % 60;
-    return horas > 0 ? `${horas}h ${mins}m` : `${mins}m`;
   }
 
   formatDiasRestantes(dias: number | undefined): string {
@@ -564,14 +897,14 @@ export class MisTerapiasComponent implements OnInit, OnDestroy {
     }
   }
 
-  getFileName(terapia: SeguimientoTerapiaDetallado | null): string {
-    if (!terapia || !terapia.terapia_nombre) {
+  getFileName(terapia: any | null): string {
+    if (!terapia || !terapia.nombre) {
       return 'mi_terapia.txt';
     }
-    return terapia.terapia_nombre.replace(/\s+/g, '_') + '_mi_terapia.txt';
+    return terapia.nombre.replace(/\s+/g, '_') + '_mi_terapia.txt';
   }
 
-  // ===== MÉTODOS DE ESTADO Y CLASES CSS =====
+  // Métodos de estado y colores
   getEstadoTemporalText(estado: string): string {
     switch (estado) {
       case 'vigente': return 'Vigente';
@@ -619,77 +952,8 @@ export class MisTerapiasComponent implements OnInit, OnDestroy {
     return 'green';
   }
 
-  // ===== MÉTODOS DE CÁLCULO =====
-  calcularEstadoTemporal(fechaInicio: string, fechaFin: string): { estado: string, diasRestantes: number } {
-    const hoy = new Date();
-    const inicio = new Date(fechaInicio);
-    const fin = new Date(fechaFin);
-    
-    // Normalizar fechas para comparación (solo fecha, sin hora)
-    hoy.setHours(0, 0, 0, 0);
-    inicio.setHours(0, 0, 0, 0);
-    fin.setHours(0, 0, 0, 0);
-    
-    const diasRestantes = Math.ceil((fin.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
-    
-    let estado: string;
-    if (hoy < inicio) {
-      estado = 'pendiente';
-    } else if (hoy <= fin) {
-      estado = 'vigente';
-    } else {
-      estado = 'vencida';
-    }
-    
-    return { estado, diasRestantes };
-  }
-
-  determinarEstadoPorProgreso(progreso: number): string {
-    if (progreso === 0) return 'pendiente';
-    if (progreso === 100) return 'completada';
-    return 'en_progreso';
-  }
-
-  // ===== VALIDACIONES =====
-  esFormularioValido(): boolean {
-    return this.progresoForm.progreso >= 0 && 
-           this.progresoForm.progreso <= 100 && 
-           this.progresoForm.estado !== '';
-  }
-
-  puedeActualizarProgreso(seguimiento: SeguimientoTerapiaDetallado): boolean {
-    return seguimiento.estado_individual !== 'completada' && 
-           seguimiento.estado_individual !== 'abandonada' &&
-           seguimiento.estado_temporal !== 'vencida';
-  }
-
-  // ===== TRACKBY FUNCTIONS =====
-  trackByTerapiaId(index: number, terapia: SeguimientoTerapiaDetallado): any {
+  // TrackBy functions para optimización
+  trackByTerapiaId(index: number, terapia: SeguimientoTerapiaSimplificado): any {
     return terapia.seguimiento_id || index;
-  }
-
-  // ===== MÉTODOS ADICIONALES PARA COHERENCIA CON MIS-RUTINAS =====
-  getTotalEjercicios(terapia: SeguimientoTerapiaDetallado): number {
-    // Si las terapias tienen ejercicios, implementar lógica similar
-    return 0;
-  }
-
-  calcularAdherencia(): number {
-    if (this.terapias.length === 0) return 0;
-    
-    const terapiasConProgreso = this.terapias.filter(t => t.progreso > 0);
-    return Math.round((terapiasConProgreso.length / this.terapias.length) * 100);
-  }
-
-  programarRecordatorio(seguimiento: SeguimientoTerapiaDetallado): void {
-    this.mostrarNotificacion('Función de recordatorios en desarrollo', 'info');
-  }
-
-  contactarTerapeuta(seguimiento: SeguimientoTerapiaDetallado): void {
-    this.mostrarNotificacion('Función de contacto en desarrollo', 'info');
-  }
-
-  exportarProgreso(): void {
-    this.mostrarNotificacion('Función de exportación en desarrollo', 'info');
   }
 }

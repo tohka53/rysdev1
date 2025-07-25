@@ -7,12 +7,12 @@
       <div>
         <h1 class="text-3xl font-bold text-gray-900">Mis Terapias Asignadas</h1>
         <p class="mt-2 text-sm text-gray-600">
-          Terapias que me han sido asignadas - Total: {{ terapias.length }}
+          Terapias que me han sido asignadas - Total: {{ misTerapias.length }}
         </p>
       </div>
       <div class="flex space-x-2">
         <button
-          (click)="refrescarTerapias()"
+          (click)="refreshMisTerapias()"
           class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           title="Refrescar lista"
         >
@@ -33,8 +33,8 @@
         <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
         <input
           type="text"
-          [(ngModel)]="filtros.busqueda"
-          (input)="aplicarFiltros()"
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
           placeholder="Buscar terapias..."
           class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         />
@@ -44,8 +44,8 @@
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2">Período</label>
         <select
-          [(ngModel)]="filtros.estado_temporal"
-          (change)="aplicarFiltros()"
+          [(ngModel)]="estadoFilter"
+          (change)="onFilterChange()"
           class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="all">Todos</option>
@@ -59,8 +59,8 @@
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2">Mi Estado</label>
         <select
-          [(ngModel)]="filtros.estado_individual"
-          (change)="aplicarFiltros()"
+          [(ngModel)]="estadoIndividualFilter"
+          (change)="onFilterChange()"
           class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="all">Todos</option>
@@ -71,27 +71,25 @@
         </select>
       </div>
 
-      <!-- Filtro por Tipo -->
+      <!-- Filtro por Progreso -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Progreso</label>
         <select
-          [(ngModel)]="filtros.tipo_terapia"
-          (change)="aplicarFiltros()"
+          [(ngModel)]="progresoFilter"
+          (change)="onFilterChange()"
           class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         >
-          <option value="all">Todos los tipos</option>
-          <option value="fisica">Física</option>
-          <option value="ocupacional">Ocupacional</option>
-          <option value="respiratoria">Respiratoria</option>
-          <option value="neurologica">Neurológica</option>
+          <option value="all">Todos</option>
+          <option value="sin_iniciar">Sin Iniciar (0%)</option>
+          <option value="en_progreso">En Progreso (1-99%)</option>
+          <option value="completado">Completado (100%)</option>
         </select>
       </div>
     </div>
     
     <div class="mt-4 flex justify-end">
       <button
-        *ngIf="hayFiltrosActivos()"
-        (click)="limpiarFiltros()"
+        (click)="clearFilters()"
         class="text-sm text-blue-600 hover:text-blue-800"
       >
         Limpiar filtros
@@ -119,7 +117,7 @@
   <!-- Grid de Mis Terapias -->
   <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     <div
-      *ngFor="let seguimiento of terapiasFiltradas; trackBy: trackByTerapiaId"
+      *ngFor="let seguimiento of filteredTerapias; trackBy: trackByTerapiaId"
       class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 border-l-4"
       [class.border-green-500]="seguimiento.estado_temporal === 'vigente'"
       [class.border-blue-500]="seguimiento.estado_temporal === 'pendiente'"
@@ -192,11 +190,11 @@
         <div class="text-sm text-gray-600 mb-4">
           <div class="flex justify-between">
             <span>Inicio:</span>
-            <span>{{ formatFecha(seguimiento.fecha_inicio_programada) }}</span>
+            <span>{{ formatDate(seguimiento.fecha_inicio_programada) }}</span>
           </div>
           <div class="flex justify-between">
             <span>Fin:</span>
-            <span>{{ formatFecha(seguimiento.fecha_fin_programada) }}</span>
+            <span>{{ formatDate(seguimiento.fecha_fin_programada) }}</span>
           </div>
           <div class="flex justify-between font-medium" 
                [class.text-green-600]="seguimiento.dias_restantes > 7"
@@ -215,13 +213,25 @@
           <span class="text-sm text-gray-500">{{ formatDuracion(seguimiento.duracion_estimada) }}</span>
         </div>
 
+        <!-- Información de sesiones -->
+        <div *ngIf="seguimiento.sesiones_completadas !== undefined && seguimiento.sesiones_programadas !== undefined" class="text-sm text-gray-600 mb-4">
+          <div class="flex justify-between">
+            <span>Sesiones:</span>
+            <span>{{ seguimiento.sesiones_completadas }} / {{ seguimiento.sesiones_programadas }}</span>
+          </div>
+          <div *ngIf="seguimiento.adherencia_porcentaje !== undefined" class="flex justify-between">
+            <span>Adherencia:</span>
+            <span>{{ seguimiento.adherencia_porcentaje }}%</span>
+          </div>
+        </div>
+
         <!-- Fechas reales si existen -->
         <div *ngIf="seguimiento.fecha_inicio_real || seguimiento.fecha_fin_real" class="text-xs text-gray-500 mb-4">
           <div *ngIf="seguimiento.fecha_inicio_real">
-            Iniciado: {{ formatFecha(seguimiento.fecha_inicio_real) }}
+            Iniciado: {{ formatDate(seguimiento.fecha_inicio_real) }}
           </div>
           <div *ngIf="seguimiento.fecha_fin_real">
-            Completado: {{ formatFecha(seguimiento.fecha_fin_real) }}
+            Completado: {{ formatDate(seguimiento.fecha_fin_real) }}
           </div>
         </div>
 
@@ -246,18 +256,6 @@
             </svg>
           </button>
           
-          <!-- Botón Actualizar Progreso -->
-          <button
-            *ngIf="seguimiento.estado_individual !== 'completada' && seguimiento.estado_individual !== 'abandonada'"
-            (click)="openProgresoModal(seguimiento)"
-            class="text-green-600 hover:text-green-900 p-2 rounded-full hover:bg-green-50 transition-colors duration-150"
-            title="Actualizar progreso detallado"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </button>
-
           <!-- Botón Exportar -->
           <button
             (click)="safeExportTerapia(seguimiento)"
@@ -274,13 +272,13 @@
   </div>
 
   <!-- Empty State -->
-  <div *ngIf="!loading && terapiasFiltradas.length === 0" class="text-center py-12">
+  <div *ngIf="!loading && filteredTerapias.length === 0" class="text-center py-12">
     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
     </svg>
     <h3 class="mt-2 text-sm font-medium text-gray-900">No hay terapias asignadas</h3>
     <p class="mt-1 text-sm text-gray-500">
-      <ng-container *ngIf="terapias.length === 0; else filtrosAplicados">
+      <ng-container *ngIf="misTerapias.length === 0; else filtrosAplicados">
         No tienes terapias asignadas en este momento.
       </ng-container>
       <ng-template #filtrosAplicados>
@@ -289,8 +287,8 @@
     </p>
     <div class="mt-6">
       <button
-        *ngIf="terapias.length > 0"
-        (click)="limpiarFiltros()"
+        *ngIf="misTerapias.length > 0"
+        (click)="clearFilters()"
         class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
       >
         Limpiar filtros
@@ -300,7 +298,7 @@
 </div>
 
 <!-- Modal para Ver Terapia Completa -->
-<div *ngIf="showViewModal && selectedViewTerapia" class="fixed inset-0 z-50 overflow-y-auto">
+<div *ngIf="showViewModal" class="fixed inset-0 z-50 overflow-y-auto">
   <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
     <!-- Backdrop -->
     <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeViewModal()"></div>
@@ -318,11 +316,11 @@
           </div>
           <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
             <h3 class="text-lg leading-6 font-medium text-gray-900">
-              {{ selectedViewTerapia?.terapia_nombre }}
+              {{ selectedTerapia?.nombre }}
             </h3>
             <div class="mt-2">
               <p class="text-sm text-gray-500">
-                Mi terapia asignada - Progreso: {{ selectedViewTerapia?.progreso }}%
+                Mi terapia asignada - Progreso: {{ selectedSeguimiento?.progreso }}%
               </p>
             </div>
           </div>
@@ -338,29 +336,29 @@
               <span class="font-medium text-gray-700">Mi Progreso:</span>
               <div class="text-gray-900 flex items-center">
                 <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                  <div class="bg-blue-600 h-2 rounded-full" [style.width.%]="selectedViewTerapia?.progreso"></div>
+                  <div class="bg-blue-600 h-2 rounded-full" [style.width.%]="selectedSeguimiento?.progreso"></div>
                 </div>
-                {{ selectedViewTerapia?.progreso }}%
+                {{ selectedSeguimiento?.progreso }}%
               </div>
             </div>
             <div>
               <span class="font-medium text-gray-700">Estado:</span>
-              <div class="text-gray-900">{{ getEstadoIndividualText(selectedViewTerapia?.estado_individual || '') }}</div>
+              <div class="text-gray-900">{{ getEstadoIndividualText(selectedSeguimiento?.estado_individual || '') }}</div>
             </div>
             <div>
               <span class="font-medium text-gray-700">Período:</span>
               <div class="text-gray-900">
-                {{ formatFecha(selectedViewTerapia?.fecha_inicio_programada) }} - 
-                {{ formatFecha(selectedViewTerapia?.fecha_fin_programada) }}
+                {{ formatDate(selectedSeguimiento?.fecha_inicio_programada) }} - 
+                {{ formatDate(selectedSeguimiento?.fecha_fin_programada) }}
               </div>
             </div>
             <div>
               <span class="font-medium text-gray-700">Días restantes:</span>
               <div class="text-gray-900"
-                   [class.text-green-600]="(selectedViewTerapia?.dias_restantes || 0) > 7"
-                   [class.text-yellow-600]="(selectedViewTerapia?.dias_restantes || 0) <= 7 && (selectedViewTerapia?.dias_restantes || 0) > 0"
-                   [class.text-red-600]="(selectedViewTerapia?.dias_restantes || 0) <= 0">
-                {{ formatDiasRestantes(selectedViewTerapia?.dias_restantes || 0) }}
+                   [class.text-green-600]="(selectedSeguimiento?.dias_restantes || 0) > 7"
+                   [class.text-yellow-600]="(selectedSeguimiento?.dias_restantes || 0) <= 7 && (selectedSeguimiento?.dias_restantes || 0) > 0"
+                   [class.text-red-600]="(selectedSeguimiento?.dias_restantes || 0) <= 0">
+                {{ formatDiasRestantes(selectedSeguimiento?.dias_restantes || 0) }}
               </div>
             </div>
           </div>
@@ -378,12 +376,12 @@
               <div class="w-3 h-3 bg-green-500 rounded-full"></div>
             </div>
             <div class="text-gray-400 text-xs">
-              {{ getFileName(selectedViewTerapia) }}
+              {{ getFileName(selectedTerapia) }}
             </div>
           </div>
           
           <!-- Contenido de la terapia -->
-          <pre class="whitespace-pre-wrap text-white">{{ getFormattedTerapia(selectedViewTerapia) }}</pre>
+          <pre class="whitespace-pre-wrap text-white">{{ getFormattedTerapia(selectedTerapia, selectedSeguimiento || undefined) }}</pre>
         </div>
         
         <!-- Mensaje de éxito al copiar -->
@@ -401,7 +399,7 @@
         <!-- Botones de acción -->
         <div class="mt-4 flex justify-between">
           <button
-            (click)="copyToClipboard(getFormattedTerapia(selectedViewTerapia))"
+            (click)="copyToClipboard(getFormattedTerapia(selectedTerapia, selectedSeguimiento ?? undefined))"
             class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -411,8 +409,8 @@
           </button>
           
           <button
-            *ngIf="selectedViewTerapia"
-            (click)="exportarTerapia(selectedViewTerapia)"
+            *ngIf="selectedTerapia"
+            (click)="exportarTerapia(selectedTerapia, selectedSeguimiento || undefined)"
             class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -432,135 +430,6 @@
         >
           Cerrar
         </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal para Actualizar Progreso -->
-<div *ngIf="showProgresoModal && selectedProgresoTerapia" class="fixed inset-0 z-50 overflow-y-auto">
-  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-    <!-- Backdrop -->
-    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeProgresoModal()"></div>
-
-    <!-- Modal Panel -->
-    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-      <!-- Modal Header -->
-      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-        <div class="sm:flex sm:items-start">
-          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
-            <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </div>
-          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">
-              Actualizar Progreso
-            </h3>
-            <div class="mt-2">
-              <p class="text-sm text-gray-500">
-                {{ selectedProgresoTerapia?.terapia_nombre }}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="bg-white px-4 pb-4 sm:px-6">
-        <div>
-          <!-- Progreso Slider -->
-          <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Progreso: {{ progresoForm.progreso }}%
-            </label>
-            <input
-              type="range"
-              name="progreso"
-              [(ngModel)]="progresoForm.progreso"
-              min="0"
-              max="100"
-              step="5"
-              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-            >
-            <div class="flex justify-between text-xs text-gray-500 mt-1">
-              <span>0%</span>
-              <span>25%</span>
-              <span>50%</span>
-              <span>75%</span>
-              <span>100%</span>
-            </div>
-          </div>
-
-          <!-- Estado -->
-          <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Estado de la terapia</label>
-            <select
-              name="estado"
-              [(ngModel)]="progresoForm.estado"
-              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              required
-            >
-              <option value="pendiente">Sin iniciar</option>
-              <option value="en_progreso">En progreso</option>
-              <option value="completada">Completada</option>
-              <option value="abandonada">Abandonada</option>
-            </select>
-          </div>
-
-          <!-- Notas -->
-          <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Notas adicionales
-            </label>
-            <textarea
-              name="notas"
-              [(ngModel)]="progresoForm.notas"
-              rows="3"
-              placeholder="Agrega comentarios sobre tu progreso, dificultades encontradas, etc..."
-              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            ></textarea>
-          </div>
-
-          <!-- Información actual -->
-          <div class="bg-gray-50 rounded-md p-4 mb-6">
-            <h4 class="text-sm font-medium text-gray-900 mb-2">Estado actual</h4>
-            <div class="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span class="text-gray-500">Progreso actual:</span>
-                <span class="ml-2 font-medium">{{ selectedProgresoTerapia.progreso }}%</span>
-              </div>
-              <div>
-                <span class="text-gray-500">Estado actual:</span>
-                <span class="ml-2 font-medium">{{ getEstadoIndividualText(selectedProgresoTerapia.estado_individual) }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Botones de acción -->
-          <div class="flex justify-end space-x-3">
-            <button
-              type="button"
-              (click)="closeProgresoModal()"
-              class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              (click)="actualizarProgreso()"
-              [disabled]="!esFormularioValido() || updating"
-              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg *ngIf="updating" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              {{ updating ? 'Actualizando...' : 'Actualizar Progreso' }}
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
