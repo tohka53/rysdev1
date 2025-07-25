@@ -1,0 +1,440 @@
+/* src/app/mis-terapias/mis-terapias.component.css */
+
+/* Estilos base del componente */
+.mis-terapias-container {
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+/* Estilos para las tarjetas de terapia */
+.terapia-card {
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+}
+
+.terapia-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Header de tarjetas con gradientes mejorados */
+.terapia-header-vigente {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.terapia-header-vencida {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.terapia-header-pendiente {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+/* Estilos para la barra de progreso */
+.progress-bar-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar {
+  transition: width 0.6s ease-in-out;
+  position: relative;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Estilos para badges y etiquetas */
+.badge-terapia-tipo {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.badge-nivel {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.badge-tag {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.badge-tag:hover {
+  transform: scale(1.05);
+}
+
+/* Estilos para el estado temporal */
+.estado-punto {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Estilos para el modal de visualización */
+.terminal-display {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background: #1a1a1a;
+  color: #00ff00;
+  border-radius: 8px;
+  padding: 20px;
+  position: relative;
+  overflow: auto;
+  max-height: 400px;
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #333;
+}
+
+.terminal-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.terminal-button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.terminal-button.red { background: #ff5f56; }
+.terminal-button.yellow { background: #ffbd2e; }
+.terminal-button.green { background: #27ca3f; }
+
+.terminal-title {
+  color: #666;
+  font-size: 12px;
+}
+
+.terminal-content {
+  line-height: 1.6;
+}
+
+.terminal-prompt {
+  color: #ffff00;
+}
+
+.terminal-command {
+  color: #00ffff;
+}
+
+.terminal-output {
+  color: #ffffff;
+  margin-left: 16px;
+}
+
+.terminal-separator {
+  color: #0099ff;
+  margin: 8px 0;
+}
+
+/* Estilos para el slider de progreso */
+.progress-slider {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: #e5e7eb;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.progress-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.progress-slider::-webkit-slider-thumb:hover {
+  background: #1d4ed8;
+  transform: scale(1.1);
+}
+
+.progress-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Estilos para las estadísticas */
+.stats-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stats-number {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stats-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Animaciones de entrada */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.5s ease-out;
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .stats-card {
+    padding: 12px;
+  }
+  
+  .stats-number {
+    font-size: 20px;
+  }
+  
+  .terapia-card {
+    margin-bottom: 16px;
+  }
+  
+  .terminal-display {
+    font-size: 12px;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .filters-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .terapia-header h3 {
+    font-size: 18px;
+  }
+}
+
+/* Estilos para estados de carga */
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Estilos para notas y observaciones */
+.nota-paciente {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-left: 4px solid #f59e0b;
+  padding: 12px;
+  border-radius: 6px;
+  margin: 12px 0;
+}
+
+.nota-paciente .nota-titulo {
+  color: #92400e;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.nota-paciente .nota-contenido {
+  color: #78350f;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* Estilos para botones personalizados */
+.btn-terapia {
+  transition: all 0.2s ease;
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-terapia::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.btn-terapia:hover::before {
+  left: 100%;
+}
+
+.btn-primary-terapia {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+}
+
+.btn-primary-terapia:hover {
+  background: linear-gradient(135deg, #1e40af, #1e3a8a);
+  transform: translateY(-1px);
+}
+
+/* Estilos para elementos vacíos */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #6b7280;
+}
+
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.empty-state-description {
+  font-size: 16px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* Mejoras de accesibilidad */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus states mejorados */
+.focus\:ring-terapia:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+/* Estilos para tooltips */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 200px;
+  background-color: #1f2937;
+  color: #ffffff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 12px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -100px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}

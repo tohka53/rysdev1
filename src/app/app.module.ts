@@ -10,7 +10,7 @@ import { UsuariosComponent } from './usuarios/usuarios/usuarios.component';
 import { LoginComponent } from './login/login/login.component';
 import { RegisterComponent } from './register/register/register.component';
 import { DashboardComponent } from './dashboard/dashboard/dashboard.component'; // Asegúrate de que la ruta sea correcta
-
+import { Router, RouterModule } from '@angular/router';
 import { Analytics } from "@vercel/analytics/next"
 // Servicios
 import { AuthService } from './services/auth.service';
@@ -21,6 +21,9 @@ import { RutinasComponent } from './rutinas/rutinas/rutinas.component';
 import { TiposSeccionComponent } from './tipos-seccion/tipos-seccion/tipos-seccion.component';
 import { RutinasUsuarioComponent } from './rutinas-usuario/rutinas-usuario/rutinas-usuario.component';
 import { MisRutinasComponent } from './mis-rutinas/mis-rutinas/mis-rutinas.component';
+import { TerapiasComponent } from './terapias/terapias/terapias.component';
+import { TerapiasUsuarioComponent } from './terapias-usuario/terapias-usuario/terapias-usuario.component';
+import { MisTerapiasComponent } from './mis-terapias/mis-terapias/mis-terapias.component';
 
 
 @NgModule({
@@ -36,14 +39,19 @@ import { MisRutinasComponent } from './mis-rutinas/mis-rutinas/mis-rutinas.compo
     RutinasComponent,
     TiposSeccionComponent,
     RutinasUsuarioComponent,
-    MisRutinasComponent
+    MisRutinasComponent,
+    TerapiasComponent,
+    TerapiasUsuarioComponent,
+    MisTerapiasComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     FormsModule,
     ReactiveFormsModule,  
-    FormsModule            
+    FormsModule,
+    RouterModule
+
     
      
   ],

@@ -14,6 +14,9 @@ import { RutinasComponent } from './rutinas/rutinas/rutinas.component';
 import { TiposSeccionComponent } from './tipos-seccion/tipos-seccion/tipos-seccion.component';
 import { RutinasUsuarioComponent } from './rutinas-usuario/rutinas-usuario/rutinas-usuario.component';
 import { MisRutinasComponent } from './mis-rutinas/mis-rutinas/mis-rutinas.component';
+import { TerapiasComponent } from './terapias/terapias/terapias.component';
+import { TerapiasUsuarioComponent } from './terapias-usuario/terapias-usuario/terapias-usuario.component';
+import { MisTerapiasComponent } from './mis-terapias/mis-terapias/mis-terapias.component';
 
 const routes: Routes = [
   // Ruta principal - Landing page
@@ -75,6 +78,31 @@ const routes: Routes = [
         component: MisRutinasComponent,
         canActivate: [AuthGuard]
       },
+
+     { 
+        path: 'terapias', 
+        component: TerapiasComponent,
+        canActivate: [PermissionGuard],
+        data: { 
+          permissions: ['view'],
+          profiles: [1, 3] // Admin, Usuario, Supervisor
+        }
+      }, 
+ { 
+        path: 'terapias-asignadas', 
+        component: TerapiasUsuarioComponent,
+        canActivate: [PermissionGuard],
+        data: { 
+          permissions: ['view'],
+          profiles: [1, 3] // Admin, Usuario, Supervisor
+        }
+      }, 
+      { 
+        path: 'mis-terapias', 
+        component: MisTerapiasComponent,
+        canActivate: [AuthGuard]
+      },
+
 
       // Aquí puedes agregar más rutas protegidas
       // { path: 'reportes', component: ReportesComponent },

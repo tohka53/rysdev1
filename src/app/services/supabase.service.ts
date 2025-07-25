@@ -1,111 +1,79 @@
+// src/app/services/supabase.service.ts
 import { Injectable } from '@angular/core';
-import { createClient, SupabaseClient, AuthResponse, User } from '@supabase/supabase-js';
-import { environment } from '../../environments/environment';
+import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Profile {
-  id: string;
-  username?: string;
-  full_name?: string;
+  id?: number;
+  username: string;
+  full_name: string;
   avatar_url?: string;
-  id_perfil?: number;
-  provider?: string;
+  id_perfil: number;
+  status: number;
   created_at?: string;
   updated_at?: string;
-  status?: number;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class SupabaseService {
-  private supabase: SupabaseClient;
+  public supabase: SupabaseClient;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor() {
     this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
-    
-    // Escuchar cambios en el estado de autenticación
-    this.supabase.auth.onAuthStateChange((event, session) => {
-      this.currentUserSubject.next(session?.user ?? null);
-    });
+    this.loadUser();
+  }
 
-    // Obtener usuario actual al inicializar
-    this.getCurrentUser();
+  private async loadUser() {
+    const { data: { user } } = await this.supabase.auth.getUser();
+    this.currentUserSubject.next(user);
   }
 
   // ================================
   // MÉTODOS DE AUTENTICACIÓN
   // ================================
 
-  public async signUp(email: string, password: string, userData?: any): Promise<AuthResponse> {
-    return await this.supabase.auth.signUp({
+  public async signUp(email: string, password: string, userData?: any) {
+    const { data, error } = await this.supabase.auth.signUp({
       email,
       password,
       options: {
-        data: userData // Datos adicionales del usuario
+        data: userData
       }
     });
+    
+    if (data.user) {
+      this.currentUserSubject.next(data.user);
+    }
+    
+    return { data, error };
   }
 
-  public async signIn(email: string, password: string): Promise<AuthResponse> {
-    return await this.supabase.auth.signInWithPassword({
+  public async signIn(email: string, password: string) {
+    const { data, error } = await this.supabase.auth.signInWithPassword({
       email,
       password
     });
-  }
-
-  public async signInWithGoogle(): Promise<{ data: { provider: string; url: string | null }, error: any }> {
-    const { data, error } = await this.supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/dashboard` // Cambia por tu ruta de dashboard
-      }
-    });
+    
+    if (data.user) {
+      this.currentUserSubject.next(data.user);
+    }
+    
     return { data, error };
   }
 
-  public async signInWithFacebook(): Promise<{ data: { provider: string; url: string | null }, error: any }> {
-    const { data, error } = await this.supabase.auth.signInWithOAuth({
-      provider: 'facebook',
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`
-      }
-    });
-    return { data, error };
-  }
-
-  public async signOut(): Promise<{ error: any }> {
+  public async signOut() {
     const { error } = await this.supabase.auth.signOut();
     this.currentUserSubject.next(null);
     return { error };
   }
 
-  public async getCurrentUser(): Promise<User | null> {
-    try {
-      const { data: { user }, error } = await this.supabase.auth.getUser();
-      if (error) throw error;
-      this.currentUserSubject.next(user);
-      return user;
-    } catch (error) {
-      console.error('Error obteniendo usuario actual:', error);
-      return null;
-    }
-  }
-
-  public async resetPassword(email: string): Promise<{ error: any }> {
-    const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`
-    });
-    return { error };
-  }
-
-  public async updatePassword(newPassword: string): Promise<{ error: any }> {
-    const { error } = await this.supabase.auth.updateUser({
-      password: newPassword
-    });
-    return { error };
+  public async getCurrentUser() {
+    return await this.supabase.auth.getUser();
   }
 
   // ================================
@@ -178,7 +146,7 @@ export class SupabaseService {
   }
 
   // ================================
-  // MÉTODOS CRUD GENERALES (mantener los existentes)
+  // MÉTODOS CRUD GENERALES
   // ================================
 
   public async getData(table: string): Promise<any[] | null> {
@@ -196,6 +164,35 @@ export class SupabaseService {
     }
   }
 
+  public async getDataWithFilters(
+    table: string, 
+    select: string = '*', 
+    filters?: { [key: string]: any }
+  ): Promise<any[] | null> {
+    try {
+      let query = this.supabase
+        .from(table)
+        .select(select);
+
+      // Aplicar filtros si existen
+      if (filters) {
+        Object.keys(filters).forEach(key => {
+          query = query.eq(key, filters[key]);
+        });
+      }
+
+      query = query.order('id', { ascending: false });
+
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error en getDataWithFilters:', error);
+      throw error;
+    }
+  }
+
   public async insertData(table: string, dataToInsert: any): Promise<any | null> {
     try {
       const { data, error } = await this.supabase
@@ -207,6 +204,21 @@ export class SupabaseService {
       return data;
     } catch (error) {
       console.error('Error en insertData:', error);
+      throw error;
+    }
+  }
+
+  public async insertBulkData(table: string, dataToInsert: any[]): Promise<any[] | null> {
+    try {
+      const { data, error } = await this.supabase
+        .from(table)
+        .insert(dataToInsert)
+        .select();
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error en insertBulkData:', error);
       throw error;
     }
   }
@@ -242,17 +254,74 @@ export class SupabaseService {
     }
   }
 
+  // ================================
+  // MÉTODOS ADICIONALES
+  // ================================
+
+  public async getDataCustomQuery(
+    table: string,
+    selectQuery: string,
+    whereClause?: string,
+    orderBy?: { column: string, ascending: boolean }
+  ): Promise<any[] | null> {
+    try {
+      let query = this.supabase
+        .from(table)
+        .select(selectQuery);
+
+      if (orderBy) {
+        query = query.order(orderBy.column, { ascending: orderBy.ascending });
+      } else {
+        query = query.order('id', { ascending: false });
+      }
+
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error en getDataCustomQuery:', error);
+      throw error;
+    }
+  }
+
+  public async executeRPC(functionName: string, params?: any): Promise<any[] | null> {
+    try {
+      const { data, error } = await this.supabase
+        .rpc(functionName, params);
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error en executeRPC:', error);
+      throw error;
+    }
+  }
+
+  // ================================
+  // GETTERS Y HELPERS
+  // ================================
+
   public get client(): SupabaseClient {
     return this.supabase;
   }
 
-  // Método helper para verificar si el usuario está autenticado
   public isAuthenticated(): boolean {
     return this.currentUserSubject.value !== null;
   }
 
-  // Método helper para obtener el usuario actual como Observable
   public getCurrentUser$(): Observable<User | null> {
     return this.currentUser$;
   }
+
+  // Método auxiliar para manejar arrays null
+  public ensureArray<T>(data: T[] | null): T[] {
+    return data || [];
+  }
+
+
+
+
+
+
 }

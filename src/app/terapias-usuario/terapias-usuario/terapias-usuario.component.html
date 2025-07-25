@@ -1,0 +1,785 @@
+<!-- src/app/terapias-usuario/terapias-usuario.component.html -->
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+  
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Asignación de Terapias a Usuarios</h1>
+        <p class="mt-2 text-sm text-gray-600">
+          Gestiona las asignaciones masivas de terapias - Total: {{ asignaciones.length }}
+        </p>
+      </div>
+      <div class="flex space-x-2">
+        <button
+          (click)="refreshData()"
+          class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Refrescar
+        </button>
+        <button
+          *ngIf="canAssignTerapias()"
+          (click)="openAsignarModal()"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          Asignar Terapia
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="bg-white rounded-lg shadow mb-6 p-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Búsqueda -->
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Buscar por terapia, asignador o terapeuta..."
+          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+        />
+      </div>
+
+      <!-- Filtro por Estado -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+        <select
+          [(ngModel)]="estadoFilter"
+          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+        >
+          <option value="all">Todos los estados</option>
+          <option value="activa">Activa</option>
+          <option value="completada">Completada</option>
+          <option value="pausada">Pausada</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+      </div>
+
+      <!-- Filtro por Tipo -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+        <select
+          [(ngModel)]="tipoFilter"
+          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+        >
+          <option value="all">Todos los tipos</option>
+          <option value="individual">Individual</option>
+          <option value="grupal">Grupal</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="mt-4 flex justify-end">
+      <button
+        (click)="clearFilters()"
+        class="text-sm text-red-600 hover:text-red-800"
+      >
+        Limpiar filtros
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error && !showAsignarModal && !showVerModal" class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+    <div class="flex">
+      <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div class="ml-3">
+        <p class="text-sm text-red-700">{{ error }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading && !showAsignarModal && !showVerModal" class="flex justify-center items-center h-64">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+  </div>
+
+  <!-- Tabla de Asignaciones -->
+  <div *ngIf="!loading" class="bg-white shadow overflow-hidden sm:rounded-md">
+    <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+      <h3 class="text-lg leading-6 font-medium text-gray-900">
+        Asignaciones Realizadas ({{ filteredAsignaciones.length }})
+      </h3>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Terapia
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Usuarios
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Fechas
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Configuración
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Estado
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Asignado por
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Acciones
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let asignacion of filteredAsignaciones; trackBy: trackByAsignacionId" class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div>
+                <div class="text-sm font-medium text-gray-900">{{ asignacion.terapia_nombre }}</div>
+                <div class="text-sm text-gray-500">{{ asignacion.terapia_tipo | titlecase }}</div>
+                <div *ngIf="asignacion.area_especializacion" class="text-xs text-gray-400">
+                  {{ asignacion.area_especializacion }}
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <svg class="h-4 w-4 text-gray-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                <span class="text-sm font-medium text-gray-900">{{ asignacion.usuarios_count }}</span>
+                <span class="text-sm text-gray-500 ml-1">usuarios</span>
+              </div>
+              <div class="text-xs text-gray-400 mt-1">
+                {{ asignacion.tipo_asignacion | titlecase }}
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <div>{{ formatDate(asignacion.fecha_inicio_programada) }}</div>
+              <div class="text-gray-500">{{ formatDate(asignacion.fecha_fin_programada) }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <div>{{ asignacion.sesiones_por_semana }}/semana</div>
+              <div class="text-gray-500">{{ formatDuracion(asignacion.duracion_sesion) }}/sesión</div>
+              <div *ngIf="asignacion.terapeuta_nombre" class="text-xs text-gray-400 mt-1">
+                {{ asignacion.terapeuta_nombre }}
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    [ngClass]="{
+                      'bg-green-100 text-green-800': asignacion.estado_asignacion === 'activa',
+                      'bg-blue-100 text-blue-800': asignacion.estado_asignacion === 'completada',
+                      'bg-yellow-100 text-yellow-800': asignacion.estado_asignacion === 'pausada',
+                      'bg-red-100 text-red-800': asignacion.estado_asignacion === 'cancelada'
+                    }">
+                <i [class]="getEstadoIcon(asignacion.estado_asignacion) + ' mr-1'"></i>
+                {{ asignacion.estado_asignacion }}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ asignacion.asignado_por_nombre }}</div>
+              <div class="text-sm text-gray-500">{{ formatDate(asignacion.fecha_asignacion) }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <div class="flex justify-end space-x-2">
+                <!-- Botón Ver -->
+                <button
+                  (click)="openVerModal(asignacion)"
+                  class="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-blue-50"
+                  title="Ver seguimiento"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                </button>
+
+                <!-- Botón Cancelar -->
+                <button
+                  *ngIf="asignacion.estado_asignacion === 'activa' && canAssignTerapias()"
+                  (click)="cancelarAsignacion(asignacion.asignacion_id)"
+                  class="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50"
+                  title="Cancelar asignación"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+      <div *ngIf="filteredAsignaciones.length === 0" class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No hay asignaciones</h3>
+        <p class="mt-1 text-sm text-gray-500">
+          <ng-container *ngIf="asignaciones.length === 0; else filtrosAplicados">
+            No se han creado asignaciones aún.
+          </ng-container>
+          <ng-template #filtrosAplicados>
+            No se encontraron asignaciones con los filtros aplicados.
+          </ng-template>
+        </p>
+        <div class="mt-6">
+          <button
+            *ngIf="asignaciones.length === 0 && canAssignTerapias()"
+            (click)="openAsignarModal()"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+          >
+            Crear primera asignación
+          </button>
+          <button
+            *ngIf="asignaciones.length > 0"
+            (click)="clearFilters()"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          >
+            Limpiar filtros
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Asignar Terapia -->
+<div *ngIf="showAsignarModal" class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeAsignarModal()"></div>
+
+    <!-- Modal Panel -->
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+      <!-- Modal Header -->
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+              Asignar Terapia a Usuarios
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500">
+                Selecciona una terapia y los usuarios a los que deseas asignarla.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="bg-white px-4 pb-4 sm:px-6 max-h-96 overflow-y-auto">
+        <form class="space-y-6">
+          <!-- Selección de Terapia -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Terapia <span class="text-red-500">*</span>
+            </label>
+            <select
+              [(ngModel)]="asignacionForm.id_terapia"
+              name="terapia"
+              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+            >
+              <option value="0">Selecciona una terapia</option>
+              <option *ngFor="let terapia of terapias; trackBy: trackByTerapiaId" [value]="terapia.id">
+                {{ terapia.nombre }} - {{ terapia.tipo | titlecase }} ({{ terapia.nivel }})
+              </option>
+            </select>
+          </div>
+
+          <!-- Configuración -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Tipo de Asignación -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Tipo de Asignación
+              </label>
+              <select
+                [(ngModel)]="asignacionForm.tipo_asignacion"
+                name="tipoAsignacion"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+              >
+                <option value="individual">Individual</option>
+                <option value="grupal">Grupal</option>
+              </select>
+            </div>
+
+            <!-- Terapeuta Responsable -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Terapeuta Responsable
+              </label>
+              <select
+                [(ngModel)]="asignacionForm.terapeuta_responsable"
+                name="terapeuta"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+              >
+                <option [value]="undefined">Sin asignar</option>
+                <option *ngFor="let terapeuta of terapeutas" [value]="terapeuta.id">
+                  {{ terapeuta.full_name }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Fechas -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Fecha de Inicio <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                [(ngModel)]="asignacionForm.fecha_inicio"
+                name="fechaInicio"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Fecha de Fin <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                [(ngModel)]="asignacionForm.fecha_fin"
+                name="fechaFin"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
+          </div>
+
+          <!-- Configuración de Sesiones -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Sesiones por Semana
+              </label>
+              <input
+                type="number"
+                [(ngModel)]="asignacionForm.sesiones_por_semana"
+                name="sesionesSemana"
+                min="1"
+                max="7"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Duración por Sesión (minutos)
+              </label>
+              <input
+                type="number"
+                [(ngModel)]="asignacionForm.duracion_sesion"
+                name="duracionSesion"
+                min="15"
+                max="180"
+                step="15"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
+          </div>
+
+          <!-- Notas -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Notas (Opcional)
+            </label>
+            <textarea
+              [(ngModel)]="asignacionForm.notas"
+              name="notas"
+              rows="3"
+              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+              placeholder="Notas adicionales sobre la asignación..."
+            ></textarea>
+          </div>
+
+          <!-- Objetivos Grupales (solo para asignación grupal) -->
+          <div *ngIf="asignacionForm.tipo_asignacion === 'grupal'">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Objetivos Grupales
+            </label>
+            <textarea
+              [(ngModel)]="asignacionForm.objetivos_grupales"
+              name="objetivosGrupales"
+              rows="3"
+              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+              placeholder="Objetivos específicos para la terapia grupal..."
+            ></textarea>
+          </div>
+
+          <!-- Selección de Usuarios -->
+          <div>
+            <div class="flex justify-between items-center mb-3">
+              <label class="block text-sm font-medium text-gray-700">
+                Usuarios <span class="text-red-500">*</span>
+              </label>
+              <div class="flex space-x-2">
+                <button
+                  type="button"
+                  (click)="selectAllUsuarios()"
+                  class="text-xs text-red-600 hover:text-red-800"
+                >
+                  Seleccionar todos
+                </button>
+                <button
+                  type="button"
+                  (click)="clearAllUsuarios()"
+                  class="text-xs text-gray-600 hover:text-gray-800"
+                >
+                  Limpiar selección
+                </button>
+              </div>
+            </div>
+            
+            <!-- Lista de usuarios con checkboxes -->
+            <div class="border border-gray-300 rounded-md p-3 max-h-48 overflow-y-auto">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <label
+                  *ngFor="let usuario of usuarios; trackBy: trackByUserId"
+                  class="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+                  [class.bg-red-50]="isUsuarioSelected(usuario.id!)"
+                >
+                  <input
+                    type="checkbox"
+                    [checked]="isUsuarioSelected(usuario.id!)"
+                    (change)="toggleUsuario(usuario.id!)"
+                    class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                  />
+                  <div class="ml-3 flex-1">
+                    <div class="text-sm font-medium text-gray-900">{{ usuario.full_name }}</div>
+                    <div class="text-xs text-gray-500">&#64;{{ usuario.username }}</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+            
+            <!-- Contador de usuarios seleccionados -->
+            <div class="mt-2 text-sm text-gray-600">
+              <span>{{ asignacionForm.usuarios_seleccionados.length }}</span>
+              <span *ngIf="asignacionForm.usuarios_seleccionados.length === 1; else pluralUsuarios"> usuario seleccionado</span>
+              <ng-template #pluralUsuarios> usuarios seleccionados</ng-template>
+            </div>
+          </div>
+        </form>
+
+        <!-- Error Message -->
+        <div *ngIf="error" class="mt-4 bg-red-50 border border-red-200 rounded-md p-3">
+          <div class="flex">
+            <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div class="ml-3">
+              <p class="text-sm text-red-700">{{ error }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button
+          type="button"
+          (click)="asignarTerapia()"
+          [disabled]="loading || !asignacionForm.id_terapia || asignacionForm.usuarios_seleccionados.length === 0"
+          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg *ngIf="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Asignar Terapia
+        </button>
+        <button
+          type="button"
+          (click)="closeAsignarModal()"
+          [disabled]="loading"
+          class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Ver Seguimiento -->
+<div *ngIf="showVerModal" class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeVerModal()"></div>
+
+    <!-- Modal Panel -->
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full">
+      <!-- Modal Header -->
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+              Seguimiento: {{ selectedAsignacion?.terapia_nombre }}
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500">
+                Progreso individual de cada usuario asignado
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="bg-white px-4 pb-4 sm:px-6">
+        <!-- Información de la asignación -->
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span class="font-medium text-gray-700">Período:</span>
+              <div class="text-gray-900">
+                {{ formatDate(selectedAsignacion?.fecha_inicio_programada || '') }} - 
+                {{ formatDate(selectedAsignacion?.fecha_fin_programada || '') }}
+              </div>
+            </div>
+            <div>
+              <span class="font-medium text-gray-700">Total usuarios:</span>
+              <div class="text-gray-900">{{ selectedAsignacion?.usuarios_count }}</div>
+            </div>
+            <div>
+              <span class="font-medium text-gray-700">Configuración:</span>
+              <div class="text-gray-900">
+                {{ selectedAsignacion?.sesiones_por_semana }}/sem - {{ formatDuracion(selectedAsignacion?.duracion_sesion) }}
+              </div>
+            </div>
+            <div>
+              <span class="font-medium text-gray-700">Asignado por:</span>
+              <div class="text-gray-900">{{ selectedAsignacion?.asignado_por_nombre }}</div>
+              <div *ngIf="selectedAsignacion?.terapeuta_nombre" class="text-xs text-gray-500">
+                Terapeuta: {{ selectedAsignacion?.terapeuta_nombre }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de seguimiento individual -->
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Usuario
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Progreso
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Estado
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Sesiones
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Adherencia
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Fechas Reales
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Notas
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let seguimiento of seguimientoDetalle; trackBy: trackByUserId" class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div class="h-8 w-8 bg-gray-300 rounded-full flex items-center justify-center mr-3">
+                      <span class="text-xs font-medium text-gray-700">
+                        {{ (seguimiento.full_name || 'U').charAt(0).toUpperCase() }}
+                      </span>
+                    </div>
+                    <div>
+                      <div class="text-sm font-medium text-gray-900">{{ seguimiento.full_name }}</div>
+                      <div class="text-sm text-gray-500">&#64;{{ seguimiento.username }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div class="w-16 bg-gray-200 rounded-full h-2 mr-3">
+                      <div class="bg-blue-600 h-2 rounded-full" [style.width.%]="seguimiento.progreso"></div>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900">{{ seguimiento.progreso }}%</span>
+                  </div>
+                  <!-- Input para actualizar progreso (solo admin/supervisor) -->
+                  <div *ngIf="canAssignTerapias()" class="mt-2">
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      [value]="seguimiento.progreso"
+                      (input)="actualizarProgreso(seguimiento.seguimiento_id, $event)"
+                      class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                    />
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        [ngClass]="{
+                          'bg-gray-100 text-gray-800': seguimiento.estado_individual === 'pendiente',
+                          'bg-yellow-100 text-yellow-800': seguimiento.estado_individual === 'en_progreso',
+                          'bg-green-100 text-green-800': seguimiento.estado_individual === 'completada',
+                          'bg-red-100 text-red-800': seguimiento.estado_individual === 'cancelada' || seguimiento.estado_individual === 'abandonada',
+                          'bg-purple-100 text-purple-800': seguimiento.estado_individual === 'pausada'
+                        }">
+                    {{ seguimiento.estado_individual }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <div>{{ seguimiento.sesiones_completadas || 0 }} / {{ seguimiento.sesiones_programadas || 0 }}</div>
+                  <div class="text-xs text-gray-500">
+                    {{ seguimiento.sesiones_programadas > 0 ? 
+                        Math.round((seguimiento.sesiones_completadas || 0) / seguimiento.sesiones_programadas * 100) : 0 }}% completado
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div class="w-12 bg-gray-200 rounded-full h-2 mr-2">
+                      <div class="bg-purple-600 h-2 rounded-full" [style.width.%]="seguimiento.adherencia_porcentaje || 0"></div>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900">{{ seguimiento.adherencia_porcentaje || 0 }}%</span>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <div *ngIf="seguimiento.fecha_inicio_real">
+                    <strong>Inicio:</strong> {{ formatDate(seguimiento.fecha_inicio_real) }}
+                  </div>
+                  <div *ngIf="seguimiento.fecha_fin_real">
+                    <strong>Fin:</strong> {{ formatDate(seguimiento.fecha_fin_real) }}
+                  </div>
+                  <div *ngIf="!seguimiento.fecha_inicio_real && !seguimiento.fecha_fin_real" class="text-gray-500">
+                    Sin fechas registradas
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="text-sm text-gray-900 max-w-xs">
+                    {{ seguimiento.notas_individuales || '-' }}
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div class="flex justify-end space-x-2">
+                    <!-- Botón para editar notas -->
+                    <button
+                      *ngIf="canAssignTerapias()"
+                      class="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
+                      title="Editar notas"
+                      (click)="editarNotasIndividuales(seguimiento)"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Empty State para seguimiento -->
+          <div *ngIf="seguimientoDetalle.length === 0" class="text-center py-8">
+            <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">Sin seguimiento disponible</h3>
+            <p class="mt-1 text-sm text-gray-500">
+              No se encontraron datos de seguimiento para esta asignación.
+            </p>
+          </div>
+        </div>
+
+        <!-- Estadísticas resumidas -->
+        <div *ngIf="seguimientoDetalle.length > 0" class="mt-6 bg-gray-50 rounded-lg p-4">
+          <h4 class="text-sm font-medium text-gray-900 mb-3">Resumen del Progreso</h4>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+            <div>
+              <div class="text-2xl font-bold text-gray-900">
+                {{ getEstadisticasProgreso().pendientes }}
+              </div>
+              <div class="text-xs text-gray-500">Pendientes</div>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-yellow-600">
+                {{ getEstadisticasProgreso().enProgreso }}
+              </div>
+              <div class="text-xs text-gray-500">En Progreso</div>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-green-600">
+                {{ getEstadisticasProgreso().completadas }}
+              </div>
+              <div class="text-xs text-gray-500">Completadas</div>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-blue-600">
+                {{ getEstadisticasProgreso().promedioProgreso }}%
+              </div>
+              <div class="text-xs text-gray-500">Progreso Promedio</div>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-purple-600">
+                {{ getEstadisticasProgreso().promedioAdherencia }}%
+              </div>
+              <div class="text-xs text-gray-500">Adherencia Promedio</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button
+          type="button"
+          (click)="closeVerModal()"
+          class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Action Button para móvil -->
+<button
+  *ngIf="!showAsignarModal && !showVerModal && canAssignTerapias()"
+  (click)="openAsignarModal()"
+  class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-red-600 text-white rounded-full shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 z-40"
+  title="Asignar terapia"
+>
+  <svg class="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+  </svg>
+</button>

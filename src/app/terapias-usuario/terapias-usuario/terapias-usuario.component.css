@@ -1,0 +1,611 @@
+/* terapias.component.css y terapias-usuario.component.css */
+
+/* ===============================================
+   ESTILOS GENERALES
+   =============================================== */
+
+.container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* ===============================================
+   ANIMACIONES PARA MODALES
+   =============================================== */
+
+.modal-enter {
+  animation: modalEnter 0.3s ease-out;
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-backdrop {
+  animation: backdropEnter 0.3s ease-out;
+}
+
+@keyframes backdropEnter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.75;
+  }
+}
+
+/* ===============================================
+   ESTILOS PARA EL TERMINAL DE VISTA DE TERAPIAS
+   =============================================== */
+
+.terminal-container {
+  background-color: #000;
+  color: #00ff00;
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.terminal-header {
+  background-color: #1a1a1a;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.terminal-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.terminal-control {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.terminal-control.close {
+  background-color: #ff5f56;
+}
+
+.terminal-control.minimize {
+  background-color: #ffbd2e;
+}
+
+.terminal-control.maximize {
+  background-color: #27ca3f;
+}
+
+.terminal-content {
+  padding: 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  min-height: 400px;
+}
+
+.watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(15deg);
+  font-size: 8rem;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+
+.terminal-text {
+  position: relative;
+  z-index: 10;
+}
+
+/* ===============================================
+   ESTILOS PARA TARJETAS DE TERAPIAS
+   =============================================== */
+
+.therapy-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+  border: 1px solid #e5e7eb;
+}
+
+.therapy-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.therapy-card-header {
+  padding: 1.25rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.therapy-card-body {
+  padding: 1.25rem;
+}
+
+.therapy-card-footer {
+  padding: 1rem 1.25rem;
+  background-color: #f9fafb;
+  border-top: 1px solid #f3f4f6;
+  border-radius: 0 0 12px 12px;
+}
+
+/* ===============================================
+   ESTILOS PARA BADGES Y ETIQUETAS
+   =============================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.badge-fisica {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-respiratoria {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.badge-neurologica {
+  background-color: #f3e8ff;
+  color: #7c3aed;
+}
+
+.badge-ocupacional {
+  background-color: #fed7aa;
+  color: #ea580c;
+}
+
+.badge-cardiaca {
+  background-color: #fecaca;
+  color: #dc2626;
+}
+
+/* ===============================================
+   ESTILOS PARA ESTADOS Y PROGRESS BARS
+   =============================================== */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-activa {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-completada {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.status-pausada {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-cancelada {
+  background-color: #fecaca;
+  color: #991b1b;
+}
+
+.status-pendiente {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.status-en-progreso {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-abandonada {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* Progress Bar Styles */
+.progress-bar {
+  width: 100%;
+  height: 0.5rem;
+  background-color: #e5e7eb;
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  transition: width 0.3s ease-in-out;
+  border-radius: 0.25rem;
+}
+
+.progress-green {
+  background-color: #10b981;
+}
+
+.progress-blue {
+  background-color: #3b82f6;
+}
+
+.progress-yellow {
+  background-color: #f59e0b;
+}
+
+.progress-red {
+  background-color: #ef4444;
+}
+
+/* ===============================================
+   ESTILOS PARA FORMULARIOS
+   =============================================== */
+
+.form-section {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-section.active {
+  border-color: #dc2626;
+  background-color: #fef2f2;
+}
+
+.section-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-card {
+  padding: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-align: center;
+}
+
+.section-card:hover {
+  border-color: #dc2626;
+  background-color: #fef2f2;
+}
+
+.section-card.selected {
+  border-color: #dc2626;
+  background-color: #fef2f2;
+}
+
+.section-card h3 {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.section-card.selected h3 {
+  color: #dc2626;
+}
+
+.section-card p {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* ===============================================
+   ESTILOS PARA EJERCICIOS
+   =============================================== */
+
+.exercise-card {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.exercise-header {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.exercise-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.exercise-actions button {
+  padding: 0.25rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.exercise-actions button:hover {
+  background-color: #f3f4f6;
+}
+
+.exercise-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 0.75rem;
+}
+
+/* ===============================================
+   ESTILOS PARA FLOATING ACTION BUTTON
+   =============================================== */
+
+.fab {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  z-index: 1000;
+}
+
+.fab:hover {
+  background-color: #b91c1c;
+  transform: scale(1.05);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.fab:active {
+  transform: scale(0.95);
+}
+
+@media (min-width: 768px) {
+  .fab {
+    display: none;
+  }
+}
+
+/* ===============================================
+   ESTILOS PARA LOADING STATES
+   =============================================== */
+
+.loading-spinner {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #f3f4f6;
+  border-radius: 50%;
+  border-top-color: #dc2626;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ===============================================
+   ESTILOS PARA TOOLTIPS
+   =============================================== */
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltip-text {
+  visibility: hidden;
+  width: 120px;
+  background-color: #374151;
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 0.75rem;
+}
+
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* ===============================================
+   ESTILOS RESPONSIVOS
+   =============================================== */
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+  
+  .therapy-card {
+    margin-bottom: 1rem;
+  }
+  
+  .section-selector {
+    grid-template-columns: 1fr;
+  }
+  
+  .exercise-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .terminal-content {
+    padding: 1rem;
+    font-size: 0.75rem;
+  }
+  
+  .watermark {
+    font-size: 4rem;
+  }
+}
+
+/* ===============================================
+   ESTILOS PARA ACCESIBILIDAD
+   =============================================== */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.focus-visible:focus {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+}
+
+/* ===============================================
+   ESTILOS PARA TABLAS
+   =============================================== */
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* ===============================================
+   UTILIDADES ADICIONALES
+   =============================================== */
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.bounce {
+  animation: bounce 0.5s ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0,0,0);
+  }
+  40%, 43% {
+    transform: translate3d(0,-5px,0);
+  }
+  70% {
+    transform: translate3d(0,-2px,0);
+  }
+  90% {
+    transform: translate3d(0,-1px,0);
+  }
+}
