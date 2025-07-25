@@ -140,7 +140,7 @@ Math: any;
   async loadUsuarios(): Promise<void> {
     try {
       const data = await this.supabaseService.getData('profiles');
-      this.usuarios = data?.filter(u => u.status === 1 && (u.id_perfil === 1 || u.id_perfil === 4)) || [];
+      this.usuarios = data?.filter(u => u.status === 1 && (u.id_perfil === 1 || u.id_perfil === 2)) || [];
     } catch (error) {
       console.error('Error cargando usuarios:', error);
     }
