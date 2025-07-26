@@ -24,6 +24,7 @@ import { MisRutinasComponent } from './mis-rutinas/mis-rutinas/mis-rutinas.compo
 import { TerapiasComponent } from './terapias/terapias/terapias.component';
 import { TerapiasUsuarioComponent } from './terapias-usuario/terapias-usuario/terapias-usuario.component';
 import { MisTerapiasComponent } from './mis-terapias/mis-terapias/mis-terapias.component';
+import { InformacionMedicaUsuariosComponent } from './informacion-medica-usuarios/informacion-medica-usuarios/informacion-medica-usuarios.component';
 
 
 @NgModule({
@@ -42,7 +43,8 @@ import { MisTerapiasComponent } from './mis-terapias/mis-terapias/mis-terapias.c
     MisRutinasComponent,
     TerapiasComponent,
     TerapiasUsuarioComponent,
-    MisTerapiasComponent
+    MisTerapiasComponent,
+    InformacionMedicaUsuariosComponent
   ],
   imports: [
     BrowserModule,

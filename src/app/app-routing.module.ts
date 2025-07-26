@@ -17,6 +17,7 @@ import { MisRutinasComponent } from './mis-rutinas/mis-rutinas/mis-rutinas.compo
 import { TerapiasComponent } from './terapias/terapias/terapias.component';
 import { TerapiasUsuarioComponent } from './terapias-usuario/terapias-usuario/terapias-usuario.component';
 import { MisTerapiasComponent } from './mis-terapias/mis-terapias/mis-terapias.component';
+import { InformacionMedicaUsuariosComponent } from './informacion-medica-usuarios/informacion-medica-usuarios/informacion-medica-usuarios.component';
 
 const routes: Routes = [
   // Ruta principal - Landing page
@@ -88,7 +89,7 @@ const routes: Routes = [
           profiles: [1, 3] // Admin, Usuario, Supervisor
         }
       }, 
- { 
+      { 
         path: 'terapias-asignadas', 
         component: TerapiasUsuarioComponent,
         canActivate: [PermissionGuard],
@@ -100,6 +101,11 @@ const routes: Routes = [
       { 
         path: 'mis-terapias', 
         component: MisTerapiasComponent,
+        canActivate: [AuthGuard]
+      },
+       { 
+        path: 'informacion-medica', 
+        component: InformacionMedicaUsuariosComponent,
         canActivate: [AuthGuard]
       },
 
