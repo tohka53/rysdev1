@@ -364,12 +364,19 @@
           </div>
         </div>
 
-        <!-- Terminal-style display -->
+        <!-- Terminal-style display CON MARCA DE AGUA -->
         <div class="bg-gray-900 text-green-400 rounded-lg p-6 font-mono text-sm overflow-auto max-h-96 relative" 
              style="font-family: 'Courier New', monospace; line-height: 1.6;">
           
+          <!-- MARCA DE AGUA - Imagen centrada -->
+          <div class="absolute inset-15 flex items-center justify-center pointer-events-none opacity-25">
+            <img src="/rh.png" 
+                 alt="RehabiMovement" 
+                 class="max-w-50 max-h-50 object-contain transform rotate-12 select-none">
+          </div>
+          
           <!-- Terminal header -->
-          <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-700">
+          <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-700 relative z-10">
             <div class="flex space-x-2">
               <div class="w-3 h-3 bg-red-500 rounded-full"></div>
               <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
@@ -381,7 +388,7 @@
           </div>
           
           <!-- Contenido de la terapia -->
-          <pre class="whitespace-pre-wrap text-white">{{ getFormattedTerapia(selectedTerapia, selectedSeguimiento || undefined) }}</pre>
+          <pre class="whitespace-pre-wrap text-white relative z-10">{{ getFormattedTerapia(selectedTerapia, selectedSeguimiento || undefined) }}</pre>
         </div>
         
         <!-- Mensaje de éxito al copiar -->
