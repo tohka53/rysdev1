@@ -1,0 +1,516 @@
+/* src/app/components/paquetes/paquete-detalle/paquete-detalle.component.css */
+
+.detalle-container {
+  @apply min-h-screen bg-gray-50;
+}
+
+/* Header del detalle */
+.detalle-header {
+  @apply bg-white border-b border-gray-200 mb-6;
+}
+
+.breadcrumb-nav {
+  @apply flex items-center gap-2 text-sm text-gray-500 mb-4;
+}
+
+.breadcrumb-link {
+  @apply hover:text-blue-600 transition-colors cursor-pointer;
+}
+
+.breadcrumb-separator {
+  @apply text-gray-400;
+}
+
+.header-content {
+  @apply flex flex-col md:flex-row md:justify-between md:items-start gap-4;
+}
+
+.header-info h1 {
+  @apply text-3xl font-bold text-gray-900 mb-2;
+}
+
+.header-info p {
+  @apply text-gray-600;
+}
+
+.header-actions {
+  @apply flex flex-wrap gap-3;
+}
+
+/* Badges y etiquetas */
+.badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border;
+}
+
+.badge-tipo {
+  @apply flex items-center gap-2;
+}
+
+.badge-status {
+  @apply flex items-center gap-2;
+}
+
+.tipo-icon, .status-icon {
+  @apply text-lg;
+}
+
+/* Cards principales */
+.info-card {
+  @apply bg-white rounded-lg shadow-sm border p-6 mb-6;
+}
+
+.card-title {
+  @apply text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200;
+}
+
+.card-content {
+  @apply space-y-4;
+}
+
+/* Grid de información */
+.info-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+}
+
+.stat-card {
+  @apply p-4 rounded-lg border;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  @apply transform scale-105;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card.blue {
+  @apply bg-blue-50 border-blue-200;
+}
+
+.stat-card.gray {
+  @apply bg-gray-50 border-gray-200;
+}
+
+.stat-card.yellow {
+  @apply bg-yellow-50 border-yellow-200;
+}
+
+.stat-card.green {
+  @apply bg-green-50 border-green-200;
+}
+
+.stat-card.red {
+  @apply bg-red-50 border-red-200;
+}
+
+.stat-header {
+  @apply flex items-center gap-3 mb-2;
+}
+
+.stat-icon {
+  @apply w-8 h-8 flex-shrink-0;
+}
+
+.stat-icon.blue {
+  @apply text-blue-600;
+}
+
+.stat-icon.gray {
+  @apply text-gray-600;
+}
+
+.stat-icon.yellow {
+  @apply text-yellow-600;
+}
+
+.stat-icon.green {
+  @apply text-green-600;
+}
+
+.stat-icon.red {
+  @apply text-red-600;
+}
+
+.stat-content h3 {
+  @apply text-sm font-medium mb-1;
+}
+
+.stat-content p {
+  @apply text-2xl font-bold;
+}
+
+.stat-content.blue h3 {
+  @apply text-blue-900;
+}
+
+.stat-content.blue p {
+  @apply text-blue-600;
+}
+
+.stat-content.gray h3 {
+  @apply text-gray-900;
+}
+
+.stat-content.gray p {
+  @apply text-gray-600;
+}
+
+.stat-content.yellow h3 {
+  @apply text-yellow-900;
+}
+
+.stat-content.yellow p {
+  @apply text-yellow-600;
+}
+
+.stat-content.green h3 {
+  @apply text-green-900;
+}
+
+.stat-content.green p {
+  @apply text-green-600;
+}
+
+.stat-content.red h3 {
+  @apply text-red-900;
+}
+
+.stat-content.red p {
+  @apply text-red-600;
+}
+
+/* Análisis de costos */
+.cost-analysis {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-6;
+}
+
+.cost-item {
+  @apply text-center p-4 rounded-lg;
+}
+
+.cost-item.gray {
+  @apply bg-gray-50;
+}
+
+.cost-item.green {
+  @apply bg-green-50;
+}
+
+.cost-item.blue {
+  @apply bg-blue-50;
+}
+
+.cost-label {
+  @apply text-sm mb-1;
+}
+
+.cost-label.gray {
+  @apply text-gray-600;
+}
+
+.cost-label.green {
+  @apply text-green-700;
+}
+
+.cost-label.blue {
+  @apply text-blue-700;
+}
+
+.cost-value {
+  @apply text-xl font-bold;
+}
+
+.cost-value.gray {
+  @apply text-gray-900;
+}
+
+.cost-value.green {
+  @apply text-green-600;
+}
+
+.cost-value.blue {
+  @apply text-blue-600;
+}
+
+/* Información del sistema */
+.system-info {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.info-item {
+  @apply space-y-1;
+}
+
+.info-label {
+  @apply text-sm font-medium text-gray-700;
+}
+
+.info-value {
+  @apply text-gray-900;
+}
+
+/* Sin descuento */
+.no-discount {
+  @apply text-center p-4 bg-gray-50 rounded-lg;
+}
+
+.no-discount p {
+  @apply text-gray-600;
+}
+
+/* Acciones del paquete */
+.actions-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
+}
+
+.action-button {
+  @apply flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium;
+}
+
+.action-button:hover {
+  @apply transform scale-105;
+}
+
+.action-button.primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.action-button.success {
+  @apply bg-green-600 text-white hover:bg-green-700;
+}
+
+.action-button.warning {
+  @apply bg-yellow-600 text-white hover:bg-yellow-700;
+}
+
+.action-button.danger {
+  @apply bg-red-600 text-white hover:bg-red-700;
+}
+
+.action-button.secondary {
+  @apply bg-gray-600 text-white hover:bg-gray-700;
+}
+
+.action-button.purple {
+  @apply bg-purple-600 text-white hover:bg-purple-700;
+}
+
+.action-button.indigo {
+  @apply bg-indigo-600 text-white hover:bg-indigo-700;
+}
+
+.action-icon {
+  @apply w-4 h-4;
+}
+
+/* Estados de carga */
+.loading-container {
+  @apply text-center py-12;
+}
+
+.loading-spinner {
+  @apply inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4;
+}
+
+.loading-text {
+  @apply text-gray-600;
+}
+
+/* Mensajes de error */
+.error-container {
+  @apply bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6;
+}
+
+.error-content {
+  @apply flex items-center justify-between;
+}
+
+.error-message {
+  @apply flex-1;
+}
+
+.error-close {
+  @apply ml-4 text-red-500 hover:text-red-700 cursor-pointer;
+}
+
+/* Modales */
+.modal-overlay {
+  @apply fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center;
+  backdrop-filter: blur(2px);
+}
+
+.modal-container {
+  @apply relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  @apply p-6 pb-4;
+}
+
+.modal-icon {
+  @apply mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4;
+}
+
+.modal-icon.danger {
+  @apply bg-red-100;
+}
+
+.modal-icon.success {
+  @apply bg-green-100;
+}
+
+.modal-icon svg {
+  @apply h-6 w-6;
+}
+
+.modal-icon.danger svg {
+  @apply text-red-600;
+}
+
+.modal-icon.success svg {
+  @apply text-green-600;
+}
+
+.modal-title {
+  @apply text-lg leading-6 font-medium text-gray-900 text-center;
+}
+
+.modal-body {
+  @apply px-6 pb-4;
+}
+
+.modal-text {
+  @apply text-sm text-gray-500 text-center;
+}
+
+.modal-footer {
+  @apply px-6 pb-6 pt-2;
+}
+
+.modal-actions {
+  @apply flex flex-col-reverse md:flex-row gap-3;
+}
+
+.modal-button {
+  @apply flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.modal-button.primary {
+  @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+}
+
+.modal-button.secondary {
+  @apply bg-gray-300 text-gray-700 hover:bg-gray-400 focus:ring-gray-500;
+}
+
+.modal-button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Descripción del paquete */
+.paquete-description {
+  @apply text-lg text-gray-600 leading-relaxed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .header-content {
+    @apply flex-col gap-4;
+  }
+  
+  .actions-grid {
+    @apply grid-cols-1;
+  }
+  
+  .info-grid {
+    @apply grid-cols-1 md:grid-cols-2;
+  }
+  
+  .cost-analysis {
+    @apply grid-cols-1;
+  }
+  
+  .modal-container {
+    @apply mx-2;
+  }
+  
+  .modal-actions {
+    @apply flex-col gap-3;
+  }
+}
+
+/* Animaciones */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estados hover para cards */
+.info-card:hover {
+  @apply shadow-md;
+  transition: box-shadow 0.3s ease;
+}
+
+/* Efectos de focus para accesibilidad */
+.action-button:focus {
+  @apply outline-none ring-2 ring-offset-2;
+}
+
+.action-button.primary:focus {
+  @apply ring-blue-500;
+}
+
+.action-button.success:focus {
+  @apply ring-green-500;
+}
+
+.action-button.warning:focus {
+  @apply ring-yellow-500;
+}
+
+.action-button.danger:focus {
+  @apply ring-red-500;
+}
+
+/* Print styles */
+@media print {
+  .header-actions,
+  .modal-overlay,
+  .action-button {
+    @apply hidden;
+  }
+  
+  .info-card {
+    @apply shadow-none border border-gray-300;
+  }
+}

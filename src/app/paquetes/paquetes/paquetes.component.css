@@ -1,0 +1,331 @@
+/* src/app/components/paquetes/paquetes.component.css */
+
+.paquetes-container {
+  @apply min-h-screen bg-gray-50;
+}
+
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-success {
+  @apply bg-green-100 text-green-800;
+}
+
+.badge-secondary {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.badge-info {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.badge-warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.table-hover-row:hover {
+  @apply bg-gray-50 transition-colors;
+}
+
+.action-button {
+  @apply inline-flex items-center justify-center w-8 h-8 rounded-full transition-colors;
+}
+
+.action-button:hover {
+  @apply bg-gray-100;
+}
+
+.pagination-button {
+  @apply relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors;
+}
+
+.pagination-button:hover:not(:disabled) {
+  @apply bg-gray-50;
+}
+
+.pagination-button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.pagination-button.active {
+  @apply bg-blue-50 border-blue-500 text-blue-600;
+}
+
+.modal-overlay {
+  @apply fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50;
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  @apply relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading-spinner {
+  @apply inline-block animate-spin rounded-full border-b-2 border-blue-600;
+}
+
+.price-display {
+  @apply text-right;
+}
+
+.price-original {
+  @apply text-sm text-gray-500 line-through;
+}
+
+.price-final {
+  @apply text-2xl font-bold;
+}
+
+.price-discount {
+  @apply text-sm font-medium;
+}
+
+.status-indicator {
+  @apply flex items-center gap-2;
+}
+
+.status-active {
+  @apply text-green-600;
+}
+
+.status-inactive {
+  @apply text-red-600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-content {
+    @apply w-11/12 top-10;
+  }
+  
+  .pagination-button {
+    @apply px-2 py-1 text-xs;
+  }
+}
+
+/* Form styles */
+.form-container {
+  @apply max-w-4xl mx-auto;
+}
+
+.form-section {
+  @apply bg-white p-6 rounded-lg shadow-sm border mb-6;
+}
+
+.form-section-title {
+  @apply text-lg font-semibold text-gray-900 mb-4;
+}
+
+.form-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.form-field {
+  @apply space-y-1;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.form-input {
+  @apply w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 transition-colors;
+}
+
+.form-input:not(.error) {
+  @apply border-gray-300 focus:border-blue-500 focus:ring-blue-500;
+}
+
+.form-input.error {
+  @apply border-red-300 focus:border-red-500 focus:ring-red-500;
+}
+
+.form-error {
+  @apply text-sm text-red-600;
+}
+
+.form-actions {
+  @apply flex justify-end space-x-4 pt-6;
+}
+
+.preview-card {
+  @apply bg-white border border-gray-200 rounded-lg p-6 shadow-sm;
+}
+
+.preview-title {
+  @apply text-xl font-semibold text-gray-900 mb-2;
+}
+
+.preview-description {
+  @apply text-gray-600 mb-3;
+}
+
+.preview-meta {
+  @apply flex items-center gap-4 text-sm text-gray-500;
+}
+
+.preview-price {
+  @apply text-right;
+}
+
+.info-box {
+  @apply p-4 rounded-md;
+}
+
+.info-box.blue {
+  @apply bg-blue-50 border border-blue-200;
+}
+
+.info-box.green {
+  @apply bg-green-50 border border-green-200;
+}
+
+.info-box.yellow {
+  @apply bg-yellow-50 border border-yellow-200;
+}
+
+.info-box.red {
+  @apply bg-red-50 border border-red-200;
+}
+
+/* Detail page styles */
+.detail-header {
+  @apply flex justify-between items-start mb-6;
+}
+
+.detail-title {
+  @apply text-3xl font-bold text-gray-900;
+}
+
+.detail-subtitle {
+  @apply text-gray-600 mt-1;
+}
+
+.detail-actions {
+  @apply flex space-x-3;
+}
+
+.stat-card {
+  @apply p-4 rounded-lg border;
+}
+
+.stat-card.blue {
+  @apply bg-blue-50 border-blue-200;
+}
+
+.stat-card.gray {
+  @apply bg-gray-50 border-gray-200;
+}
+
+.stat-card.yellow {
+  @apply bg-yellow-50 border-yellow-200;
+}
+
+.stat-card.green {
+  @apply bg-green-50 border-green-200;
+}
+
+.stat-icon {
+  @apply w-8 h-8 flex-shrink-0;
+}
+
+.stat-label {
+  @apply text-sm font-medium;
+}
+
+.stat-value {
+  @apply text-2xl font-bold;
+}
+
+/* Empty state */
+.empty-state {
+  @apply flex flex-col items-center py-12 text-center;
+}
+
+.empty-state-icon {
+  @apply w-12 h-12 text-gray-400 mb-4;
+}
+
+.empty-state-title {
+  @apply text-lg font-medium text-gray-900 mb-2;
+}
+
+.empty-state-description {
+  @apply text-sm text-gray-500;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  @apply flex items-center gap-2 text-sm text-gray-500 mb-2;
+}
+
+.breadcrumb a {
+  @apply hover:text-blue-600 transition-colors;
+}
+
+/* Button variants */
+.btn {
+  @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+}
+
+.btn-secondary {
+  @apply bg-gray-500 text-white hover:bg-gray-600 focus:ring-gray-500;
+}
+
+.btn-success {
+  @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+}
+
+.btn-outline {
+  @apply border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:ring-gray-500;
+}
+
+.btn:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Animations */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

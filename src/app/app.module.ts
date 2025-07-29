@@ -25,6 +25,9 @@ import { TerapiasComponent } from './terapias/terapias/terapias.component';
 import { TerapiasUsuarioComponent } from './terapias-usuario/terapias-usuario/terapias-usuario.component';
 import { MisTerapiasComponent } from './mis-terapias/mis-terapias/mis-terapias.component';
 import { InformacionMedicaUsuariosComponent } from './informacion-medica-usuarios/informacion-medica-usuarios/informacion-medica-usuarios.component';
+import { PaquetesComponent } from './paquetes/paquetes/paquetes.component';
+import { PaqueteFormComponent } from './paquete-form/paquete-form/paquete-form.component';
+import { PaqueteDetalleComponent } from './paquete-detalle/paquete-detalle/paquete-detalle.component';
 
 
 @NgModule({
@@ -44,7 +47,10 @@ import { InformacionMedicaUsuariosComponent } from './informacion-medica-usuario
     TerapiasComponent,
     TerapiasUsuarioComponent,
     MisTerapiasComponent,
-    InformacionMedicaUsuariosComponent
+    InformacionMedicaUsuariosComponent,
+    PaquetesComponent,
+    PaqueteFormComponent,
+    PaqueteDetalleComponent
   ],
   imports: [
     BrowserModule,

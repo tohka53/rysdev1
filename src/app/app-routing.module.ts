@@ -18,6 +18,9 @@ import { TerapiasComponent } from './terapias/terapias/terapias.component';
 import { TerapiasUsuarioComponent } from './terapias-usuario/terapias-usuario/terapias-usuario.component';
 import { MisTerapiasComponent } from './mis-terapias/mis-terapias/mis-terapias.component';
 import { InformacionMedicaUsuariosComponent } from './informacion-medica-usuarios/informacion-medica-usuarios/informacion-medica-usuarios.component';
+import { PaquetesComponent } from './paquetes/paquetes/paquetes.component';
+import { PaqueteFormComponent } from './paquete-form/paquete-form/paquete-form.component';
+import { PaqueteDetalleComponent } from './paquete-detalle/paquete-detalle/paquete-detalle.component';
 
 const routes: Routes = [
   // Ruta principal - Landing page
@@ -109,6 +112,37 @@ const routes: Routes = [
         canActivate: [AuthGuard]
       },
 
+         { 
+        path: 'paquetes', 
+        component: PaquetesComponent,
+        canActivate: [AuthGuard]
+      },
+      {
+       path: 'paquetes',
+    children: [
+      {
+        path: '',
+        component: PaquetesComponent,
+        data: { title: 'Gestión de Paquetes' }
+      },
+      {
+        path: 'crear',
+        component: PaqueteFormComponent,
+        data: { title: 'Crear Paquete' }
+      },
+      {
+        path: 'editar/:id',
+        component: PaqueteFormComponent,
+        data: { title: 'Editar Paquete' }
+      },
+      {
+        path: 'detalle/:id',
+        component: PaqueteDetalleComponent,
+        data: { title: 'Detalle del Paquete' }
+      }
+    ]
+      },
+      
 
       // Aquí puedes agregar más rutas protegidas
       // { path: 'reportes', component: ReportesComponent },
