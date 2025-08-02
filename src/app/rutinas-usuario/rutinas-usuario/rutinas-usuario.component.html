@@ -7,10 +7,22 @@
       <div>
         <h1 class="text-3xl font-bold text-gray-900">Asignación de Rutinas a Usuarios</h1>
         <p class="mt-2 text-sm text-gray-600">
-          Gestiona las asignaciones masivas de rutinas - Total: {{ asignaciones.length }}
+          Gestiona las asignaciones masivas de rutinas (duración: 1 mes) - Total: {{ asignaciones.length }}
         </p>
       </div>
       <div class="flex space-x-2">
+        <!-- Toggle para mostrar/ocultar inactivas -->
+        <button
+          (click)="toggleMostrarInactivas()"
+          class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          [class.bg-gray-200]="mostrarInactivas"
+        >
+          <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+          </svg>
+          {{ mostrarInactivas ? 'Ocultar' : 'Mostrar' }} vencidas
+        </button>
         <button
           (click)="refreshData()"
           class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
@@ -60,6 +72,7 @@
           <option value="completada">Completada</option>
           <option value="pausada">Pausada</option>
           <option value="cancelada">Cancelada</option>
+          <option value="expirada">Expirada</option>
         </select>
       </div>
 
@@ -124,7 +137,7 @@
               Usuarios
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Fechas
+              Fechas / Duración
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Estado
@@ -138,10 +151,16 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr *ngFor="let asignacion of filteredAsignaciones; trackBy: trackByAsignacionId" class="hover:bg-gray-50">
+          <tr *ngFor="let asignacion of filteredAsignaciones; trackBy: trackByAsignacionId" 
+              class="hover:bg-gray-50"
+              [class.opacity-50]="!asignacion.es_activa"
+              [class.bg-gray-50]="!asignacion.es_activa">
             <td class="px-6 py-4 whitespace-nowrap">
               <div>
-                <div class="text-sm font-medium text-gray-900">{{ asignacion.rutina_nombre }}</div>
+                <div class="text-sm font-medium text-gray-900"
+                     [class.text-gray-500]="!asignacion.es_activa">
+                  {{ asignacion.rutina_nombre }}
+                </div>
                 <div class="text-sm text-gray-500">{{ asignacion.rutina_descripcion }}</div>
               </div>
             </td>
@@ -150,36 +169,62 @@
                 <svg class="h-4 w-4 text-gray-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-                <span class="text-sm font-medium text-gray-900">{{ asignacion.usuarios_count }}</span>
+                <span class="text-sm font-medium text-gray-900"
+                      [class.text-gray-500]="!asignacion.es_activa">
+                  {{ asignacion.usuarios_count }}
+                </span>
                 <span class="text-sm text-gray-500 ml-1">usuarios</span>
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              <div>{{ formatDate(asignacion.fecha_inicio_programada) }}</div>
-              <div class="text-gray-500">{{ formatDate(asignacion.fecha_fin_programada) }}</div>
+              <div [class.text-gray-500]="!asignacion.es_activa">
+                <div>{{ formatDate(asignacion.fecha_inicio_programada) }}</div>
+                <div class="text-gray-500">{{ formatDate(asignacion.fecha_fin_programada) }}</div>
+                <!-- Indicador de días restantes -->
+                <div *ngIf="asignacion.es_activa" class="text-xs mt-1">
+                  <span *ngIf="getDiasRestantes(asignacion.fecha_fin_programada) > 0" 
+                        class="text-green-600">
+                    {{ getDiasRestantes(asignacion.fecha_fin_programada) }} días restantes
+                  </span>
+                  <span *ngIf="getDiasRestantes(asignacion.fecha_fin_programada) === 0" 
+                        class="text-yellow-600">
+                    Vence hoy
+                  </span>
+                </div>
+                <div *ngIf="!asignacion.es_activa && isVencida(asignacion.fecha_fin_programada)" 
+                     class="text-xs text-red-500 mt-1">
+                  Vencida
+                </div>
+              </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                     [ngClass]="{
-                      'bg-green-100 text-green-800': asignacion.estado_asignacion === 'activa',
+                      'bg-green-100 text-green-800': asignacion.estado_asignacion === 'activa' && asignacion.es_activa,
                       'bg-blue-100 text-blue-800': asignacion.estado_asignacion === 'completada',
                       'bg-yellow-100 text-yellow-800': asignacion.estado_asignacion === 'pausada',
-                      'bg-red-100 text-red-800': asignacion.estado_asignacion === 'cancelada'
+                      'bg-red-100 text-red-800': asignacion.estado_asignacion === 'cancelada' || asignacion.estado_asignacion === 'expirada',
+                      'bg-gray-100 text-gray-600': !asignacion.es_activa
                     }">
                 <i [class]="getEstadoIcon(asignacion.estado_asignacion) + ' mr-1'"></i>
-                {{ asignacion.estado_asignacion }}
+                {{ !asignacion.es_activa && asignacion.estado_asignacion === 'activa' ? 'expirada' : asignacion.estado_asignacion }}
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-gray-900">{{ asignacion.asignado_por_nombre }}</div>
+              <div class="text-sm text-gray-900"
+                   [class.text-gray-500]="!asignacion.es_activa">
+                {{ asignacion.asignado_por_nombre }}
+              </div>
               <div class="text-sm text-gray-500">{{ formatDate(asignacion.fecha_asignacion) }}</div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <div class="flex justify-end space-x-2">
-                <!-- Botón Ver -->
+                <!-- Botón Ver (siempre disponible) -->
                 <button
                   (click)="openVerModal(asignacion)"
                   class="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-blue-50"
+                  [class.text-gray-400]="!asignacion.es_activa"
+                  [class.hover:text-gray-600]="!asignacion.es_activa"
                   title="Ver seguimiento"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,9 +233,9 @@
                   </svg>
                 </button>
 
-                <!-- Botón Cancelar -->
+                <!-- Botón Cancelar (solo para asignaciones activas) -->
                 <button
-                  *ngIf="asignacion.estado_asignacion === 'activa' && canAssignRoutines()"
+                  *ngIf="asignacion.es_activa && asignacion.estado_asignacion === 'activa' && canAssignRoutines()"
                   (click)="cancelarAsignacion(asignacion.asignacion_id)"
                   class="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50"
                   title="Cancelar asignación"
@@ -263,7 +308,7 @@
             </h3>
             <div class="mt-2">
               <p class="text-sm text-gray-500">
-                Selecciona una rutina y los usuarios a los que deseas asignarla.
+                Selecciona una rutina y los usuarios. La asignación durará automáticamente 1 mes.
               </p>
             </div>
           </div>
@@ -290,7 +335,7 @@
             </select>
           </div>
 
-          <!-- Fechas -->
+          <!-- Fecha de Inicio y Duración Automática -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -305,14 +350,27 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
-                Fecha de Fin <span class="text-red-500">*</span>
+                Duración
               </label>
-              <input
-                type="date"
-                [(ngModel)]="asignacionForm.fecha_fin"
-                name="fechaFin"
-                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
-              />
+              <div class="flex items-center h-10 px-3 py-2 border border-gray-200 rounded-md bg-gray-50">
+                <svg class="h-4 w-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="text-sm text-gray-600 font-medium">1 mes (automático)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mostrar fecha de fin calculada -->
+          <div *ngIf="asignacionForm.fecha_inicio" class="bg-blue-50 border border-blue-200 rounded-md p-3">
+            <div class="flex items-center">
+              <svg class="h-5 w-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <div class="text-sm">
+                <span class="font-medium text-blue-800">Fecha de finalización:</span>
+                <span class="text-blue-700 ml-1">{{ formatDate(calcularFechaFin(asignacionForm.fecha_inicio)) }}</span>
+              </div>
             </div>
           </div>
 
@@ -409,7 +467,7 @@
           <svg *ngIf="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
           </svg>
-          Asignar Rutina
+          Asignar por 1 mes
         </button>
         <button
           type="button"
@@ -448,6 +506,9 @@
             <div class="mt-2">
               <p class="text-sm text-gray-500">
                 Progreso individual de cada usuario asignado
+                <span *ngIf="selectedAsignacion && !selectedAsignacion.es_activa" class="text-red-500 font-medium ml-2">
+                  (Asignación vencida)
+                </span>
               </p>
             </div>
           </div>
@@ -457,13 +518,28 @@
       <!-- Modal Body -->
       <div class="bg-white px-4 pb-4 sm:px-6">
         <!-- Información de la asignación -->
-        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+        <div class="bg-gray-50 rounded-lg p-4 mb-6"
+             [class.bg-red-50]="selectedAsignacion && !selectedAsignacion.es_activa">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div>
               <span class="font-medium text-gray-700">Período:</span>
               <div class="text-gray-900">
                 {{ formatDate(selectedAsignacion?.fecha_inicio_programada || '') }} - 
                 {{ formatDate(selectedAsignacion?.fecha_fin_programada || '') }}
+              </div>
+              <div *ngIf="selectedAsignacion" class="text-xs mt-1">
+                <span *ngIf="selectedAsignacion.es_activa && getDiasRestantes(selectedAsignacion.fecha_fin_programada) > 0" 
+                      class="text-green-600">
+                  {{ getDiasRestantes(selectedAsignacion.fecha_fin_programada) }} días restantes
+                </span>
+                <span *ngIf="selectedAsignacion.es_activa && getDiasRestantes(selectedAsignacion.fecha_fin_programada) === 0" 
+                      class="text-yellow-600">
+                  Vence hoy
+                </span>
+                <span *ngIf="!selectedAsignacion.es_activa" 
+                      class="text-red-600">
+                  Asignación vencida
+                </span>
               </div>
             </div>
             <div>
@@ -524,8 +600,8 @@
                     </div>
                     <span class="text-sm font-medium text-gray-900">{{ seguimiento.progreso }}%</span>
                   </div>
-                  <!-- Input para actualizar progreso (solo admin/supervisor) -->
-                  <div *ngIf="canAssignRoutines()" class="mt-2">
+                  <!-- Input para actualizar progreso (solo admin/supervisor y asignaciones activas) -->
+                  <div *ngIf="canAssignRoutines() && selectedAsignacion?.es_activa" class="mt-2">
                     <input
                       type="range"
                       min="0"
@@ -534,6 +610,9 @@
                       (input)="actualizarProgreso(seguimiento.seguimiento_id, $event)"
                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                     />
+                  </div>
+                  <div *ngIf="!selectedAsignacion?.es_activa" class="mt-2 text-xs text-gray-500">
+                    Progreso final
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -565,9 +644,9 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div class="flex justify-end space-x-2">
-                    <!-- Botón para editar notas (opcional) -->
+                    <!-- Botón para editar notas (solo para asignaciones activas) -->
                     <button
-                      *ngIf="canAssignRoutines()"
+                      *ngIf="canAssignRoutines() && selectedAsignacion?.es_activa"
                       class="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
                       title="Editar notas"
                       (click)="editarNotasIndividuales(seguimiento)"
@@ -576,6 +655,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                       </svg>
                     </button>
+                    <span *ngIf="!selectedAsignacion?.es_activa" class="text-xs text-gray-400 px-2 py-1">
+                      Solo lectura
+                    </span>
                   </div>
                 </td>
               </tr>

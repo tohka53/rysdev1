@@ -1,4 +1,4 @@
-// src/app/mis-rutinas/mis-rutinas.component.ts
+// src/app/mis-rutinas/mis-rutinas/mis-rutinas.component.ts - CORREGIDO
 import { Component, OnInit } from '@angular/core';
 import { SupabaseService } from '../../services/supabase.service';
 import { AuthService } from '../../services/auth.service';
@@ -15,6 +15,9 @@ import {
   FiltrosMisRutinas
 } from '../../interfaces/mis-rutinas.interfaces';
 
+// Tipo para las vistas disponibles
+type VistaRutinas = 'tarjetas' | 'calendario';
+
 @Component({
   selector: 'app-mis-rutinas',
   standalone: false,
@@ -22,6 +25,9 @@ import {
   styleUrls: ['./mis-rutinas.component.css']
 })
 export class MisRutinasComponent implements OnInit {
+  // Control de vistas - CALENDARIO COMO VISTA PREDETERMINADA
+  vistaActual: VistaRutinas = 'calendario'; // ← CAMBIO AQUÍ: de 'tarjetas' a 'calendario'
+  
   // Datos principales
   misRutinas: SeguimientoDetalladoExtendido[] = [];
   filteredRutinas: SeguimientoDetalladoExtendido[] = [];
@@ -62,6 +68,36 @@ export class MisRutinasComponent implements OnInit {
       this.loadEstadisticasPersonales()
     ]);
   }
+
+  // =====================================
+  // MÉTODOS DE CONTROL DE VISTAS
+  // =====================================
+  
+  cambiarVista(vista: VistaRutinas): void {
+    console.log('Cambiando vista a:', vista);
+    this.vistaActual = vista;
+  }
+
+  get mostrarVistaTarjetas(): boolean {
+    return this.vistaActual === 'tarjetas';
+  }
+
+  get mostrarVistaCalendario(): boolean {
+    return this.vistaActual === 'calendario';
+  }
+
+  onVolverDeCalendario(): void {
+    this.cambiarVista('tarjetas');
+  }
+
+  // Método para manejar la apertura de rutina desde el calendario
+  onAbrirRutinaDesdeCalendario(seguimiento: SeguimientoDetalladoExtendido): void {
+    this.openViewModal(seguimiento);
+  }
+
+  // =====================================
+  // MÉTODOS EXISTENTES
+  // =====================================
 
   async loadMisRutinas(): Promise<void> {
     this.loading = true;
@@ -427,40 +463,38 @@ export class MisRutinasComponent implements OnInit {
     document.body.removeChild(textArea);
   }
 
-
-
   safeExportRutina(seguimiento: SeguimientoDetalladoExtendido): void {
-  const rutina = seguimiento.rutina_completa || this.selectedRutina;
-  if (rutina) {
-    this.exportarRutina(rutina, seguimiento);
-  } else {
-    console.warn('No hay rutina disponible para exportar');
+    const rutina = seguimiento.rutina_completa || this.selectedRutina;
+    if (rutina) {
+      this.exportarRutina(rutina, seguimiento);
+    } else {
+      console.warn('No hay rutina disponible para exportar');
+    }
   }
-}
-safeCopyToClipboard(seguimiento: SeguimientoDetalladoExtendido): void {
-  const rutina = seguimiento.rutina_completa || this.selectedRutina;
-  if (rutina) {
-    const texto = this.getFormattedRutina(rutina, seguimiento);
-    this.copyToClipboard(texto);
-  } else {
-    console.warn('No hay rutina disponible para copiar');
-  }
-}
 
-  // Exportar rutina
-  exportarRutina(rutina: Rutina, seguimiento?: SeguimientoDetalladoExtendido): void {
-    if (!rutina) {
-    console.warn('No hay rutina para exportar');
-    return;
+  safeCopyToClipboard(seguimiento: SeguimientoDetalladoExtendido): void {
+    const rutina = seguimiento.rutina_completa || this.selectedRutina;
+    if (rutina) {
+      const texto = this.getFormattedRutina(rutina, seguimiento);
+      this.copyToClipboard(texto);
+    } else {
+      console.warn('No hay rutina disponible para copiar');
+    }
   }
-    const seguimientoValido = seguimiento || undefined;
+
+  // Exportar rutina - CORREGIDA PARA MANEJAR TIPOS NULL
+  exportarRutina(rutina: Rutina | null, seguimiento?: SeguimientoDetalladoExtendido): void {
+    if (!rutina) {
+      console.warn('No hay rutina para exportar');
+      return;
+    }
+    
     const texto = this.getFormattedRutina(rutina, seguimiento);
     if (!texto) {
-    console.warn('No se pudo generar el contenido para exportar');
-    return;
-  }
+      console.warn('No se pudo generar el contenido para exportar');
+      return;
+    }
 
-    
     const blob = new Blob([texto], { type: 'text/plain;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -535,8 +569,6 @@ safeCopyToClipboard(seguimiento: SeguimientoDetalladoExtendido): void {
       return 'Fecha inválida';
     }
   }
-
-
 
   getFileName(rutina: Rutina | null): string {
     if (!rutina || !rutina.nombre) {

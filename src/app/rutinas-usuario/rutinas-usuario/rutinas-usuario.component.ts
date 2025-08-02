@@ -44,6 +44,8 @@ export interface AsignacionCompleta {
   asignado_por_nombre: string;
   fecha_asignacion: string;
   notas_asignacion?: string;
+  status?: number;
+  es_activa?: boolean; // Nueva propiedad para determinar si está activa
 }
 
 @Component({
@@ -66,12 +68,11 @@ export class RutinasUsuarioComponent implements OnInit {
   selectedAsignacion: AsignacionCompleta | null = null;
   seguimientoDetalle: any[] = [];
 
-  // Formulario de asignación
+  // Formulario de asignación (sin fecha_fin)
   asignacionForm = {
     id_rutina: 0,
     usuarios_seleccionados: [] as number[],
     fecha_inicio: '',
-    fecha_fin: '',
     notas: ''
   };
 
@@ -79,6 +80,7 @@ export class RutinasUsuarioComponent implements OnInit {
   searchTerm = '';
   estadoFilter = 'all';
   rutinaFilter = 'all';
+  mostrarInactivas = true; // Toggle para mostrar/ocultar inactivas
 
   constructor(
     private supabaseService: SupabaseService,
@@ -87,6 +89,8 @@ export class RutinasUsuarioComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.loadInitialData();
+    // Ejecutar limpieza de asignaciones vencidas al inicializar
+    await this.procesarAsignacionesVencidas();
   }
 
   async loadInitialData(): Promise<void> {
@@ -125,8 +129,8 @@ export class RutinasUsuarioComponent implements OnInit {
 
   async loadAsignaciones(): Promise<void> {
     try {
-      // Obtener asignaciones masivas con información expandida
-      const { data, error } = await this.supabaseService.client
+      // Obtener asignaciones masivas incluyendo las inactivas
+      let query = this.supabaseService.client
         .from('rutina_asignaciones_masivas')
         .select(`
           id,
@@ -137,48 +141,69 @@ export class RutinasUsuarioComponent implements OnInit {
           estado,
           notas,
           created_at,
+          status,
           rutinas(nombre, descripcion),
           profiles!rutina_asignaciones_masivas_asignado_por_fkey(full_name)
-        `)
-        .eq('status', 1)
-        .order('created_at', { ascending: false });
+        `);
+
+      // Si no se muestran inactivas, filtrar por status = 1
+      if (!this.mostrarInactivas) {
+        query = query.eq('status', 1);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      this.asignaciones = (data || []).map((item: any) => ({
-        asignacion_id: item.id,
-        rutina_nombre: item.rutinas?.nombre || 'Rutina no encontrada',
-        rutina_descripcion: item.rutinas?.descripcion || '',
-        fecha_inicio_programada: item.fecha_inicio,
-        fecha_fin_programada: item.fecha_fin,
-        usuarios_count: item.usuarios_asignados?.length || 0,
-        estado_asignacion: item.estado,
-        asignado_por_nombre: item.profiles?.full_name || 'Usuario no encontrado',
-        fecha_asignacion: item.created_at,
-        notas_asignacion: item.notas
-      }));
+      this.asignaciones = (data || []).map((item: any) => {
+        const fechaFin = new Date(item.fecha_fin);
+        const hoy = new Date();
+        const esActiva = item.status === 1 && fechaFin >= hoy;
+
+        return {
+          asignacion_id: item.id,
+          rutina_nombre: item.rutinas?.nombre || 'Rutina no encontrada',
+          rutina_descripcion: item.rutinas?.descripcion || '',
+          fecha_inicio_programada: item.fecha_inicio,
+          fecha_fin_programada: item.fecha_fin,
+          usuarios_count: item.usuarios_asignados?.length || 0,
+          estado_asignacion: item.estado,
+          asignado_por_nombre: item.profiles?.full_name || 'Usuario no encontrado',
+          fecha_asignacion: item.created_at,
+          notas_asignacion: item.notas,
+          status: item.status,
+          es_activa: esActiva
+        };
+      });
 
     } catch (error) {
       console.error('Error cargando asignaciones:', error);
-      // En caso de error, usar método alternativo
       await this.loadAsignacionesAlternativo();
     }
   }
 
   async loadAsignacionesAlternativo(): Promise<void> {
     try {
-      // Método alternativo: obtener datos por separado
       const [asignacionesData, rutinasData, usuariosData] = await Promise.all([
         this.supabaseService.getData('rutina_asignaciones_masivas'),
         this.supabaseService.getData('rutinas'),
         this.supabaseService.getData('profiles')
       ]);
 
-      const asignacionesFiltradas = asignacionesData?.filter(a => a.status === 1) || [];
+      let asignacionesFiltradas = asignacionesData || [];
+      
+      // Aplicar filtro de inactivas si es necesario
+      if (!this.mostrarInactivas) {
+        asignacionesFiltradas = asignacionesFiltradas.filter(a => a.status === 1);
+      }
 
       this.asignaciones = asignacionesFiltradas.map((item: any) => {
         const rutina = rutinasData?.find(r => r.id === item.id_rutina);
         const asignador = usuariosData?.find(u => u.id === item.asignado_por);
+        
+        const fechaFin = new Date(item.fecha_fin);
+        const hoy = new Date();
+        const esActiva = item.status === 1 && fechaFin >= hoy;
 
         return {
           asignacion_id: item.id,
@@ -190,7 +215,9 @@ export class RutinasUsuarioComponent implements OnInit {
           estado_asignacion: item.estado,
           asignado_por_nombre: asignador?.full_name || 'Usuario no encontrado',
           fecha_asignacion: item.created_at,
-          notas_asignacion: item.notas
+          notas_asignacion: item.notas,
+          status: item.status,
+          es_activa: esActiva
         };
       });
 
@@ -200,12 +227,53 @@ export class RutinasUsuarioComponent implements OnInit {
     }
   }
 
+  // Método para procesar asignaciones vencidas automáticamente
+  async procesarAsignacionesVencidas(): Promise<void> {
+    try {
+      const hoy = new Date();
+      const fechaHoy = hoy.toISOString().split('T')[0];
+
+      // Buscar asignaciones activas que hayan vencido
+      const { data: asignacionesVencidas, error } = await this.supabaseService.client
+        .from('rutina_asignaciones_masivas')
+        .select('id')
+        .eq('status', 1)
+        .lt('fecha_fin', fechaHoy);
+
+      if (error) {
+        console.error('Error buscando asignaciones vencidas:', error);
+        return;
+      }
+
+      if (asignacionesVencidas && asignacionesVencidas.length > 0) {
+        const idsVencidas = asignacionesVencidas.map(a => a.id);
+        
+        // Marcar como inactivas (status = 0)
+        const { error: updateError } = await this.supabaseService.client
+          .from('rutina_asignaciones_masivas')
+          .update({ 
+            status: 0,
+            estado: 'expirada',
+            updated_at: new Date().toISOString()
+          })
+          .in('id', idsVencidas);
+
+        if (updateError) {
+          console.error('Error actualizando asignaciones vencidas:', updateError);
+        } else {
+          console.log(`${idsVencidas.length} asignaciones marcadas como vencidas`);
+        }
+      }
+    } catch (error) {
+      console.error('Error procesando asignaciones vencidas:', error);
+    }
+  }
+
   openAsignarModal(): void {
     this.asignacionForm = {
       id_rutina: 0,
       usuarios_seleccionados: [],
       fecha_inicio: this.getTomorrowDate(),
-      fecha_fin: this.getNextWeekDate(),
       notas: ''
     };
     this.error = '';
@@ -231,7 +299,6 @@ export class RutinasUsuarioComponent implements OnInit {
 
   async loadSeguimientoDetalle(asignacionId: number): Promise<void> {
     try {
-      // Primero intentar con la vista si existe
       const { data: viaVista, error: errorVista } = await this.supabaseService.client
         .from('v_rutinas_asignadas_usuarios')
         .select('*')
@@ -243,7 +310,6 @@ export class RutinasUsuarioComponent implements OnInit {
         return;
       }
 
-      // Método alternativo: consulta manual
       const { data: seguimientos, error: errorSeguimientos } = await this.supabaseService.client
         .from('rutina_seguimiento_individual')
         .select(`
@@ -280,7 +346,6 @@ export class RutinasUsuarioComponent implements OnInit {
     }
   }
 
-  // Toggle selección de usuario
   toggleUsuario(userId: number): void {
     const index = this.asignacionForm.usuarios_seleccionados.indexOf(userId);
     if (index > -1) {
@@ -302,6 +367,14 @@ export class RutinasUsuarioComponent implements OnInit {
     this.asignacionForm.usuarios_seleccionados = [];
   }
 
+  // Método para calcular fecha fin automáticamente (1 mes después)
+  calcularFechaFin(fechaInicio: string): string {
+    if (!fechaInicio) return '';
+    const fecha = new Date(fechaInicio);
+    fecha.setMonth(fecha.getMonth() + 1);
+    return fecha.toISOString().split('T')[0];
+  }
+
   async asignarRutina(): Promise<void> {
     try {
       this.error = '';
@@ -317,13 +390,8 @@ export class RutinasUsuarioComponent implements OnInit {
         return;
       }
 
-      if (!this.asignacionForm.fecha_inicio || !this.asignacionForm.fecha_fin) {
-        this.error = 'Debe especificar fechas de inicio y fin';
-        return;
-      }
-
-      if (new Date(this.asignacionForm.fecha_fin) <= new Date(this.asignacionForm.fecha_inicio)) {
-        this.error = 'La fecha de fin debe ser posterior a la fecha de inicio';
+      if (!this.asignacionForm.fecha_inicio) {
+        this.error = 'Debe especificar la fecha de inicio';
         return;
       }
 
@@ -334,7 +402,9 @@ export class RutinasUsuarioComponent implements OnInit {
         throw new Error('Usuario no autenticado');
       }
 
-      // Intentar primero con la función RPC
+      // Calcular fecha de fin automáticamente (1 mes después)
+      const fechaFin = this.calcularFechaFin(this.asignacionForm.fecha_inicio);
+
       let asignacionId: number;
 
       try {
@@ -344,7 +414,7 @@ export class RutinasUsuarioComponent implements OnInit {
             p_usuarios_ids: this.asignacionForm.usuarios_seleccionados,
             p_asignado_por: currentUser.id,
             p_fecha_inicio: this.asignacionForm.fecha_inicio,
-            p_fecha_fin: this.asignacionForm.fecha_fin,
+            p_fecha_fin: fechaFin, // Fecha calculada automáticamente
             p_notas: this.asignacionForm.notas || null
           });
 
@@ -354,13 +424,12 @@ export class RutinasUsuarioComponent implements OnInit {
       } catch (rpcError) {
         console.log('Función RPC no disponible, usando método manual');
         
-        // Método alternativo: crear registros manualmente
         const asignacionData = {
           id_rutina: this.asignacionForm.id_rutina,
           usuarios_asignados: this.asignacionForm.usuarios_seleccionados,
           asignado_por: currentUser.id,
           fecha_inicio: this.asignacionForm.fecha_inicio,
-          fecha_fin: this.asignacionForm.fecha_fin,
+          fecha_fin: fechaFin, // Fecha calculada automáticamente
           notas: this.asignacionForm.notas || null,
           estado: 'activa'
         };
@@ -374,7 +443,6 @@ export class RutinasUsuarioComponent implements OnInit {
         if (asignacionError) throw asignacionError;
         asignacionId = asignacion.id;
 
-        // Crear registros de seguimiento individual
         const seguimientosData = this.asignacionForm.usuarios_seleccionados.map(userId => ({
           id_asignacion_masiva: asignacionId,
           id_profile: userId,
@@ -392,12 +460,10 @@ export class RutinasUsuarioComponent implements OnInit {
 
       console.log('Rutina asignada exitosamente, ID:', asignacionId);
 
-      // Recargar datos y cerrar modal
       await this.loadAsignaciones();
       this.closeAsignarModal();
 
-      // Mostrar mensaje de éxito
-      alert(`Rutina asignada exitosamente a ${this.asignacionForm.usuarios_seleccionados.length} usuarios`);
+      alert(`Rutina asignada exitosamente a ${this.asignacionForm.usuarios_seleccionados.length} usuarios por 1 mes`);
 
     } catch (error) {
       console.error('Error asignando rutina:', error);
@@ -416,6 +482,7 @@ export class RutinasUsuarioComponent implements OnInit {
           .from('rutina_asignaciones_masivas')
           .update({ 
             estado: 'cancelada',
+            status: 0, // También marcar como inactiva
             updated_at: new Date().toISOString()
           })
           .eq('id', asignacionId);
@@ -440,18 +507,15 @@ export class RutinasUsuarioComponent implements OnInit {
         return;
       }
 
-      // Método directo si no existe la función RPC
       const updateData: any = {
         progreso: nuevoProgreso,
         updated_at: new Date().toISOString()
       };
 
-      // Determinar estado basado en progreso
       if (nuevoProgreso === 0) {
         updateData.estado_individual = 'pendiente';
       } else if (nuevoProgreso < 100) {
         updateData.estado_individual = 'en_progreso';
-        // Si no tiene fecha de inicio, agregarla
         const seguimiento = this.seguimientoDetalle.find(s => s.seguimiento_id === seguimientoId);
         if (seguimiento && !seguimiento.fecha_inicio_real) {
           updateData.fecha_inicio_real = new Date().toISOString().split('T')[0];
@@ -468,7 +532,6 @@ export class RutinasUsuarioComponent implements OnInit {
 
       if (error) throw error;
 
-      // Recargar seguimiento detalle
       if (this.selectedAsignacion) {
         await this.loadSeguimientoDetalle(this.selectedAsignacion.asignacion_id);
       }
@@ -479,9 +542,6 @@ export class RutinasUsuarioComponent implements OnInit {
     }
   }
 
-// Agregar estos métodos al final de la clase RutinasUsuarioComponent
-
-  // Método para editar notas individuales
   async editarNotasIndividuales(seguimiento: any): Promise<void> {
     const nuevasNotas = prompt('Ingrese las notas para este usuario:', seguimiento.notas_individuales || '');
     
@@ -497,7 +557,6 @@ export class RutinasUsuarioComponent implements OnInit {
 
         if (error) throw error;
 
-        // Recargar seguimiento detalle
         if (this.selectedAsignacion) {
           await this.loadSeguimientoDetalle(this.selectedAsignacion.asignacion_id);
         }
@@ -509,7 +568,6 @@ export class RutinasUsuarioComponent implements OnInit {
     }
   }
 
-  // Método para obtener estadísticas del progreso
   getEstadisticasProgreso(): any {
     if (!this.seguimientoDetalle || this.seguimientoDetalle.length === 0) {
       return {
@@ -535,10 +593,11 @@ export class RutinasUsuarioComponent implements OnInit {
     };
   }
 
-
-
-
-
+  // Método para toggle mostrar/ocultar inactivas
+  async toggleMostrarInactivas(): Promise<void> {
+    this.mostrarInactivas = !this.mostrarInactivas;
+    await this.loadAsignaciones();
+  }
 
   // Métodos de utilidad
   getRutinaNombre(rutinaId: number): string {
@@ -551,12 +610,14 @@ export class RutinasUsuarioComponent implements OnInit {
     return user?.full_name || user?.username || 'Usuario no encontrado';
   }
 
-  getEstadoColor(estado: string): string {
+  getEstadoColor(estado: string, esActiva: boolean = true): string {
+    if (!esActiva) return 'gray';
+    
     switch (estado) {
       case 'activa': return 'green';
       case 'completada': return 'blue';
       case 'pausada': return 'yellow';
-      case 'cancelada': return 'red';
+      case 'cancelada': case 'expirada': return 'red';
       default: return 'gray';
     }
   }
@@ -567,6 +628,7 @@ export class RutinasUsuarioComponent implements OnInit {
       case 'completada': return 'fas fa-check-circle';
       case 'pausada': return 'fas fa-pause-circle';
       case 'cancelada': return 'fas fa-times-circle';
+      case 'expirada': return 'fas fa-clock';
       default: return 'fas fa-circle';
     }
   }
@@ -585,13 +647,20 @@ export class RutinasUsuarioComponent implements OnInit {
     return tomorrow.toISOString().split('T')[0];
   }
 
-  getNextWeekDate(): string {
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    return nextWeek.toISOString().split('T')[0];
+  // Calcular días restantes para una asignación
+  getDiasRestantes(fechaFin: string): number {
+    const fin = new Date(fechaFin);
+    const hoy = new Date();
+    const diffTime = fin.getTime() - hoy.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
-  // Filtros
+  // Verificar si ya venció
+  isVencida(fechaFin: string): boolean {
+    return this.getDiasRestantes(fechaFin) < 0;
+  }
+
+  // Filtros actualizados
   get filteredAsignaciones(): AsignacionCompleta[] {
     let filtered = [...this.asignaciones];
 
@@ -621,12 +690,12 @@ export class RutinasUsuarioComponent implements OnInit {
   }
 
   async refreshData(): Promise<void> {
+    await this.procesarAsignacionesVencidas();
     await this.loadAsignaciones();
   }
 
-  // Verificar permisos
   canAssignRoutines(): boolean {
-    return this.authService.isAdmin() || this.authService.hasProfile(3); // Admin o Supervisor
+    return this.authService.isAdmin() || this.authService.hasProfile(3);
   }
 
   trackByAsignacionId(index: number, item: AsignacionCompleta): any {

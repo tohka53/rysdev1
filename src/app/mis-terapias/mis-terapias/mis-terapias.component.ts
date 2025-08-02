@@ -1,4 +1,4 @@
-// src/app/mis-terapias/mis-terapias.component.ts
+// src/app/mis-terapias/mis-terapias.component.ts - MODIFICADO CON CALENDARIO
 import { Component, OnInit } from '@angular/core';
 import { TerapiasService } from '../../services/terapias.service';
 import { AuthService } from '../../services/auth.service';
@@ -20,7 +20,7 @@ interface SeguimientoTerapiaSimplificado {
   terapia_tipo: string;
   terapia_nivel: string;
   duracion_estimada?: number;
-  terapia_completa?: any; // La terapia completa cuando la carguemos
+  terapia_completa?: any;
   progreso: number;
   estado_individual: string;
   fecha_inicio_real?: string | Date;
@@ -49,6 +49,9 @@ interface EstadisticasPersonalesTerapias {
   sesiones_completadas_total: number;
 }
 
+// Tipo para las vistas disponibles
+type VistaTerapias = 'tarjetas' | 'calendario';
+
 @Component({
   selector: 'app-mis-terapias',
   standalone: false,
@@ -56,6 +59,9 @@ interface EstadisticasPersonalesTerapias {
   styleUrls: ['./mis-terapias.component.css']
 })
 export class MisTerapiasComponent implements OnInit {
+  // Control de vistas - CALENDARIO COMO VISTA ADICIONAL
+  vistaActual: VistaTerapias = 'tarjetas'; // Vista por defecto: tarjetas
+  
   // Datos principales
   misTerapias: SeguimientoTerapiaSimplificado[] = [];
   filteredTerapias: SeguimientoTerapiaSimplificado[] = [];
@@ -91,6 +97,41 @@ export class MisTerapiasComponent implements OnInit {
       this.loadEstadisticasPersonales()
     ]);
   }
+
+  // =====================================
+  // CONTROL DE VISTAS
+  // =====================================
+
+  get mostrarVistaTarjetas(): boolean {
+    return this.vistaActual === 'tarjetas';
+  }
+
+  get mostrarVistaCalendario(): boolean {
+    return this.vistaActual === 'calendario';
+  }
+
+  onCambiarACalendario(): void {
+    console.log('Cambiando a vista de calendario');
+    this.vistaActual = 'calendario';
+  }
+
+  onVolverDeCalendario(): void {
+    console.log('Volviendo de calendario a tarjetas');
+    this.vistaActual = 'tarjetas';
+  }
+
+  onAbrirTerapiaDesdeCalendario(seguimiento: SeguimientoTerapiaSimplificado): void {
+    console.log('Abriendo terapia desde calendario:', seguimiento.terapia_nombre);
+    // Cambiar a vista de tarjetas y abrir el modal
+    this.vistaActual = 'tarjetas';
+    setTimeout(() => {
+      this.openViewModal(seguimiento);
+    }, 100);
+  }
+
+  // =====================================
+  // CARGA DE DATOS (MANTENER ORIGINAL)
+  // =====================================
 
   async loadMisTerapias(): Promise<void> {
     this.loading = true;
@@ -270,6 +311,10 @@ export class MisTerapiasComponent implements OnInit {
 
     this.filteredTerapias = filtered;
   }
+
+  // =====================================
+  // MODAL Y ACCIONES (MANTENER ORIGINAL)
+  // =====================================
 
   // Modal para ver terapia completa
   async openViewModal(seguimiento: SeguimientoTerapiaSimplificado): Promise<void> {
@@ -511,6 +556,10 @@ export class MisTerapiasComponent implements OnInit {
     }
   }
 
+  // =====================================
+  // MÉTODOS AUXILIARES (MANTENER ORIGINAL)
+  // =====================================
+
   // Método auxiliar para convertir fechas
   private convertirFechaAString(fecha: string | Date | undefined): string {
     if (!fecha) return '';
@@ -551,21 +600,36 @@ export class MisTerapiasComponent implements OnInit {
     return 'en_progreso';
   }
 
-  // Formatear terapia para el modal
+  // Formatear terapia para el modal - VERSIÓN MEJORADA
   getFormattedTerapia(terapia: any | null, seguimiento?: SeguimientoTerapiaSimplificado): string {
-    if (!terapia) return '';
+    console.log('getFormattedTerapia llamado con:', { terapia, seguimiento });
+    
+    if (!terapia && !seguimiento) {
+      console.warn('No hay datos de terapia ni seguimiento');
+      return 'No hay información disponible para mostrar.';
+    }
 
-    let texto = `${terapia.nombre}\n`;
-    texto += `${terapia.descripcion || 'Programa de rehabilitación personalizada'}\n`;
-    texto += `Tipo: ${terapia.tipo} | Nivel: ${terapia.nivel}\n`;
+    // Si no hay terapia pero sí seguimiento, crear una terapia básica
+    if (!terapia && seguimiento) {
+      terapia = this.crearTerapiaBasica(seguimiento);
+    }
+
+    let texto = `${terapia.nombre || seguimiento?.terapia_nombre || 'Terapia sin nombre'}\n`;
+    texto += `${terapia.descripcion || seguimiento?.terapia_descripcion || 'Programa de rehabilitación personalizada'}\n`;
+    texto += `Tipo: ${terapia.tipo || seguimiento?.terapia_tipo || 'No especificado'} | Nivel: ${terapia.nivel || seguimiento?.terapia_nivel || 'No especificado'}\n`;
+    
     if (terapia.area_especializacion) {
       texto += `Área: ${terapia.area_especializacion}\n`;
     }
-    texto += `Duración estimada: ${this.formatDuracion(terapia.duracion_estimada)}\n\n`;
+    
+    texto += `Duración estimada: ${this.formatDuracion(terapia.duracion_estimada || seguimiento?.duracion_estimada)}\n\n`;
     
     // Agregar información de seguimiento si está disponible
     if (seguimiento) {
-      texto += `MI PROGRESO:\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+      texto += `                          MI PROGRESO\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      
       texto += `Estado: ${this.getEstadoIndividualText(seguimiento.estado_individual)} (${seguimiento.progreso}%)\n`;
       texto += `Período: ${this.formatDate(seguimiento.fecha_inicio_programada)} - ${this.formatDate(seguimiento.fecha_fin_programada)}\n`;
       
@@ -589,30 +653,31 @@ export class MisTerapiasComponent implements OnInit {
 
     // Agregar objetivo principal si existe
     if (terapia.objetivo_principal) {
-      texto += `OBJETIVO PRINCIPAL:\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+      texto += `                      OBJETIVO PRINCIPAL\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
       texto += `${terapia.objetivo_principal}\n\n`;
     }
 
-    // Procesar ejercicios de la base de datos (JSONB)
+    // Procesar ejercicios de la base de datos (JSONB) o generar ejercicios básicos
     if (terapia.ejercicios && typeof terapia.ejercicios === 'object') {
-      texto += `PLAN DE EJERCICIOS:\n\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+      texto += `                      PLAN DE EJERCICIOS\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
       
-      // Las secciones están en el JSONB (calentamiento, fortalecimiento, etc.)
       const seccionesOrdenadas = ['calentamiento', 'fortalecimiento', 'equilibrio', 'coordinacion', 'estiramiento', 'respiracion'];
       
       seccionesOrdenadas.forEach(seccionKey => {
         const seccion = terapia.ejercicios[seccionKey];
         
         if (seccion && seccion.ejercicios && seccion.ejercicios.length > 0) {
-          // Nombre de la sección
           texto += `${seccionKey.toUpperCase()}\n`;
+          texto += `${'─'.repeat(seccionKey.length)}\n`;
           
-          // Descripción de la sección
           if (seccion.descripcion) {
             texto += `${seccion.descripcion}\n`;
           }
           
-          // Información adicional de la sección
           const infoSeccion = [];
           if (seccion.tiempo_total) infoSeccion.push(`Tiempo: ${seccion.tiempo_total}`);
           if (seccion.objetivos && seccion.objetivos.length > 0) {
@@ -625,7 +690,6 @@ export class MisTerapiasComponent implements OnInit {
           
           texto += '\n';
           
-          // Ejercicios de la sección
           seccion.ejercicios.forEach((ejercicio: any, index: number) => {
             texto += `${index + 1}. ${ejercicio.nombre}\n`;
             
@@ -633,7 +697,6 @@ export class MisTerapiasComponent implements OnInit {
               texto += `   ${ejercicio.descripcion}\n`;
             }
             
-            // Detalles del ejercicio
             const detalles = [];
             if (ejercicio.series) detalles.push(`${ejercicio.series} series`);
             if (ejercicio.repeticiones) detalles.push(`${ejercicio.repeticiones} reps`);
@@ -647,17 +710,14 @@ export class MisTerapiasComponent implements OnInit {
               texto += `   ${detalles.join(' | ')}\n`;
             }
             
-            // Ejecución
             if (ejercicio.ejecucion) {
               texto += `   Ejecución: ${ejercicio.ejecucion}\n`;
             }
             
-            // Precauciones
             if (ejercicio.precauciones) {
               texto += `   ⚠️  ${ejercicio.precauciones}\n`;
             }
             
-            // Modificaciones
             if (ejercicio.modificaciones) {
               if (ejercicio.modificaciones.principiante) {
                 texto += `   💡 Principiante: ${ejercicio.modificaciones.principiante}\n`;
@@ -674,37 +734,80 @@ export class MisTerapiasComponent implements OnInit {
         }
       });
     } else {
-      // Si no hay ejercicios en JSONB, usar el plan genérico anterior
-      texto += `PLAN DE TRATAMIENTO:\n\n`;
-      texto += `1. Evaluación inicial y establecimiento de objetivos\n`;
-      texto += `2. Programa de ejercicios adaptado al nivel del paciente\n`;
-      texto += `3. Progresión gradual según tolerancia y evolución\n`;
-      texto += `4. Reevaluación periódica y ajustes del programa\n`;
-      texto += `5. Educación del paciente y recomendaciones para el hogar\n\n`;
+      // Si no hay ejercicios en JSONB, usar ejercicios generados
+      const ejerciciosGenerados = this.generarEjerciciosBasicos(seguimiento?.terapia_tipo || terapia.tipo || 'general');
+      
+      if (ejerciciosGenerados && ejerciciosGenerados.length > 0) {
+        texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        texto += `                      PLAN DE EJERCICIOS\n`;
+        texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+        
+        ejerciciosGenerados.forEach((ejercicio: any, index: number) => {
+          texto += `${index + 1}. ${ejercicio.nombre}\n`;
+          
+          if (ejercicio.descripcion) {
+            texto += `   ${ejercicio.descripcion}\n`;
+          }
+          
+          if (ejercicio.series) {
+            texto += `   ${ejercicio.series}\n`;
+          }
+          
+          if (ejercicio.duracion) {
+            texto += `   Duración: ${ejercicio.duracion}\n`;
+          }
+          
+          if (ejercicio.observaciones) {
+            texto += `   📝 ${ejercicio.observaciones}\n`;
+          }
+          
+          texto += '\n';
+        });
+      } else {
+        // Plan de tratamiento genérico
+        texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        texto += `                    PLAN DE TRATAMIENTO\n`;
+        texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+        
+        texto += `1. Evaluación inicial y establecimiento de objetivos\n`;
+        texto += `2. Programa de ejercicios adaptado al nivel del paciente\n`;
+        texto += `3. Progresión gradual según tolerancia y evolución\n`;
+        texto += `4. Reevaluación periódica y ajustes del programa\n`;
+        texto += `5. Educación del paciente y recomendaciones para el hogar\n\n`;
+      }
     }
 
     // Agregar contraindicaciones si existen
     if (terapia.contraindicaciones) {
-      texto += `CONTRAINDICACIONES:\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+      texto += `                     CONTRAINDICACIONES\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
       texto += `${terapia.contraindicaciones}\n\n`;
     }
 
     // Agregar criterios de progresión
     if (terapia.criterios_progresion) {
-      texto += `CRITERIOS DE PROGRESIÓN:\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+      texto += `                   CRITERIOS DE PROGRESIÓN\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
       texto += `${terapia.criterios_progresion}\n\n`;
     }
 
     // Agregar mis notas si existen
     if (seguimiento?.notas_individuales) {
-      texto += `MIS NOTAS PERSONALES:\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+      texto += `                   MIS NOTAS PERSONALES\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
       texto += `${seguimiento.notas_individuales}\n\n`;
     }
 
     // Información adicional de seguimiento
     if (seguimiento) {
       if (seguimiento.nivel_dolor_actual !== undefined || seguimiento.nivel_funcionalidad_actual !== undefined) {
-        texto += `EVALUACIÓN ACTUAL:\n`;
+        texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        texto += `                     EVALUACIÓN ACTUAL\n`;
+        texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+        
         if (seguimiento.nivel_dolor_actual !== undefined) {
           texto += `Nivel de dolor: ${seguimiento.nivel_dolor_actual}/10\n`;
         }
@@ -720,54 +823,23 @@ export class MisTerapiasComponent implements OnInit {
       texto += `Tags: ${terapia.tags.map((tag: string) => `#${tag}`).join(' ')}\n\n`;
     }
 
+    texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
     texto += `Última actualización: ${this.formatDate(new Date().toISOString())}\n`;
     texto += `Generado por: rehabiMovement - Sistema de Rehabilitación\n`;
+    texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
 
+    console.log('Texto generado:', texto.substring(0, 200) + '...');
     return texto;
   }
 
-  // Copiar al portapapeles
-  async copyToClipboard(text: string): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(text);
-      this.copySuccess = true;
-      console.log('Texto copiado al portapapeles');
-      
-      setTimeout(() => {
-        this.copySuccess = false;
-      }, 2000);
-    } catch (err) {
-      console.error('Error al copiar al portapapeles:', err);
-      this.fallbackCopyTextToClipboard(text);
+  getFileName(terapia: any | null): string {
+    if (!terapia || !terapia.nombre) {
+      return 'mi_terapia.txt';
     }
+    return terapia.nombre.replace(/\s+/g, '_') + '_mi_terapia.txt';
   }
 
-  private fallbackCopyTextToClipboard(text: string): void {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    textArea.style.top = '0';
-    textArea.style.left = '0';
-    textArea.style.position = 'fixed';
-    textArea.style.opacity = '0';
-
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-
-    try {
-      const successful = document.execCommand('copy');
-      if (successful) {
-        this.copySuccess = true;
-        setTimeout(() => {
-          this.copySuccess = false;
-        }, 2000);
-      }
-    } catch (err) {
-      console.error('Fallback: Error al copiar al portapapeles:', err);
-    }
-
-    document.body.removeChild(textArea);
-  }
+  // [TODOS LOS DEMÁS MÉTODOS ORIGINALES SE MANTIENEN IGUAL]
 
   // Exportar terapia
   safeExportTerapia(seguimiento: SeguimientoTerapiaSimplificado): void {
@@ -897,13 +969,7 @@ export class MisTerapiasComponent implements OnInit {
     }
   }
 
-  getFileName(terapia: any | null): string {
-    if (!terapia || !terapia.nombre) {
-      return 'mi_terapia.txt';
-    }
-    return terapia.nombre.replace(/\s+/g, '_') + '_mi_terapia.txt';
-  }
-
+ 
   // Métodos de estado y colores
   getEstadoTemporalText(estado: string): string {
     switch (estado) {
@@ -950,6 +1016,49 @@ export class MisTerapiasComponent implements OnInit {
     if (progreso < 30) return 'red';
     if (progreso < 70) return 'yellow';
     return 'green';
+  }
+
+  // Copiar al portapapeles
+  async copyToClipboard(text: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(text);
+      this.copySuccess = true;
+      console.log('Texto copiado al portapapeles');
+      
+      setTimeout(() => {
+        this.copySuccess = false;
+      }, 2000);
+    } catch (err) {
+      console.error('Error al copiar al portapapeles:', err);
+      this.fallbackCopyTextToClipboard(text);
+    }
+  }
+
+  private fallbackCopyTextToClipboard(text: string): void {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.top = '0';
+    textArea.style.left = '0';
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        this.copySuccess = true;
+        setTimeout(() => {
+          this.copySuccess = false;
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Fallback: Error al copiar al portapapeles:', err);
+    }
+
+    document.body.removeChild(textArea);
   }
 
   // TrackBy functions para optimización

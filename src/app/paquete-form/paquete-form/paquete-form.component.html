@@ -71,7 +71,7 @@
             </p>
           </div>
 
-          <!-- Cantidad de Sesiones -->
+          <!-- Cantidad de sesiones -->
           <div>
             <label for="cantidad_sesiones" class="block text-sm font-medium text-gray-700 mb-1">
               Cantidad de Sesiones *
@@ -81,9 +81,10 @@
               id="cantidad_sesiones"
               formControlName="cantidad_sesiones"
               min="1"
+              max="25"
               [class]="esInvalido('cantidad_sesiones') ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'"
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 transition-colors"
-              placeholder="Ej: 8">
+              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 transition-colors">
+            <p class="mt-1 text-xs text-gray-500">Mínimo 1, máximo 25 sesiones</p>
             <p *ngIf="esInvalido('cantidad_sesiones')" class="mt-1 text-sm text-red-600">
               {{ obtenerMensajeError('cantidad_sesiones') }}
             </p>
@@ -98,18 +99,170 @@
               id="descripcion"
               formControlName="descripcion"
               rows="3"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-500 transition-colors"
-              placeholder="Describe el contenido y beneficios del paquete..."></textarea>
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-colors"
+              placeholder="Describe el contenido y beneficios del paquete...">
+            </textarea>
           </div>
         </div>
       </div>
 
-      <!-- Información de precios -->
+      <!-- Selección de Rutinas/Terapias -->
       <div class="bg-white p-6 rounded-lg shadow-sm border">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Precios y Descuentos</h2>
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900">
+              Seleccionar {{ paqueteForm.get('tipo')?.value === 'rutina' ? 'Rutinas' : 'Terapias' }}
+            </h2>
+            <p class="text-sm text-gray-600 mt-1">
+              Puedes seleccionar hasta {{ cantidadPermitida }} {{ paqueteForm.get('tipo')?.value === 'rutina' ? 'rutinas' : 'terapias' }} para este paquete
+            </p>
+          </div>
+          <div class="text-sm">
+            <span class="font-medium">Seleccionadas: </span>
+            <span [class]="cantidadSeleccionada === cantidadPermitida ? 'text-green-600' : 'text-blue-600'">
+              {{ cantidadSeleccionada }} / {{ cantidadPermitida }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Loading opciones -->
+        <div *ngIf="cargandoOpciones" class="text-center py-8">
+          <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <p class="mt-2 text-gray-600">Cargando opciones disponibles...</p>
+        </div>
+
+        <!-- Selector de Rutinas -->
+        <div *ngIf="!cargandoOpciones && paqueteForm.get('tipo')?.value === 'rutina'" class="space-y-3">
+          <div *ngIf="rutinasDisponibles.length === 0" class="text-center py-8 text-gray-500">
+            <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <p>No hay rutinas disponibles</p>
+            <p class="text-sm">Crea rutinas primero para poder seleccionarlas</p>
+          </div>
+
+          <div *ngFor="let rutina of rutinasDisponibles" 
+               class="border rounded-lg p-4 transition-all duration-200 hover:shadow-md"
+               [class.border-blue-500]="rutina.seleccionado"
+               [class.bg-blue-50]="rutina.seleccionado"
+               [class.border-gray-200]="!rutina.seleccionado">
+            
+            <div class="flex items-start gap-3">
+              <!-- Checkbox -->
+              <div class="flex-shrink-0 mt-1">
+                <input
+                  type="checkbox"
+                  [id]="'rutina-' + rutina.id"
+                  [checked]="rutina.seleccionado"
+                  (change)="onSeleccionChange(rutina.id, true)"
+                  [disabled]="!rutina.seleccionado && cantidadSeleccionada >= cantidadPermitida"
+                  class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+              </div>
+              
+              <!-- Información de la rutina -->
+              <div class="flex-1 min-w-0">
+                <label [for]="'rutina-' + rutina.id" class="block font-medium text-gray-900 cursor-pointer">
+                  {{ rutina.nombre }}
+                </label>
+                <p *ngIf="rutina.descripcion" class="text-sm text-gray-600 mt-1 line-clamp-2">
+                  {{ rutina.descripcion }}
+                </p>
+                <p *ngIf="rutina.informacion_adicional" class="text-xs text-gray-500 mt-2">
+                  {{ rutina.informacion_adicional }}
+                </p>
+              </div>
+              
+              <!-- Indicador de selección -->
+              <div *ngIf="rutina.seleccionado" class="flex-shrink-0">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  ✓ Seleccionada
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selector de Terapias -->
+        <div *ngIf="!cargandoOpciones && paqueteForm.get('tipo')?.value === 'terapia'" class="space-y-3">
+          <div *ngIf="terapiasDisponibles.length === 0" class="text-center py-8 text-gray-500">
+            <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+            </svg>
+            <p>No hay terapias disponibles</p>
+            <p class="text-sm">Crea terapias primero para poder seleccionarlas</p>
+          </div>
+
+          <div *ngFor="let terapia of terapiasDisponibles" 
+               class="border rounded-lg p-4 transition-all duration-200 hover:shadow-md"
+               [class.border-blue-500]="terapia.seleccionado"
+               [class.bg-blue-50]="terapia.seleccionado"
+               [class.border-gray-200]="!terapia.seleccionado">
+            
+            <div class="flex items-start gap-3">
+              <!-- Checkbox -->
+              <div class="flex-shrink-0 mt-1">
+                <input
+                  type="checkbox"
+                  [id]="'terapia-' + terapia.id"
+                  [checked]="terapia.seleccionado"
+                  (change)="onSeleccionChange(terapia.id, false)"
+                  [disabled]="!terapia.seleccionado && cantidadSeleccionada >= cantidadPermitida"
+                  class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+              </div>
+              
+              <!-- Información de la terapia -->
+              <div class="flex-1 min-w-0">
+                <label [for]="'terapia-' + terapia.id" class="block font-medium text-gray-900 cursor-pointer">
+                  {{ terapia.nombre }}
+                </label>
+                <p *ngIf="terapia.descripcion" class="text-sm text-gray-600 mt-1 line-clamp-2">
+                  {{ terapia.descripcion }}
+                </p>
+                <p *ngIf="terapia.informacion_adicional" class="text-xs text-gray-500 mt-2">
+                  {{ terapia.informacion_adicional }}
+                </p>
+              </div>
+              
+              <!-- Indicador de selección -->
+              <div *ngIf="terapia.seleccionado" class="flex-shrink-0">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  ✓ Seleccionada
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones de selección -->
+        <div *ngIf="!cargandoOpciones && (rutinasDisponibles.length > 0 || terapiasDisponibles.length > 0)" 
+             class="mt-4 pt-4 border-t border-gray-200">
+          <div class="flex items-center justify-between">
+            <button
+              type="button"
+              (click)="limpiarSelecciones()"
+              *ngIf="cantidadSeleccionada > 0"
+              class="text-sm text-red-600 hover:text-red-700 font-medium">
+              Limpiar selecciones
+            </button>
+            <div class="text-sm text-gray-600">
+              <span *ngIf="cantidadSeleccionada === 0">Selecciona al menos una opción</span>
+              <span *ngIf="cantidadSeleccionada > 0 && cantidadSeleccionada < cantidadPermitida">
+                Puedes seleccionar {{ cantidadPermitida - cantidadSeleccionada }} más
+              </span>
+              <span *ngIf="cantidadSeleccionada === cantidadPermitida" class="text-green-600 font-medium">
+                ✓ Selección completa
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Precios -->
+      <div class="bg-white p-6 rounded-lg shadow-sm border">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Información de Precios</h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <!-- Precio Base -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Precio base -->
           <div>
             <label for="precio" class="block text-sm font-medium text-gray-700 mb-1">
               Precio Base *
@@ -120,11 +273,10 @@
                 type="number"
                 id="precio"
                 formControlName="precio"
-                min="0"
+                min="0.01"
                 step="0.01"
                 [class]="esInvalido('precio') ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'"
-                class="w-full pl-8 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 transition-colors"
-                placeholder="0.00">
+                class="w-full pl-8 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 transition-colors">
             </div>
             <p *ngIf="esInvalido('precio')" class="mt-1 text-sm text-red-600">
               {{ obtenerMensajeError('precio') }}
@@ -136,75 +288,36 @@
             <label for="descuento" class="block text-sm font-medium text-gray-700 mb-1">
               Descuento (%)
             </label>
-            <div class="relative">
-              <input
-                type="number"
-                id="descuento"
-                formControlName="descuento"
-                min="0"
-                max="100"
-                step="0.01"
-                [class]="esInvalido('descuento') ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'"
-                class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 transition-colors pr-8"
-                placeholder="0.00">
-              <span class="absolute right-3 top-2 text-gray-500">%</span>
-            </div>
+            <input
+              type="number"
+              id="descuento"
+              formControlName="descuento"
+              min="0"
+              max="100"
+              step="0.01"
+              [class]="esInvalido('descuento') ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'"
+              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 transition-colors">
+            <p class="mt-1 text-xs text-gray-500">0% = Sin descuento, máximo 100%</p>
             <p *ngIf="esInvalido('descuento')" class="mt-1 text-sm text-red-600">
               {{ obtenerMensajeError('descuento') }}
             </p>
           </div>
-
-          <!-- Precio Final -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Precio Final
-            </label>
-            <div class="bg-gray-50 border border-gray-200 rounded-md px-3 py-2">
-              <div class="text-lg font-semibold" [class.text-green-600]="hayDescuento">
-                {{ formatearPrecio(precioFinalCalculado) }}
-              </div>
-              <div *ngIf="hayDescuento" class="text-sm text-gray-500">
-                <span class="line-through">{{ formatearPrecio(precioControl?.value || 0) }}</span>
-                <span class="text-green-600 ml-2">{{ descuentoControl?.value }}% desc.</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Información adicional de precios -->
-        <div *ngIf="precioControl?.value > 0 && cantidadSesionesControl?.value > 0" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-          <h4 class="text-sm font-medium text-blue-900 mb-2">Información de costos</h4>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <span class="text-blue-700">Precio por sesión:</span>
-              <div class="font-semibold">{{ formatearPrecio((precioControl?.value || 0) / (cantidadSesionesControl?.value || 1)) }}</div>
-            </div>
-            <div>
-              <span class="text-blue-700">Precio final por sesión:</span>
-              <div class="font-semibold">{{ formatearPrecio(precioFinalCalculado / (cantidadSesionesControl?.value || 1)) }}</div>
-            </div>
-            <div *ngIf="hayDescuento">
-              <span class="text-blue-700">Ahorro total:</span>
-              <div class="font-semibold text-green-600">{{ formatearPrecio((precioControl?.value || 0) - precioFinalCalculado) }}</div>
-            </div>
-          </div>
         </div>
       </div>
 
-      <!-- Acciones -->
-      <div class="flex justify-end space-x-4 pt-6">
+      <!-- Botones de acción -->
+      <div class="flex flex-col sm:flex-row gap-3 pt-6">
         <button
           type="button"
           (click)="cancelar()"
-          [disabled]="guardando"
-          class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+          class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
           Cancelar
         </button>
         
         <button
           type="submit"
-          [disabled]="paqueteForm.invalid || guardando"
-          class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+          [disabled]="paqueteForm.invalid || guardando || cantidadSeleccionada === 0"
+          class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
           <span *ngIf="!guardando">
             {{ esEdicion ? 'Actualizar' : 'Crear' }} Paquete
           </span>
@@ -222,8 +335,8 @@
   </div>
 
   <!-- Preview del paquete -->
-  <div *ngIf="!cargando && paqueteForm.value.nombre" class="mt-8 max-w-4xl">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4">Vista Previa</h3>
+  <div *ngIf="!cargando && paqueteForm.value.nombre && cantidadSeleccionada > 0" class="mt-8 max-w-4xl">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Vista Previa del Paquete</h3>
     <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
       <div class="flex justify-between items-start">
         <div class="flex-1">
@@ -239,13 +352,47 @@
             {{ paqueteForm.value.descripcion }}
           </p>
           
-          <div class="flex items-center gap-4 text-sm text-gray-500">
+          <div class="flex items-center gap-4 text-sm text-gray-500 mb-3">
             <div class="flex items-center gap-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
               {{ paqueteForm.value.cantidad_sesiones || 0 }} sesiones
             </div>
+            <div class="flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              {{ cantidadSeleccionada }} {{ paqueteForm.value.tipo === 'rutina' ? 'rutinas' : 'terapias' }} incluidas
+            </div>
+          </div>
+
+          <!-- Lista de selecciones -->
+          <div class="bg-gray-50 rounded-lg p-3">
+            <h5 class="text-sm font-medium text-gray-700 mb-2">
+              {{ paqueteForm.value.tipo === 'rutina' ? 'Rutinas' : 'Terapias' }} incluidas:
+            </h5>
+            <ul class="text-sm text-gray-600 space-y-1">
+              <!-- Rutinas seleccionadas -->
+              <ng-container *ngIf="paqueteForm.value.tipo === 'rutina'">
+                <li *ngFor="let rutina of rutinasDisponibles" class="flex items-center gap-2">
+                  <ng-container *ngIf="rutina.seleccionado">
+                    <span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+                    {{ rutina.nombre }}
+                  </ng-container>
+                </li>
+              </ng-container>
+              
+              <!-- Terapias seleccionadas -->
+              <ng-container *ngIf="paqueteForm.value.tipo === 'terapia'">
+                <li *ngFor="let terapia of terapiasDisponibles" class="flex items-center gap-2">
+                  <ng-container *ngIf="terapia.seleccionado">
+                    <span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+                    {{ terapia.nombre }}
+                  </ng-container>
+                </li>
+              </ng-container>
+            </ul>
           </div>
         </div>
         

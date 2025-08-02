@@ -1,4 +1,4 @@
-<!-- src/app/mis-terapias/mis-terapias.component.html -->
+<!-- src/app/mis-terapias/mis-terapias.component.html - MODIFICADO CON CALENDARIO -->
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
   
   <!-- Header -->
@@ -11,6 +11,30 @@
         </p>
       </div>
       <div class="flex space-x-2">
+        <!-- Botones de Vista AGREGADOS -->
+        <div class="flex bg-gray-100 rounded-lg p-1">
+          <button
+            (click)="vistaActual = 'tarjetas'"
+            [class]="'px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ' + 
+                     (vistaActual === 'tarjetas' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900')"
+          >
+            <svg class="h-4 w-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+            Tarjetas
+          </button>
+          <button
+            (click)="onCambiarACalendario()"
+            [class]="'px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ' + 
+                     (vistaActual === 'calendario' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900')"
+          >
+            <svg class="h-4 w-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h8a2 2 0 012 2v4m-4 0V3m-4 4h8m-8 0H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-2"/>
+            </svg>
+            Calendario
+          </button>
+        </div>
+
         <button
           (click)="refreshMisTerapias()"
           class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -25,274 +49,286 @@
     </div>
   </div>
 
-  <!-- Filtros -->
-  <div class="bg-white rounded-lg shadow mb-6 p-6">
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-      <!-- Búsqueda -->
-      <div class="md:col-span-2">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
-        <input
-          type="text"
-          [(ngModel)]="searchTerm"
-          (input)="onSearch()"
-          placeholder="Buscar terapias..."
-          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
-
-      <!-- Filtro por Estado Temporal -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Período</label>
-        <select
-          [(ngModel)]="estadoFilter"
-          (change)="onFilterChange()"
-          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="all">Todos</option>
-          <option value="vigente">Vigentes</option>
-          <option value="pendiente">Pendientes</option>
-          <option value="vencida">Vencidas</option>
-        </select>
-      </div>
-
-      <!-- Filtro por Estado Individual -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Mi Estado</label>
-        <select
-          [(ngModel)]="estadoIndividualFilter"
-          (change)="onFilterChange()"
-          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="all">Todos</option>
-          <option value="pendiente">Pendiente</option>
-          <option value="en_progreso">En Progreso</option>
-          <option value="completada">Completada</option>
-          <option value="abandonada">Abandonada</option>
-        </select>
-      </div>
-
-      <!-- Filtro por Progreso -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Progreso</label>
-        <select
-          [(ngModel)]="progresoFilter"
-          (change)="onFilterChange()"
-          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="all">Todos</option>
-          <option value="sin_iniciar">Sin Iniciar (0%)</option>
-          <option value="en_progreso">En Progreso (1-99%)</option>
-          <option value="completado">Completado (100%)</option>
-        </select>
-      </div>
-    </div>
-    
-    <div class="mt-4 flex justify-end">
-      <button
-        (click)="clearFilters()"
-        class="text-sm text-blue-600 hover:text-blue-800"
-      >
-        Limpiar filtros
-      </button>
-    </div>
+  <!-- Vista de Calendario AGREGADA -->
+  <div *ngIf="mostrarVistaCalendario">
+    <app-calendario-terapias 
+      [terapias]="filteredTerapias"
+      (volverAVista)="onVolverDeCalendario()"
+      (abrirTerapia)="onAbrirTerapiaDesdeCalendario($event)">
+    </app-calendario-terapias>
   </div>
 
-  <!-- Error Message -->
-  <div *ngIf="error && !showViewModal" class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-    <div class="flex">
-      <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
-      <div class="ml-3">
-        <p class="text-sm text-red-700">{{ error }}</p>
-      </div>
-    </div>
-  </div>
+  <!-- Vista de Tarjetas - WRAPEADA EN CONDICIÓN -->
+  <div *ngIf="mostrarVistaTarjetas">
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow mb-6 p-6">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <!-- Búsqueda -->
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            placeholder="Buscar terapias..."
+            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
 
-  <!-- Loading -->
-  <div *ngIf="loading" class="flex justify-center items-center h-64">
-    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-  </div>
+        <!-- Filtro por Estado Temporal -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Período</label>
+          <select
+            [(ngModel)]="estadoFilter"
+            (change)="onFilterChange()"
+            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="all">Todos</option>
+            <option value="vigente">Vigentes</option>
+            <option value="pendiente">Pendientes</option>
+            <option value="vencida">Vencidas</option>
+          </select>
+        </div>
 
-  <!-- Grid de Mis Terapias -->
-  <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <div
-      *ngFor="let seguimiento of filteredTerapias; trackBy: trackByTerapiaId"
-      class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 border-l-4"
-      [class.border-green-500]="seguimiento.estado_temporal === 'vigente'"
-      [class.border-blue-500]="seguimiento.estado_temporal === 'pendiente'"
-      [class.border-red-500]="seguimiento.estado_temporal === 'vencida'"
-    >
-      <!-- Header de la tarjeta -->
-      <div [class]="'px-6 py-4 ' + (seguimiento.estado_temporal === 'vigente' ? 'bg-gradient-to-r from-green-500 to-green-600' : 
-                                     seguimiento.estado_temporal === 'pendiente' ? 'bg-gradient-to-r from-blue-500 to-blue-600' :
-                                     'bg-gradient-to-r from-red-500 to-red-600')">
-        <div class="flex justify-between items-start">
-          <div class="flex-1">
-            <h3 class="text-xl font-bold text-white">{{ seguimiento.terapia_nombre }}</h3>
-            <p class="text-white text-opacity-90 text-sm">{{ seguimiento.terapia_descripcion }}</p>
-          </div>
-          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white bg-opacity-20 text-white">
-            {{ getEstadoTemporalText(seguimiento.estado_temporal) }}
-          </span>
+        <!-- Filtro por Estado Individual -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Mi Estado</label>
+          <select
+            [(ngModel)]="estadoIndividualFilter"
+            (change)="onFilterChange()"
+            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="all">Todos</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="en_progreso">En Progreso</option>
+            <option value="completada">Completada</option>
+            <option value="abandonada">Abandonada</option>
+          </select>
+        </div>
+
+        <!-- Filtro por Progreso -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Progreso</label>
+          <select
+            [(ngModel)]="progresoFilter"
+            (change)="onFilterChange()"
+            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="all">Todos</option>
+            <option value="sin_iniciar">Sin Iniciar (0%)</option>
+            <option value="en_progreso">En Progreso (1-99%)</option>
+            <option value="completado">Completado (100%)</option>
+          </select>
         </div>
       </div>
+      
+      <div class="mt-4 flex justify-end">
+        <button
+          (click)="clearFilters()"
+          class="text-sm text-blue-600 hover:text-blue-800"
+        >
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
 
-      <!-- Contenido de la tarjeta -->
-      <div class="p-6">
-        <!-- Progreso -->
-        <div class="mb-4">
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-sm font-medium text-gray-700">Mi Progreso</span>
-            <span class="text-sm font-bold text-gray-900">{{ seguimiento.progreso }}%</span>
+    <!-- Error Message -->
+    <div *ngIf="error && !showViewModal" class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+      <div class="flex">
+        <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div class="ml-3">
+          <p class="text-sm text-red-700">{{ error }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="flex justify-center items-center h-64">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+
+    <!-- Grid de Mis Terapias -->
+    <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div
+        *ngFor="let seguimiento of filteredTerapias; trackBy: trackByTerapiaId"
+        class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 border-l-4"
+        [class.border-green-500]="seguimiento.estado_temporal === 'vigente'"
+        [class.border-blue-500]="seguimiento.estado_temporal === 'pendiente'"
+        [class.border-red-500]="seguimiento.estado_temporal === 'vencida'"
+      >
+        <!-- Header de la tarjeta -->
+        <div [class]="'px-6 py-4 ' + (seguimiento.estado_temporal === 'vigente' ? 'bg-gradient-to-r from-green-500 to-green-600' : 
+                                       seguimiento.estado_temporal === 'pendiente' ? 'bg-gradient-to-r from-blue-500 to-blue-600' :
+                                       'bg-gradient-to-r from-red-500 to-red-600')">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-white">{{ seguimiento.terapia_nombre }}</h3>
+              <p class="text-white text-opacity-90 text-sm">{{ seguimiento.terapia_descripcion }}</p>
+            </div>
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white bg-opacity-20 text-white">
+              {{ getEstadoTemporalText(seguimiento.estado_temporal) }}
+            </span>
           </div>
-          <div class="w-full bg-gray-200 rounded-full h-3">
-            <div 
-              class="h-3 rounded-full transition-all duration-300"
-              [class.bg-gray-400]="seguimiento.progreso === 0"
-              [class.bg-red-400]="seguimiento.progreso > 0 && seguimiento.progreso < 30"
-              [class.bg-yellow-400]="seguimiento.progreso >= 30 && seguimiento.progreso < 70"
-              [class.bg-green-400]="seguimiento.progreso >= 70"
-              [style.width.%]="seguimiento.progreso">
+        </div>
+
+        <!-- Contenido de la tarjeta -->
+        <div class="p-6">
+          <!-- Progreso -->
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm font-medium text-gray-700">Mi Progreso</span>
+              <span class="text-sm font-bold text-gray-900">{{ seguimiento.progreso }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-3">
+              <div 
+                class="h-3 rounded-full transition-all duration-300"
+                [class.bg-gray-400]="seguimiento.progreso === 0"
+                [class.bg-red-400]="seguimiento.progreso > 0 && seguimiento.progreso < 30"
+                [class.bg-yellow-400]="seguimiento.progreso >= 30 && seguimiento.progreso < 70"
+                [class.bg-green-400]="seguimiento.progreso >= 70"
+                [style.width.%]="seguimiento.progreso">
+              </div>
+            </div>
+            
+            <!-- Control deslizante para actualizar progreso -->
+            <div class="mt-3">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                [value]="seguimiento.progreso"
+                (input)="actualizarMiProgreso(seguimiento, +$any($event.target).value)"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                title="Desliza para actualizar tu progreso"
+              />
             </div>
           </div>
-          
-          <!-- Control deslizante para actualizar progreso -->
-          <div class="mt-3">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="5"
-              [value]="seguimiento.progreso"
-              (input)="actualizarMiProgreso(seguimiento, +$any($event.target).value)"
-              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-              title="Desliza para actualizar tu progreso"
-            />
-          </div>
-        </div>
 
-        <!-- Estados -->
-        <div class="flex justify-between items-center mb-4">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                [ngClass]="{
-                  'bg-gray-100 text-gray-800': seguimiento.estado_individual === 'pendiente',
-                  'bg-yellow-100 text-yellow-800': seguimiento.estado_individual === 'en_progreso',
-                  'bg-green-100 text-green-800': seguimiento.estado_individual === 'completada',
-                  'bg-red-100 text-red-800': seguimiento.estado_individual === 'abandonada'
-                }">
-            {{ getEstadoIndividualText(seguimiento.estado_individual) }}
-          </span>
-          <span class="text-sm text-gray-500">{{ seguimiento.terapia_nivel }}</span>
-        </div>
+          <!-- Estados -->
+          <div class="flex justify-between items-center mb-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  [ngClass]="{
+                    'bg-gray-100 text-gray-800': seguimiento.estado_individual === 'pendiente',
+                    'bg-yellow-100 text-yellow-800': seguimiento.estado_individual === 'en_progreso',
+                    'bg-green-100 text-green-800': seguimiento.estado_individual === 'completada',
+                    'bg-red-100 text-red-800': seguimiento.estado_individual === 'abandonada'
+                  }">
+              {{ getEstadoIndividualText(seguimiento.estado_individual) }}
+            </span>
+            <span class="text-sm text-gray-500">{{ seguimiento.terapia_nivel }}</span>
+          </div>
 
-        <!-- Información del período -->
-        <div class="text-sm text-gray-600 mb-4">
-          <div class="flex justify-between">
-            <span>Inicio:</span>
-            <span>{{ formatDate(seguimiento.fecha_inicio_programada) }}</span>
+          <!-- Información del período -->
+          <div class="text-sm text-gray-600 mb-4">
+            <div class="flex justify-between">
+              <span>Inicio:</span>
+              <span>{{ formatDate(seguimiento.fecha_inicio_programada) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Fin:</span>
+              <span>{{ formatDate(seguimiento.fecha_fin_programada) }}</span>
+            </div>
+            <div class="flex justify-between font-medium" 
+                 [class.text-green-600]="seguimiento.dias_restantes > 7"
+                 [class.text-yellow-600]="seguimiento.dias_restantes <= 7 && seguimiento.dias_restantes > 0"
+                 [class.text-red-600]="seguimiento.dias_restantes <= 0">
+              <span>Días restantes:</span>
+              <span>{{ formatDiasRestantes(seguimiento.dias_restantes) }}</span>
+            </div>
           </div>
-          <div class="flex justify-between">
-            <span>Fin:</span>
-            <span>{{ formatDate(seguimiento.fecha_fin_programada) }}</span>
-          </div>
-          <div class="flex justify-between font-medium" 
-               [class.text-green-600]="seguimiento.dias_restantes > 7"
-               [class.text-yellow-600]="seguimiento.dias_restantes <= 7 && seguimiento.dias_restantes > 0"
-               [class.text-red-600]="seguimiento.dias_restantes <= 0">
-            <span>Días restantes:</span>
-            <span>{{ formatDiasRestantes(seguimiento.dias_restantes) }}</span>
-          </div>
-        </div>
 
-        <!-- Información básica de la terapia -->
-        <div class="flex justify-between items-center mb-4">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            {{ seguimiento.terapia_tipo }}
-          </span>
-          <span class="text-sm text-gray-500">{{ formatDuracion(seguimiento.duracion_estimada) }}</span>
-        </div>
-
-        <!-- Información de sesiones -->
-        <div *ngIf="seguimiento.sesiones_completadas !== undefined && seguimiento.sesiones_programadas !== undefined" class="text-sm text-gray-600 mb-4">
-          <div class="flex justify-between">
-            <span>Sesiones:</span>
-            <span>{{ seguimiento.sesiones_completadas }} / {{ seguimiento.sesiones_programadas }}</span>
+          <!-- Información básica de la terapia -->
+          <div class="flex justify-between items-center mb-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              {{ seguimiento.terapia_tipo }}
+            </span>
+            <span class="text-sm text-gray-500">{{ formatDuracion(seguimiento.duracion_estimada) }}</span>
           </div>
-          <div *ngIf="seguimiento.adherencia_porcentaje !== undefined" class="flex justify-between">
-            <span>Adherencia:</span>
-            <span>{{ seguimiento.adherencia_porcentaje }}%</span>
-          </div>
-        </div>
 
-        <!-- Fechas reales si existen -->
-        <div *ngIf="seguimiento.fecha_inicio_real || seguimiento.fecha_fin_real" class="text-xs text-gray-500 mb-4">
-          <div *ngIf="seguimiento.fecha_inicio_real">
-            Iniciado: {{ formatDate(seguimiento.fecha_inicio_real) }}
+          <!-- Información de sesiones -->
+          <div *ngIf="seguimiento.sesiones_completadas !== undefined && seguimiento.sesiones_programadas !== undefined" class="text-sm text-gray-600 mb-4">
+            <div class="flex justify-between">
+              <span>Sesiones:</span>
+              <span>{{ seguimiento.sesiones_completadas }} / {{ seguimiento.sesiones_programadas }}</span>
+            </div>
+            <div *ngIf="seguimiento.adherencia_porcentaje !== undefined" class="flex justify-between">
+              <span>Adherencia:</span>
+              <span>{{ seguimiento.adherencia_porcentaje }}%</span>
+            </div>
           </div>
-          <div *ngIf="seguimiento.fecha_fin_real">
-            Completado: {{ formatDate(seguimiento.fecha_fin_real) }}
+
+          <!-- Fechas reales si existen -->
+          <div *ngIf="seguimiento.fecha_inicio_real || seguimiento.fecha_fin_real" class="text-xs text-gray-500 mb-4">
+            <div *ngIf="seguimiento.fecha_inicio_real">
+              Iniciado: {{ formatDate(seguimiento.fecha_inicio_real) }}
+            </div>
+            <div *ngIf="seguimiento.fecha_fin_real">
+              Completado: {{ formatDate(seguimiento.fecha_fin_real) }}
+            </div>
           </div>
-        </div>
 
-        <!-- Notas individuales -->
-        <div *ngIf="seguimiento.notas_individuales" class="mb-4 p-3 bg-gray-50 rounded-md">
-          <p class="text-sm text-gray-700">
-            <strong>Mis notas:</strong> {{ seguimiento.notas_individuales }}
-          </p>
-        </div>
+          <!-- Notas individuales -->
+          <div *ngIf="seguimiento.notas_individuales" class="mb-4 p-3 bg-gray-50 rounded-md">
+            <p class="text-sm text-gray-700">
+              <strong>Mis notas:</strong> {{ seguimiento.notas_individuales }}
+            </p>
+          </div>
 
-        <!-- Acciones -->
-        <div class="flex justify-end space-x-2">
-          <!-- Botón Ver -->
-          <button
-            (click)="openViewModal(seguimiento)"
-            class="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-blue-50 transition-colors duration-150"
-            title="Ver terapia completa"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-            </svg>
-          </button>
-          
-          <!-- Botón Exportar -->
-          <button
-            (click)="safeExportTerapia(seguimiento)"
-            class="text-purple-600 hover:text-purple-900 p-2 rounded-full hover:bg-purple-50 transition-colors duration-150"
-            title="Descargar mi terapia"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-          </button>
+          <!-- Acciones -->
+          <div class="flex justify-end space-x-2">
+            <!-- Botón Ver -->
+            <button
+              (click)="openViewModal(seguimiento)"
+              class="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-blue-50 transition-colors duration-150"
+              title="Ver terapia completa"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </button>
+            
+            <!-- Botón Exportar -->
+            <button
+              (click)="safeExportTerapia(seguimiento)"
+              class="text-purple-600 hover:text-purple-900 p-2 rounded-full hover:bg-purple-50 transition-colors duration-150"
+              title="Descargar mi terapia"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Empty State -->
-  <div *ngIf="!loading && filteredTerapias.length === 0" class="text-center py-12">
-    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-    </svg>
-    <h3 class="mt-2 text-sm font-medium text-gray-900">No hay terapias asignadas</h3>
-    <p class="mt-1 text-sm text-gray-500">
-      <ng-container *ngIf="misTerapias.length === 0; else filtrosAplicados">
-        No tienes terapias asignadas en este momento.
-      </ng-container>
-      <ng-template #filtrosAplicados>
-        No se encontraron terapias con los filtros aplicados.
-      </ng-template>
-    </p>
-    <div class="mt-6">
-      <button
-        *ngIf="misTerapias.length > 0"
-        (click)="clearFilters()"
-        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-      >
-        Limpiar filtros
-      </button>
+    <!-- Empty State -->
+    <div *ngIf="!loading && filteredTerapias.length === 0" class="text-center py-12">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">No hay terapias asignadas</h3>
+      <p class="mt-1 text-sm text-gray-500">
+        <ng-container *ngIf="misTerapias.length === 0; else filtrosAplicados">
+          No tienes terapias asignadas en este momento.
+        </ng-container>
+        <ng-template #filtrosAplicados>
+          No se encontraron terapias con los filtros aplicados.
+        </ng-template>
+      </p>
+      <div class="mt-6">
+        <button
+          *ngIf="misTerapias.length > 0"
+          (click)="clearFilters()"
+          class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+        >
+          Limpiar filtros
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -410,17 +446,6 @@
             class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-            </svg>
-            Copiar
-          </button>
-          
-          <button
-            *ngIf="selectedTerapia"
-            (click)="exportarTerapia(selectedTerapia, selectedSeguimiento || undefined)"
-            class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
             Descargar
@@ -478,3 +503,4 @@
     </div>
   </div>
 </div>
+<!-- Fin del sistema de notificaciones -->
