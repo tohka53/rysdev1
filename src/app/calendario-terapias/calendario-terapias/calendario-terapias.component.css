@@ -1,328 +1,177 @@
 /* src/app/calendario-terapias/calendario-terapias.component.css */
 
-/* Estilos para el calendario de terapias */
+/* Estilos personalizados para el calendario de terapias */
 .calendario-container {
-  @apply w-full;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Grid del calendario */
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0;
+/* Estilos para las celdas del calendario */
+.celda-calendario {
+  transition: all 0.2s ease-in-out;
 }
 
-/* Celdas del calendario */
-.calendar-cell {
-  @apply min-h-32 border-r border-b border-gray-200 p-2 relative;
-  transition: background-color 0.2s ease;
+.celda-calendario:hover {
+  background-color: #f8fafc;
 }
 
-.calendar-cell:last-child {
-  @apply border-r-0;
+/* Estilos para las terapias en el calendario */
+.terapia-evento {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  border-radius: 0.25rem;
+  transition: all 0.15s ease-in-out;
 }
 
-.calendar-cell:hover {
-  @apply bg-gray-50;
+.terapia-evento:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Estados de terapias */
+.terapia-vigente {
+  border-left: 3px solid #10b981;
+  background-color: #ecfdf5;
+}
+
+.terapia-pendiente {
+  border-left: 3px solid #3b82f6;
+  background-color: #eff6ff;
+}
+
+.terapia-vencida {
+  border-left: 3px solid #ef4444;
+  background-color: #fef2f2;
 }
 
 /* Día actual */
-.today-cell {
-  @apply bg-blue-50;
-  position: relative;
+.dia-actual {
+  background-color: #dbeafe !important;
+  border: 2px solid #3b82f6;
 }
 
-.today-cell::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #3B82F6, #1D4ED8);
+.dia-actual .numero-dia {
+  color: #1d4ed8;
+  font-weight: bold;
 }
 
-/* Días fuera del mes actual */
-.outside-month {
-  @apply bg-gray-50 text-gray-400;
+/* Efectos hover para navegación */
+.nav-button {
+  transition: all 0.2s ease-in-out;
 }
 
-/* Número del día */
-.day-number {
-  @apply text-sm font-medium;
-  min-height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.nav-button:hover {
+  background-color: #f3f4f6;
+  transform: scale(1.05);
 }
 
-.day-number.today {
-  @apply text-blue-600 font-bold;
+/* Modal styles */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
 }
 
-.day-number.outside-month {
-  @apply text-gray-400;
+/* Terminal styles */
+.terminal-display {
+  font-family: 'Courier New', Consolas, Monaco, monospace;
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
 }
 
-/* Contenedor de terapias */
-.terapias-container {
-  @apply space-y-1 mt-1;
-  max-height: calc(8rem - 2rem); /* Ajustar según min-h-32 */
-  overflow: hidden;
+.terminal-display pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
-/* Tarjetas de terapias */
-.terapia-card {
-  @apply text-xs p-1 rounded border cursor-pointer transition-all duration-150;
-  font-size: 0.7rem;
-  line-height: 1.2;
+/* Scrollbar personalizado para el terminal */
+.terminal-display::-webkit-scrollbar {
+  width: 8px;
 }
 
-.terapia-card:hover {
-  @apply shadow-sm transform scale-105;
+.terminal-display::-webkit-scrollbar-track {
+  background: #374151;
+  border-radius: 4px;
 }
 
-/* Estilos por tipo de evento */
-.terapia-inicio {
-  @apply border-green-500 bg-green-100 text-green-800;
+.terminal-display::-webkit-scrollbar-thumb {
+  background: #6b7280;
+  border-radius: 4px;
 }
 
-.terapia-fin {
-  @apply border-red-500 bg-red-100 text-red-800;
-}
-
-/* Indicadores de estado */
-.estado-indicator {
-  @apply w-2 h-2 rounded-full flex-shrink-0;
-  display: inline-block;
-}
-
-.estado-vigente {
-  @apply bg-green-500;
-}
-
-.estado-pendiente {
-  @apply bg-blue-500;
-}
-
-.estado-vencida {
-  @apply bg-red-500;
+.terminal-display::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
 /* Animaciones */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.terapia-card {
+.fade-in {
   animation: fadeIn 0.3s ease-out;
 }
 
-/* Responsive */
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .calendar-cell {
-    @apply min-h-24 p-1;
+  .terapia-evento {
+    font-size: 0.65rem;
+    padding: 0.25rem;
   }
   
-  .terapia-card {
-    font-size: 0.6rem;
-    @apply p-0.5;
+  .celda-calendario {
+    min-height: 6rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .nav-button,
+  .modal-backdrop,
+  .modal {
+    display: none !important;
   }
   
-  .day-number {
-    font-size: 0.75rem;
+  .calendario-container {
+    margin: 0;
+    box-shadow: none;
   }
 }
 
-@media (max-width: 640px) {
-  .calendar-cell {
-    @apply min-h-20;
+/* Accessibility improvements */
+.terapia-evento:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.nav-button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Loading state */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
   }
-  
-  .terapias-container {
-    max-height: calc(5rem - 1.5rem);
+  100% {
+    background-position: -200% 0;
   }
 }
 
-/* Estilos para el modal */
-.modal-backdrop {
-  @apply fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity;
-  z-index: 40;
-}
-
-.modal-panel {
-  @apply inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all;
-  z-index: 50;
-}
-
-/* Terminal styling */
-.terminal-container {
-  font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-  color: #00ff00;
-  border-radius: 8px;
-  position: relative;
-  overflow: hidden;
-}
-
-.terminal-header {
-  @apply flex items-center justify-between mb-4 pb-2 border-b border-gray-700;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 0.75rem;
-  margin: -1.5rem -1.5rem 1rem -1.5rem;
-}
-
-.terminal-buttons {
-  @apply flex space-x-2;
-}
-
-.terminal-button {
-  @apply w-3 h-3 rounded-full;
-}
-
-.terminal-content {
-  @apply whitespace-pre-wrap relative;
-  color: #ffffff;
-  text-shadow: 0 0 2px rgba(0, 255, 0, 0.3);
-  line-height: 1.6;
-  position: relative;
-  z-index: 10;
-}
-
-/* Marca de agua */
+/* Marca de agua styles */
 .watermark {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotate(12deg);
-  opacity: 0.1;
   pointer-events: none;
-  z-index: 1;
-}
-
-/* Leyenda */
-.legend-container {
-  @apply px-6 py-3 bg-gray-50 border-t border-gray-200;
-}
-
-.legend-item {
-  @apply flex items-center text-sm text-gray-700;
-}
-
-.legend-indicator {
-  @apply w-3 h-3 rounded-full mr-2;
-}
-
-/* Navegación del mes */
-.month-navigation {
-  @apply flex items-center justify-between;
-}
-
-.nav-button {
-  @apply p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500;
-  transition: background-color 0.2s ease;
-}
-
-.nav-button:hover {
-  transform: scale(1.05);
-}
-
-.month-title {
-  @apply text-xl font-semibold text-gray-900;
-  min-width: 200px;
-  text-align: center;
-}
-
-.today-button {
-  @apply inline-flex items-center px-3 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
-  transition: all 0.2s ease;
-}
-
-.today-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
-}
-
-/* Encabezados de días */
-.weekday-header {
-  @apply px-4 py-3 text-center text-sm font-medium text-gray-700 border-r border-gray-200;
-  background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
-}
-
-.weekday-header:last-child {
-  @apply border-r-0;
-}
-
-/* Efectos de hover */
-.hover-shadow {
-  transition: box-shadow 0.2s ease;
-}
-
-.hover-shadow:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-/* Scrollbar personalizado para el modal */
-.terminal-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.terminal-container::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-}
-
-.terminal-container::-webkit-scrollbar-thumb {
-  background: rgba(0, 255, 0, 0.3);
-  border-radius: 4px;
-}
-
-.terminal-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 255, 0, 0.5);
-}
-
-/* Animación de carga */
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.loading-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Estilos para notificaciones de éxito */
-.success-notification {
-  @apply bg-green-50 border border-green-200 rounded-md p-3;
-  animation: slideInRight 0.3s ease-out;
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-/* Focus styles para accesibilidad */
-.focus-ring:focus {
-  @apply outline-none ring-2 ring-offset-2 ring-blue-500;
-}
-
-/* Transiciones suaves */
-.smooth-transition {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Estilo para días con muchas terapias */
-.overflow-indicator {
-  @apply text-xs text-gray-500 text-center mt-1 font-medium;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-  padding: 2px;
+  user-select: none;
+  opacity: 0.1;
+  filter: grayscale(100%);
 }

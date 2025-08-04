@@ -1,4 +1,3 @@
-// src/app/mis-terapias/mis-terapias.component.ts - MODIFICADO CON CALENDARIO
 import { Component, OnInit } from '@angular/core';
 import { TerapiasService } from '../../services/terapias.service';
 import { AuthService } from '../../services/auth.service';
@@ -59,8 +58,8 @@ type VistaTerapias = 'tarjetas' | 'calendario';
   styleUrls: ['./mis-terapias.component.css']
 })
 export class MisTerapiasComponent implements OnInit {
-  // Control de vistas - CALENDARIO COMO VISTA ADICIONAL
-  vistaActual: VistaTerapias = 'tarjetas'; // Vista por defecto: tarjetas
+  // Control de vistas - CALENDARIO COMO VISTA PREDETERMINADA
+  vistaActual: VistaTerapias = 'calendario';
   
   // Datos principales
   misTerapias: SeguimientoTerapiaSimplificado[] = [];
@@ -115,6 +114,11 @@ export class MisTerapiasComponent implements OnInit {
     this.vistaActual = 'calendario';
   }
 
+  onCambiarATarjetas(): void {
+    console.log('Cambiando a vista de tarjetas');
+    this.vistaActual = 'tarjetas';
+  }
+
   onVolverDeCalendario(): void {
     console.log('Volviendo de calendario a tarjetas');
     this.vistaActual = 'tarjetas';
@@ -130,7 +134,7 @@ export class MisTerapiasComponent implements OnInit {
   }
 
   // =====================================
-  // CARGA DE DATOS (MANTENER ORIGINAL)
+  // CARGA DE DATOS
   // =====================================
 
   async loadMisTerapias(): Promise<void> {
@@ -159,9 +163,7 @@ export class MisTerapiasComponent implements OnInit {
         console.log('Terapias filtradas para el usuario:', seguimientos.length);
       } catch (serviceError) {
         console.warn('Error con el servicio principal, intentando método alternativo:', serviceError);
-        
-        // Método de respaldo: usar datos simulados o método alternativo
-        seguimientos = await this.loadTerapiasAlternativo(currentUser.id);
+        seguimientos = [];
       }
       
       // Transformar datos al formato simplificado
@@ -216,23 +218,6 @@ export class MisTerapiasComponent implements OnInit {
       this.filteredTerapias = [];
     } finally {
       this.loading = false;
-    }
-  }
-
-  // Método alternativo en caso de que el servicio principal falle
-  private async loadTerapiasAlternativo(userId: number): Promise<TerapiaAsignadaUsuario[]> {
-    try {
-      console.log('Usando método alternativo para cargar terapias...');
-      
-      // Por ahora retornamos una lista vacía, pero aquí podrías:
-      // 1. Hacer una consulta directa a Supabase
-      // 2. Usar datos simulados para desarrollo
-      // 3. Implementar otra lógica de respaldo
-      
-      return [];
-    } catch (error) {
-      console.error('Error en método alternativo:', error);
-      return [];
     }
   }
 
@@ -313,186 +298,52 @@ export class MisTerapiasComponent implements OnInit {
   }
 
   // =====================================
-  // MODAL Y ACCIONES (MANTENER ORIGINAL)
+  // MODAL Y ACCIONES
   // =====================================
 
-  // Modal para ver terapia completa
+  // Modal para ver terapia completa - CARGAR SIEMPRE DESDE BD
   async openViewModal(seguimiento: SeguimientoTerapiaSimplificado): Promise<void> {
     console.log('Abriendo modal para ver terapia:', seguimiento.terapia_nombre);
     
     this.selectedSeguimiento = seguimiento;
     
-    // Intentar cargar la terapia completa desde el servicio
+    // SIEMPRE intentar cargar la terapia completa desde la base de datos
     try {
-      // Buscar la terapia completa usando el ID
-      const terapiaCompleta = await this.cargarTerapiaCompleta(seguimiento.terapia_id);
+      console.log('Cargando terapia completa desde BD para ID:', seguimiento.terapia_id);
+      const terapiaCompleta = await this.terapiasService.getTerapiaById(seguimiento.terapia_id);
       
       if (terapiaCompleta) {
+        console.log('✅ Terapia completa cargada desde BD:', terapiaCompleta);
         this.selectedTerapia = terapiaCompleta;
       } else {
-        // Si no se puede cargar, crear una terapia básica con la información disponible
+        console.warn('⚠️ No se encontró terapia en BD, usando información básica');
         this.selectedTerapia = this.crearTerapiaBasica(seguimiento);
       }
     } catch (error) {
-      console.error('Error cargando terapia completa:', error);
-      // Usar la información básica disponible
+      console.error('❌ Error cargando terapia completa desde BD:', error);
       this.selectedTerapia = this.crearTerapiaBasica(seguimiento);
     }
     
     this.showViewModal = true;
   }
 
-  private async cargarTerapiaCompleta(terapiaId: number): Promise<any> {
-    try {
-      console.log('Cargando terapia completa para ID:', terapiaId);
-      
-      // Cargar la terapia completa desde la base de datos
-      const terapia = await this.terapiasService.getTerapiaById(terapiaId);
-      
-      if (terapia) {
-        console.log('Terapia cargada desde BD:', terapia);
-        return terapia;
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error al cargar terapia completa:', error);
-      return null;
-    }
-  }
-
+  // Crear terapia básica usando solo datos de seguimiento
   private crearTerapiaBasica(seguimiento: SeguimientoTerapiaSimplificado): any {
     return {
       id: seguimiento.terapia_id,
       nombre: seguimiento.terapia_nombre,
-      descripcion: seguimiento.terapia_descripcion || 'Terapia de rehabilitación personalizada',
+      descripcion: seguimiento.terapia_descripcion || 'Información detallada disponible con el terapeuta',
       tipo: seguimiento.terapia_tipo,
       nivel: seguimiento.terapia_nivel,
       duracion_estimada: seguimiento.duracion_estimada,
-      objetivos: this.generarObjetivosTerapia(seguimiento.terapia_tipo),
-      ejercicios: this.generarEjerciciosBasicos(seguimiento.terapia_tipo),
-      observaciones: seguimiento.notas_individuales || 'Sin observaciones adicionales',
-      area_especializacion: this.obtenerAreaEspecializacion(seguimiento.terapia_tipo)
+      area_especializacion: this.obtenerAreaEspecializacion(seguimiento.terapia_tipo),
+      ejercicios: null,
+      objetivo_principal: null,
+      contraindicaciones: null,
+      criterios_progresion: null,
+      recomendaciones: null,
+      observaciones: 'Para información detallada de ejercicios y contraindicaciones, consulte con su terapeuta'
     };
-  }
-
-  private generarObjetivosTerapia(tipo: string): string {
-    switch (tipo.toLowerCase()) {
-      case 'fisica':
-        return '• Mejorar la movilidad y flexibilidad\n• Fortalecer grupos musculares específicos\n• Reducir el dolor y la inflamación\n• Recuperar la función normal';
-      case 'ocupacional':
-        return '• Mejorar las actividades de la vida diaria\n• Desarrollar habilidades motoras finas\n• Adaptar el entorno a las necesidades\n• Incrementar la independencia funcional';
-      case 'respiratoria':
-        return '• Mejorar la capacidad pulmonar\n• Fortalecer músculos respiratorios\n• Optimizar técnicas de respiración\n• Reducir la disnea';
-      case 'neurologica':
-        return '• Mejorar el control motor\n• Estimular la neuroplasticidad\n• Desarrollar patrones de movimiento\n• Mejorar el equilibrio y coordinación';
-      default:
-        return '• Objetivos específicos según evaluación inicial\n• Mejora progresiva de la condición\n• Mantenimiento de logros alcanzados\n• Prevención de recaídas';
-    }
-  }
-
-  private generarEjerciciosBasicos(tipo: string): any[] {
-    switch (tipo.toLowerCase()) {
-      case 'fisica':
-        return [
-          { 
-            nombre: 'Pendular suave', 
-            descripcion: 'Movimientos pendulares del brazo',
-            series: '2 series x 10 repeticiones',
-            duracion: '2:00'
-          },
-          { 
-            nombre: 'Rotación externa con banda', 
-            descripcion: 'Ejercicio con banda elástica para fortalecimiento',
-            series: '3 series x 15 repeticiones',
-            observaciones: 'No forzar el movimiento'
-          },
-          { 
-            nombre: 'Flexión anterior asistida', 
-            descripcion: 'Elevación del brazo hacia adelante con ayuda',
-            series: '2 series x 12 repeticiones',
-            duracion: '1:30'
-          }
-        ];
-      case 'ocupacional':
-        return [
-          { 
-            nombre: 'Coordinación fina', 
-            descripcion: 'Ejercicios de precisión con objetos pequeños',
-            duracion: '15:00',
-            observaciones: 'Aumentar dificultad gradualmente'
-          },
-          { 
-            nombre: 'Actividades funcionales', 
-            descripcion: 'Simulación de tareas cotidianas',
-            duracion: '20:00',
-            series: '3 repeticiones de cada actividad'
-          },
-          { 
-            nombre: 'Adaptación del entorno', 
-            descripcion: 'Práctica con ayudas técnicas',
-            duracion: '10:00'
-          }
-        ];
-      case 'respiratoria':
-        return [
-          { 
-            nombre: 'Respiración diafragmática', 
-            descripcion: 'Inspiraciones profundas usando el diafragma',
-            series: '4 series x 10 respiraciones',
-            duracion: '5:00',
-            observaciones: 'Mantener ritmo lento y controlado'
-          },
-          { 
-            nombre: 'Expansión costal', 
-            descripcion: 'Ejercicios para expandir la caja torácica',
-            series: '3 series x 8 repeticiones',
-            duracion: '3:00'
-          },
-          { 
-            nombre: 'Aclaramiento de secreciones', 
-            descripcion: 'Técnicas para movilizar mucosidad',
-            duracion: '10:00',
-            observaciones: 'Realizar después de nebulización si es necesario'
-          }
-        ];
-      case 'neurologica':
-        return [
-          { 
-            nombre: 'Control postural', 
-            descripcion: 'Ejercicios de estabilización y equilibrio',
-            duracion: '15:00',
-            series: '3 series x 5 repeticiones'
-          },
-          { 
-            nombre: 'Coordinación bilateral', 
-            descripcion: 'Movimientos coordinados de ambos lados del cuerpo',
-            series: '4 series x 10 repeticiones',
-            duracion: '8:00'
-          },
-          { 
-            nombre: 'Marcha funcional', 
-            descripcion: 'Práctica de patrones de caminata',
-            duracion: '20:00',
-            observaciones: 'Con asistencia según necesidad'
-          }
-        ];
-      default:
-        return [
-          { 
-            nombre: 'Ejercicio terapéutico personalizado', 
-            descripcion: 'Ejercicio adaptado según evaluación individual',
-            duracion: '15:00',
-            observaciones: 'Ajustar según tolerancia'
-          },
-          { 
-            nombre: 'Técnicas de rehabilitación', 
-            descripcion: 'Aplicación de métodos especializados',
-            duracion: '20:00',
-            series: '2-3 repeticiones según protocolo'
-          }
-        ];
-    }
   }
 
   private obtenerAreaEspecializacion(tipo: string): string {
@@ -557,7 +408,7 @@ export class MisTerapiasComponent implements OnInit {
   }
 
   // =====================================
-  // MÉTODOS AUXILIARES (MANTENER ORIGINAL)
+  // MÉTODOS AUXILIARES
   // =====================================
 
   // Método auxiliar para convertir fechas
@@ -600,22 +451,22 @@ export class MisTerapiasComponent implements OnInit {
     return 'en_progreso';
   }
 
-  // Formatear terapia para el modal - VERSIÓN MEJORADA
+  // Formatear terapia para el modal - SOLO DATOS REALES DE BD
   getFormattedTerapia(terapia: any | null, seguimiento?: SeguimientoTerapiaSimplificado): string {
-    console.log('getFormattedTerapia llamado con:', { terapia, seguimiento });
+    console.log('🖨️ Formateando terapia desde BD:', { terapia, seguimiento });
     
     if (!terapia && !seguimiento) {
       console.warn('No hay datos de terapia ni seguimiento');
       return 'No hay información disponible para mostrar.';
     }
 
-    // Si no hay terapia pero sí seguimiento, crear una terapia básica
+    // Si no hay terapia pero sí seguimiento, usar información básica
     if (!terapia && seguimiento) {
       terapia = this.crearTerapiaBasica(seguimiento);
     }
 
     let texto = `${terapia.nombre || seguimiento?.terapia_nombre || 'Terapia sin nombre'}\n`;
-    texto += `${terapia.descripcion || seguimiento?.terapia_descripcion || 'Programa de rehabilitación personalizada'}\n`;
+    texto += `${terapia.descripcion || seguimiento?.terapia_descripcion || 'Información detallada disponible con el terapeuta'}\n`;
     texto += `Tipo: ${terapia.tipo || seguimiento?.terapia_tipo || 'No especificado'} | Nivel: ${terapia.nivel || seguimiento?.terapia_nivel || 'No especificado'}\n`;
     
     if (terapia.area_especializacion) {
@@ -651,7 +502,7 @@ export class MisTerapiasComponent implements OnInit {
       texto += '\n';
     }
 
-    // Agregar objetivo principal si existe
+    // Agregar objetivo principal SOLO si existe en BD
     if (terapia.objetivo_principal) {
       texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
       texto += `                      OBJETIVO PRINCIPAL\n`;
@@ -659,18 +510,25 @@ export class MisTerapiasComponent implements OnInit {
       texto += `${terapia.objetivo_principal}\n\n`;
     }
 
-    // Procesar ejercicios de la base de datos (JSONB) o generar ejercicios básicos
-    if (terapia.ejercicios && typeof terapia.ejercicios === 'object') {
+    // Procesar ejercicios SOLO si existen en la BD
+    if (terapia.ejercicios && typeof terapia.ejercicios === 'object' && Object.keys(terapia.ejercicios).length > 0) {
+      console.log('📋 Procesando ejercicios desde BD:', terapia.ejercicios);
+      
       texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
       texto += `                      PLAN DE EJERCICIOS\n`;
       texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
       
-      const seccionesOrdenadas = ['calentamiento', 'fortalecimiento', 'equilibrio', 'coordinacion', 'estiramiento', 'respiracion'];
+      // Buscar secciones conocidas en el JSONB
+      const seccionesOrdenadas = ['calentamiento', 'fortalecimiento', 'equilibrio', 'coordinacion', 'estiramiento', 'respiracion', 'flexibilidad', 'movilidad', 'resistencia'];
+      
+      let seccionesEncontradas = 0;
       
       seccionesOrdenadas.forEach(seccionKey => {
         const seccion = terapia.ejercicios[seccionKey];
         
-        if (seccion && seccion.ejercicios && seccion.ejercicios.length > 0) {
+        if (seccion && seccion.ejercicios && Array.isArray(seccion.ejercicios) && seccion.ejercicios.length > 0) {
+          seccionesEncontradas++;
+          
           texto += `${seccionKey.toUpperCase()}\n`;
           texto += `${'─'.repeat(seccionKey.length)}\n`;
           
@@ -680,7 +538,7 @@ export class MisTerapiasComponent implements OnInit {
           
           const infoSeccion = [];
           if (seccion.tiempo_total) infoSeccion.push(`Tiempo: ${seccion.tiempo_total}`);
-          if (seccion.objetivos && seccion.objetivos.length > 0) {
+          if (seccion.objetivos && Array.isArray(seccion.objetivos) && seccion.objetivos.length > 0) {
             infoSeccion.push(`Objetivos: ${seccion.objetivos.join(', ')}`);
           }
           
@@ -691,7 +549,7 @@ export class MisTerapiasComponent implements OnInit {
           texto += '\n';
           
           seccion.ejercicios.forEach((ejercicio: any, index: number) => {
-            texto += `${index + 1}. ${ejercicio.nombre}\n`;
+            texto += `${index + 1}. ${ejercicio.nombre || 'Ejercicio sin nombre'}\n`;
             
             if (ejercicio.descripcion) {
               texto += `   ${ejercicio.descripcion}\n`;
@@ -702,7 +560,7 @@ export class MisTerapiasComponent implements OnInit {
             if (ejercicio.repeticiones) detalles.push(`${ejercicio.repeticiones} reps`);
             if (ejercicio.duracion) detalles.push(`${ejercicio.duracion}`);
             if (ejercicio.resistencia) detalles.push(`Resistencia: ${ejercicio.resistencia}`);
-            if (ejercicio.equipamiento && ejercicio.equipamiento.length > 0) {
+            if (ejercicio.equipamiento && Array.isArray(ejercicio.equipamiento) && ejercicio.equipamiento.length > 0) {
               detalles.push(`Equipo: ${ejercicio.equipamiento.join(', ')}`);
             }
             
@@ -727,57 +585,66 @@ export class MisTerapiasComponent implements OnInit {
               }
             }
             
+            if (ejercicio.observaciones) {
+              texto += `   📝 ${ejercicio.observaciones}\n`;
+            }
+            
             texto += '\n';
           });
           
           texto += '\n';
         }
       });
-    } else {
-      // Si no hay ejercicios en JSONB, usar ejercicios generados
-      const ejerciciosGenerados = this.generarEjerciciosBasicos(seguimiento?.terapia_tipo || terapia.tipo || 'general');
       
-      if (ejerciciosGenerados && ejerciciosGenerados.length > 0) {
-        texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-        texto += `                      PLAN DE EJERCICIOS\n`;
-        texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      // Si no se encontraron secciones organizadas, buscar ejercicios directos
+      if (seccionesEncontradas === 0) {
+        console.log('🔍 No se encontraron secciones organizadas, buscando ejercicios directos...');
         
-        ejerciciosGenerados.forEach((ejercicio: any, index: number) => {
-          texto += `${index + 1}. ${ejercicio.nombre}\n`;
+        // Verificar si hay ejercicios directamente en el objeto
+        if (Array.isArray(terapia.ejercicios)) {
+          texto += `EJERCICIOS\n`;
+          texto += `─────────\n\n`;
           
-          if (ejercicio.descripcion) {
-            texto += `   ${ejercicio.descripcion}\n`;
-          }
-          
-          if (ejercicio.series) {
-            texto += `   ${ejercicio.series}\n`;
-          }
-          
-          if (ejercicio.duracion) {
-            texto += `   Duración: ${ejercicio.duracion}\n`;
-          }
-          
-          if (ejercicio.observaciones) {
-            texto += `   📝 ${ejercicio.observaciones}\n`;
-          }
-          
-          texto += '\n';
-        });
-      } else {
-        // Plan de tratamiento genérico
-        texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-        texto += `                    PLAN DE TRATAMIENTO\n`;
-        texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-        
-        texto += `1. Evaluación inicial y establecimiento de objetivos\n`;
-        texto += `2. Programa de ejercicios adaptado al nivel del paciente\n`;
-        texto += `3. Progresión gradual según tolerancia y evolución\n`;
-        texto += `4. Reevaluación periódica y ajustes del programa\n`;
-        texto += `5. Educación del paciente y recomendaciones para el hogar\n\n`;
+          terapia.ejercicios.forEach((ejercicio: any, index: number) => {
+            texto += `${index + 1}. ${ejercicio.nombre || 'Ejercicio sin nombre'}\n`;
+            
+            if (ejercicio.descripcion) {
+              texto += `   ${ejercicio.descripcion}\n`;
+            }
+            
+            const detalles = [];
+            if (ejercicio.series) detalles.push(`${ejercicio.series} series`);
+            if (ejercicio.repeticiones) detalles.push(`${ejercicio.repeticiones} reps`);
+            if (ejercicio.duracion) detalles.push(`${ejercicio.duracion}`);
+            
+            if (detalles.length > 0) {
+              texto += `   ${detalles.join(' | ')}\n`;
+            }
+            
+            if (ejercicio.observaciones) {
+              texto += `   📝 ${ejercicio.observaciones}\n`;
+            }
+            
+            texto += '\n';
+          });
+        } else {
+          console.log('⚠️ Estructura de ejercicios no reconocida:', typeof terapia.ejercicios);
+          texto += `INFORMACIÓN DE EJERCICIOS\n`;
+          texto += `────────────────────────\n\n`;
+          texto += `Los ejercicios están disponibles en la base de datos.\n`;
+          texto += `Consulte con su terapeuta para obtener el plan de ejercicios detallado.\n\n`;
+        }
       }
+    } else {
+      console.log('ℹ️ No hay ejercicios en BD o estructura vacía');
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+      texto += `                    PLAN DE EJERCICIOS\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      texto += `El plan de ejercicios detallado está disponible con su terapeuta.\n`;
+      texto += `Consulte directamente para obtener las instrucciones específicas.\n\n`;
     }
 
-    // Agregar contraindicaciones si existen
+    // Agregar contraindicaciones SOLO si existen en BD
     if (terapia.contraindicaciones) {
       texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
       texto += `                     CONTRAINDICACIONES\n`;
@@ -785,7 +652,7 @@ export class MisTerapiasComponent implements OnInit {
       texto += `${terapia.contraindicaciones}\n\n`;
     }
 
-    // Agregar criterios de progresión
+    // Agregar criterios de progresión SOLO si existen en BD
     if (terapia.criterios_progresion) {
       texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
       texto += `                   CRITERIOS DE PROGRESIÓN\n`;
@@ -793,7 +660,24 @@ export class MisTerapiasComponent implements OnInit {
       texto += `${terapia.criterios_progresion}\n\n`;
     }
 
-    // Agregar mis notas si existen
+    // Agregar recomendaciones SOLO si existen en BD
+    if (terapia.recomendaciones) {
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+      texto += `                      RECOMENDACIONES\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      texto += `${terapia.recomendaciones}\n\n`;
+    }
+
+    // Agregar observaciones SOLO si existen en BD (y no son el mensaje por defecto)
+    if (terapia.observaciones && 
+        terapia.observaciones !== 'Para información detallada de ejercicios y contraindicaciones, consulte con su terapeuta') {
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+      texto += `                      OBSERVACIONES\n`;
+      texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      texto += `${terapia.observaciones}\n\n`;
+    }
+
+    // Agregar mis notas personales si existen
     if (seguimiento?.notas_individuales) {
       texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
       texto += `                   MIS NOTAS PERSONALES\n`;
@@ -808,10 +692,10 @@ export class MisTerapiasComponent implements OnInit {
         texto += `                     EVALUACIÓN ACTUAL\n`;
         texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
         
-        if (seguimiento.nivel_dolor_actual !== undefined) {
+        if (seguimiento.nivel_dolor_actual !== undefined && seguimiento.nivel_dolor_actual > 0) {
           texto += `Nivel de dolor: ${seguimiento.nivel_dolor_actual}/10\n`;
         }
-        if (seguimiento.nivel_funcionalidad_actual !== undefined) {
+        if (seguimiento.nivel_funcionalidad_actual !== undefined && seguimiento.nivel_funcionalidad_actual > 0) {
           texto += `Funcionalidad: ${seguimiento.nivel_funcionalidad_actual}%\n`;
         }
         texto += '\n';
@@ -819,16 +703,17 @@ export class MisTerapiasComponent implements OnInit {
     }
 
     // Tags si existen
-    if (terapia.tags && terapia.tags.length > 0) {
+    if (terapia.tags && Array.isArray(terapia.tags) && terapia.tags.length > 0) {
       texto += `Tags: ${terapia.tags.map((tag: string) => `#${tag}`).join(' ')}\n\n`;
     }
 
     texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
     texto += `Última actualización: ${this.formatDate(new Date().toISOString())}\n`;
     texto += `Generado por: rehabiMovement - Sistema de Rehabilitación\n`;
+    texto += `ID de Terapia: ${terapia.id || seguimiento?.terapia_id || 'N/A'}\n`;
     texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
 
-    console.log('Texto generado:', texto.substring(0, 200) + '...');
+    console.log('✅ Texto generado con datos reales de BD');
     return texto;
   }
 
@@ -838,8 +723,6 @@ export class MisTerapiasComponent implements OnInit {
     }
     return terapia.nombre.replace(/\s+/g, '_') + '_mi_terapia.txt';
   }
-
-  // [TODOS LOS DEMÁS MÉTODOS ORIGINALES SE MANTIENEN IGUAL]
 
   // Exportar terapia
   safeExportTerapia(seguimiento: SeguimientoTerapiaSimplificado): void {
@@ -969,7 +852,6 @@ export class MisTerapiasComponent implements OnInit {
     }
   }
 
- 
   // Métodos de estado y colores
   getEstadoTemporalText(estado: string): string {
     switch (estado) {

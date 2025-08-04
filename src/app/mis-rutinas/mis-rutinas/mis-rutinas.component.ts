@@ -343,82 +343,227 @@ export class MisRutinasComponent implements OnInit {
     return total;
   }
 
-  // Formatear rutina para el modal (similar al componente rutinas)
-  getFormattedRutina(rutina: Rutina | null, seguimiento?: SeguimientoDetalladoExtendido): string {
-    if (!rutina) return '';
+// REEMPLAZA COMPLETAMENTE el método getFormattedRutina con este código:
+getFormattedRutina(rutina: Rutina | null, seguimiento?: SeguimientoDetalladoExtendido): string {
+  console.log('🎨 Formateando rutina con NUEVO FORMATO:', rutina?.nombre); // Debug
+  
+  if (!rutina) return '';
 
-    let texto = `${rutina.nombre}\n`;
-    texto += `${rutina.descripcion || 'Rutina de entrenamiento'}\n`;
-    texto += `Nivel: ${rutina.nivel} | Duración: ${this.formatDuracion(rutina.duracion_estimada)}\n`;
+  let texto = '';
+  
+  // =====================================
+  // HEADER PRINCIPAL CON DISEÑO MEJORADO
+  // =====================================
+  texto += '╔' + '═'.repeat(78) + '╗\n';
+  texto += '║' + `🏋️  ${rutina.nombre.toUpperCase()}`.padEnd(78) + '║\n';
+  texto += '╚' + '═'.repeat(78) + '╝\n';
+  
+  texto += `${rutina.descripcion || 'Rutina de entrenamiento completa'}\n\n`;
+  
+  // Información básica con iconos
+  const nivelText = `Nivel: ${rutina.nivel.toUpperCase()}`;
+  const duracionText = `Duración: ${this.formatDuracion(rutina.duracion_estimada)}`;
+  const tipoText = `Tipo: ${rutina.tipo.toUpperCase()}`;
+  
+  texto += `🎯 ${nivelText} | ⏱️  ${duracionText} | 📋 ${tipoText}\n\n`;
+  
+  // =====================================
+  // SECCIÓN DE MI PROGRESO (si hay seguimiento)
+  // =====================================
+  if (seguimiento) {
+    texto += '┌' + '─'.repeat(78) + '┐\n';
+    texto += '│' + `📊 MI PROGRESO`.padEnd(78) + '│\n';
+    texto += '└' + '─'.repeat(78) + '┘\n';
     
-    // Agregar información de seguimiento si está disponible
-    if (seguimiento) {
-      texto += `Progreso: ${seguimiento.progreso}% | Estado: ${seguimiento.estado_individual}\n`;
-      texto += `Período: ${this.formatDate(seguimiento.fecha_inicio_programada)} - ${this.formatDate(seguimiento.fecha_fin_programada)}\n`;
-      if (seguimiento.estado_temporal === 'vigente') {
-        texto += `Días restantes: ${seguimiento.dias_restantes}\n`;
-      }
+    // Barra de progreso visual
+    const progreso = seguimiento.progreso || 0;
+    const barLength = 40;
+    const filledLength = Math.round((progreso / 100) * barLength);
+    const emptyLength = barLength - filledLength;
+    const progressBar = '█'.repeat(filledLength) + '░'.repeat(emptyLength);
+    
+    texto += `Estado: ${seguimiento.estado_individual.toUpperCase()} (${progreso}%)\n`;
+    texto += `Progreso: [${progressBar}] ${progreso}%\n`;
+    texto += `Período: ${this.formatDate(seguimiento.fecha_inicio_programada)} → ${this.formatDate(seguimiento.fecha_fin_programada)}\n`;
+    
+    if (seguimiento.estado_temporal === 'vigente') {
+      const diasIcon = seguimiento.dias_restantes > 7 ? '🟢' : seguimiento.dias_restantes > 0 ? '🟡' : '🔴';
+      texto += `${diasIcon} Días restantes: ${seguimiento.dias_restantes}\n`;
     }
+    
+    if (seguimiento.fecha_inicio_real) {
+      texto += `✅ Iniciado: ${this.formatDate(seguimiento.fecha_inicio_real)}\n`;
+    }
+    
+    if (seguimiento.fecha_fin_real) {
+      texto += `🎉 Completado: ${this.formatDate(seguimiento.fecha_fin_real)}\n`;
+    }
+    
     texto += '\n';
-
-    // Procesar cada sección
-    const ordenSecciones = ['warm_up', 'met_con', 'strength', 'core', 'extra'];
-    
-    ordenSecciones.forEach(sectionKey => {
-      const seccionInfo = this.seccionesDisponibles.find(s => s.key === sectionKey);
-      const seccionData = this.getSeccionData(rutina, sectionKey);
-      
-      if (seccionData && seccionData.ejercicios && seccionData.ejercicios.length > 0 && seccionInfo) {
-        texto += `${seccionInfo.nombre.toUpperCase()}\n`;
-        
-        if (seccionData.descripcion) {
-          texto += `${seccionData.descripcion}\n`;
-        }
-        
-        const infoAdicional = [];
-        if (seccionData.tiempo_total) infoAdicional.push(`Tiempo: ${seccionData.tiempo_total}`);
-        if (seccionData.series) infoAdicional.push(`Series: ${seccionData.series}`);
-        if (seccionData.time_cap) infoAdicional.push(`Time Cap: ${seccionData.time_cap}`);
-        
-        if (infoAdicional.length > 0) {
-          texto += `${infoAdicional.join(' | ')}\n`;
-        }
-        
-        seccionData.ejercicios.forEach(ejercicio => {
-          let lineaEjercicio = ejercicio.nombre;
-          
-          const detalles = [];
-          if (ejercicio.repeticiones) detalles.push(`${ejercicio.repeticiones} reps`);
-          if (ejercicio.series) detalles.push(`x ${ejercicio.series}`);
-          if (ejercicio.duracion) detalles.push(`${ejercicio.duracion}`);
-          if (ejercicio.distancia) detalles.push(`${ejercicio.distancia}`);
-          if (ejercicio.peso) detalles.push(`${ejercicio.peso}`);
-          
-          if (detalles.length > 0) {
-            lineaEjercicio += ` - ${detalles.join(' ')}`;
-          }
-          
-          if (ejercicio.rpe) {
-            lineaEjercicio += ` (RPE ${ejercicio.rpe})`;
-          }
-          
-          if (ejercicio.observaciones) {
-            lineaEjercicio += ` - ${ejercicio.observaciones}`;
-          }
-          
-          texto += `${lineaEjercicio}\n`;
-        });
-        
-        texto += '\n';
-      }
-    });
-
-    if (rutina.tags && rutina.tags.length > 0) {
-      texto += `Tags: ${rutina.tags.map(tag => `#${tag}`).join(' ')}\n`;
-    }
-
-    return texto;
   }
+
+  // =====================================
+  // PLAN DE ENTRENAMIENTO CON FORMATO MEJORADO
+  // =====================================
+  texto += '╔' + '═'.repeat(78) + '╗\n';
+  texto += '║' + `💪 PLAN DE ENTRENAMIENTO`.padEnd(78) + '║\n';
+  texto += '╚' + '═'.repeat(78) + '╝\n\n';
+
+  // Iconos para cada sección - CORREGIDO CON TIPADO ADECUADO
+  const iconosSecciones: { [key: string]: string } = {
+    'warm_up': '🔥',
+    'met_con': '💨',
+    'strength': '🏋️',
+    'core': '🎯',
+    'extra': '✨'
+  };
+
+  // Procesar cada sección con formato mejorado
+  const ordenSecciones = ['warm_up', 'met_con', 'strength', 'core', 'extra'];
+  
+  let seccionesEncontradas = 0;
+  
+  ordenSecciones.forEach((sectionKey, index) => {
+    const seccionInfo = this.seccionesDisponibles.find(s => s.key === sectionKey);
+    const seccionData = this.getSeccionData(rutina, sectionKey);
+    
+    if (seccionData && seccionData.ejercicios && seccionData.ejercicios.length > 0 && seccionInfo) {
+      seccionesEncontradas++;
+      
+      console.log(`📋 Procesando sección: ${seccionInfo.nombre}`); // Debug
+      
+      // Header de sección con icono
+      const icono = iconosSecciones[sectionKey] || '📋';
+      texto += '┌' + '─'.repeat(76) + '┐\n';
+      texto += '│ ' + `${icono} ${seccionInfo.nombre.toUpperCase()}`.padEnd(75) + '│\n';
+      texto += '└' + '─'.repeat(76) + '┘\n';
+      
+      // Descripción de la sección si existe
+      if (seccionData.descripcion) {
+        texto += `📝 ${seccionData.descripcion}\n`;
+      }
+      
+      // Información adicional de la sección con iconos - CORREGIDAS LAS PROPIEDADES
+      const infoAdicional = [];
+      if (seccionData.tiempo_total) infoAdicional.push(`⏱️  Tiempo: ${seccionData.tiempo_total}`);
+      if (seccionData.series) infoAdicional.push(`🔄 Series: ${seccionData.series}`);
+      if (seccionData.time_cap) infoAdicional.push(`⏰ Time Cap: ${seccionData.time_cap}`);
+      
+      // Usar propiedades que existen en SeccionRutina o acceder de forma segura
+      const seccionAny = seccionData as any;
+      if (seccionAny.rest_between_exercises) infoAdicional.push(`⏸️  Descanso: ${seccionAny.rest_between_exercises}`);
+      if (seccionAny.rest_between_sets) infoAdicional.push(`💤 Descanso series: ${seccionAny.rest_between_sets}`);
+      
+      if (infoAdicional.length > 0) {
+        texto += `${infoAdicional.join(' | ')}\n`;
+      }
+      
+      texto += '─'.repeat(78) + '\n';
+      
+      // EJERCICIOS CON NUMERACIÓN Y FORMATO MEJORADO
+      seccionData.ejercicios.forEach((ejercicio: any, ejercicioIndex: number) => {
+        texto += `${(ejercicioIndex + 1).toString().padStart(2, '0')}. 🔹 ${ejercicio.nombre || 'Ejercicio'}\n`;
+        
+        // Detalles del ejercicio con iconos
+        const detalles = [];
+        if (ejercicio.repeticiones) detalles.push(`🔢 ${ejercicio.repeticiones} reps`);
+        if (ejercicio.series) detalles.push(`🔄 ${ejercicio.series} series`);
+        if (ejercicio.peso) detalles.push(`⚖️  ${ejercicio.peso}`);
+        if (ejercicio.distancia) detalles.push(`📏 ${ejercicio.distancia}`);
+        if (ejercicio.tiempo) detalles.push(`⏱️  ${ejercicio.tiempo}`);
+        if (ejercicio.duracion) detalles.push(`⏳ ${ejercicio.duracion}`);
+        
+        if (detalles.length > 0) {
+          texto += `    └─ ${detalles.join(' • ')}\n`;
+        }
+        
+        // RPE si existe
+        if (ejercicio.rpe) {
+          texto += `    💪 RPE: ${ejercicio.rpe}/10\n`;
+        }
+        
+        // Descanso si existe
+        if (ejercicio.descanso) {
+          texto += `    ⏸️  Descanso: ${ejercicio.descanso}\n`;
+        }
+        
+        // Observaciones si existen
+        if (ejercicio.observaciones) {
+          texto += `    📝 ${ejercicio.observaciones}\n`;
+        }
+        
+        // Notas adicionales si existen
+        if (ejercicio.notas) {
+          texto += `    💡 ${ejercicio.notas}\n`;
+        }
+        
+        // Espaciado entre ejercicios
+        if (ejercicioIndex < seccionData.ejercicios.length - 1) {
+          texto += '\n';
+        }
+      });
+      
+      // Separador entre secciones
+      if (index < ordenSecciones.length - 1 && seccionesEncontradas > 0) {
+        texto += '\n' + '═'.repeat(78) + '\n\n';
+      }
+    }
+  });
+
+  // Si no se encontraron secciones con ejercicios
+  if (seccionesEncontradas === 0) {
+    console.log('⚠️ No se encontraron secciones con ejercicios'); // Debug
+    texto += `┌${'─'.repeat(76)}┐\n`;
+    texto += `│ ℹ️  RUTINA EN DESARROLLO${' '.repeat(51)}│\n`;
+    texto += `└${'─'.repeat(76)}┘\n`;
+    texto += `Esta rutina está siendo desarrollada.\n`;
+    texto += `Los ejercicios serán agregados próximamente.\n\n`;
+  }
+
+  // =====================================
+  // MIS NOTAS PERSONALES
+  // =====================================
+  if (seguimiento?.notas_individuales) {
+    texto += '┌' + '─'.repeat(78) + '┐\n';
+    texto += '│' + `📝 MIS NOTAS PERSONALES`.padEnd(78) + '│\n';
+    texto += '└' + '─'.repeat(78) + '┘\n';
+    texto += `${seguimiento.notas_individuales}\n\n`;
+  }
+
+  // =====================================
+  // TAGS DE LA RUTINA
+  // =====================================
+  if (rutina.tags && rutina.tags.length > 0) {
+    texto += `🏷️  Tags: ${rutina.tags.map((tag: string) => `#${tag}`).join(' ')}\n\n`;
+  }
+
+  // =====================================
+  // FOOTER CON RESUMEN E INFORMACIÓN DEL SISTEMA
+  // =====================================
+  texto += '╔' + '═'.repeat(78) + '╗\n';
+  texto += '║' + `📱 rehabiMovement - Sistema de Entrenamiento`.padEnd(78) + '║\n';
+  texto += '╠' + '═'.repeat(78) + '╣\n';
+  
+  // Resumen de la rutina
+  const totalEjercicios = this.getTotalEjercicios(rutina);
+  texto += '║' + `📈 RESUMEN: ${totalEjercicios} ejercicios total`.padEnd(78) + '║\n';
+  
+  if (rutina.duracion_estimada) {
+    texto += '║' + `⏱️  Duración estimada: ${this.formatDuracion(rutina.duracion_estimada)}`.padEnd(78) + '║\n';
+  }
+  
+  texto += '║' + `📅 Generado: ${this.formatDate(new Date().toISOString())}`.padEnd(78) + '║\n';
+  texto += '║' + `🆔 ID Rutina: ${rutina.id || 'N/A'}`.padEnd(78) + '║\n';
+  
+  if (seguimiento) {
+    texto += '║' + `👤 Atleta: ${seguimiento.full_name || seguimiento.username || 'N/A'}`.padEnd(78) + '║\n';
+  }
+  
+  texto += '╚' + '═'.repeat(78) + '╝\n';
+
+  console.log('✅ Nuevo formato aplicado exitosamente!'); // Debug
+  return texto;
+}
 
   // Copiar al portapapeles
   async copyToClipboard(text: string): Promise<void> {
@@ -570,12 +715,25 @@ export class MisRutinasComponent implements OnInit {
     }
   }
 
-  getFileName(rutina: Rutina | null): string {
-    if (!rutina || !rutina.nombre) {
-      return 'mi_rutina.txt';
-    }
-    return rutina.nombre.replace(/\s+/g, '_') + '_mi_rutina.txt';
+  // Método mejorado para generar nombres de archivo descriptivos para rutinas
+getFileName(rutina: Rutina | null): string {
+  if (!rutina || !rutina.nombre) {
+    return 'mi_rutina_rehabimovement.txt';
   }
+  
+  // Limpiar nombre para usar como filename
+  const nombreLimpio = rutina.nombre
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remover caracteres especiales excepto guiones y espacios
+    .replace(/\s+/g, '_')     // Reemplazar espacios con guiones bajos
+    .substring(0, 30);        // Limitar longitud
+  
+  const tipo = rutina.tipo ? `_${rutina.tipo}` : '';
+  const nivel = rutina.nivel ? `_${rutina.nivel}` : '';
+  const fecha = new Date().toISOString().split('T')[0];
+  
+  return `${nombreLimpio}${tipo}${nivel}_${fecha}_rehabimovement.txt`;
+}
 
   // TrackBy functions para optimización
   trackByRutinaId(index: number, rutina: SeguimientoDetalladoExtendido): any {

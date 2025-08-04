@@ -1,7 +1,11 @@
-// src/app/calendario-rutinas/calendario-rutinas/calendario-rutinas.component.ts - SOLO DÍA DE INICIO
+// src/app/calendario-rutinas/calendario-rutinas/calendario-rutinas.component.ts - CORREGIDO COMPLETO
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { SeguimientoDetalladoExtendido } from '../../interfaces/mis-rutinas.interfaces';
-import { Rutina } from '../../interfaces/rutinas.interfaces';
+import { 
+  Rutina, 
+  SeccionRutina, 
+  SeccionInfo
+} from '../../interfaces/rutinas.interfaces';
 
 export interface DiaCalendario {
   fecha: Date;
@@ -36,6 +40,15 @@ export class CalendarioRutinasComponent implements OnInit {
   selectedRutina: Rutina | null = null;
   selectedSeguimiento: SeguimientoDetalladoExtendido | null = null;
   copySuccess = false;
+
+  // AGREGADO: Secciones disponibles para mostrar rutinas
+  seccionesDisponibles: SeccionInfo[] = [
+    { key: 'warm_up', nombre: 'Warm Up', descripcion: 'Calentamiento' },
+    { key: 'met_con', nombre: 'Met-Con', descripcion: 'Metabolic Conditioning' },
+    { key: 'strength', nombre: 'Strength', descripcion: 'Entrenamiento de Fuerza' },
+    { key: 'core', nombre: 'Core', descripcion: 'Trabajo de Core' },
+    { key: 'extra', nombre: 'Extra', descripcion: 'Trabajo Adicional' }
+  ];
 
   // Nombres de meses y días
   meses = [
@@ -185,8 +198,25 @@ export class CalendarioRutinasComponent implements OnInit {
   }
 
   // =====================================
-  // MÉTODOS DE UTILIDAD
+  // MÉTODOS DE UTILIDAD AGREGADOS
   // =====================================
+
+  // AGREGADO: Método para obtener datos de sección
+  getSeccionData(rutina: Rutina, seccionKey: string): SeccionRutina | undefined {
+    return rutina[seccionKey] as SeccionRutina | undefined;
+  }
+
+  // AGREGADO: Método para obtener total de ejercicios
+  getTotalEjercicios(rutina: Rutina): number {
+    let total = 0;
+    this.seccionesDisponibles.forEach(s => {
+      const seccionData = this.getSeccionData(rutina, s.key);
+      if (seccionData && seccionData.ejercicios) {
+        total += seccionData.ejercicios.length;
+      }
+    });
+    return total;
+  }
 
   esHoy(fecha: Date): boolean {
     const hoy = new Date();
@@ -220,91 +250,6 @@ export class CalendarioRutinasComponent implements OnInit {
     }
   }
 
-  // Formatear rutina para el modal - VERSIÓN COMPLETA IGUAL QUE MIS-RUTINAS
-  getFormattedRutina(rutina: Rutina | null, seguimiento?: SeguimientoDetalladoExtendido): string {
-    if (!rutina) return '';
-
-    let texto = `${rutina.nombre}\n`;
-    texto += `${rutina.descripcion || 'Rutina de entrenamiento'}\n`;
-    texto += `Nivel: ${rutina.nivel} | Duración: ${this.formatDuracion(rutina.duracion_estimada)}\n`;
-    
-    if (seguimiento) {
-      texto += `Progreso: ${seguimiento.progreso}% | Estado: ${seguimiento.estado_individual}\n`;
-      texto += `Período: ${this.formatDate(seguimiento.fecha_inicio_programada)} - ${this.formatDate(seguimiento.fecha_fin_programada)}\n`;
-      if (seguimiento.estado_temporal === 'vigente') {
-        texto += `Días restantes: ${seguimiento.dias_restantes}\n`;
-      }
-    }
-    texto += '\n';
-
-    // Secciones disponibles (igual que mis-rutinas)
-    const seccionesDisponibles = [
-      { key: 'warm_up', nombre: 'Warm Up', descripcion: 'Calentamiento' },
-      { key: 'met_con', nombre: 'Met-Con', descripcion: 'Metabolic Conditioning' },
-      { key: 'strength', nombre: 'Strength', descripcion: 'Entrenamiento de Fuerza' },
-      { key: 'core', nombre: 'Core', descripcion: 'Trabajo de Core' },
-      { key: 'extra', nombre: 'Extra', descripcion: 'Trabajo Adicional' }
-    ];
-
-    // Procesar cada sección
-    const ordenSecciones = ['warm_up', 'met_con', 'strength', 'core', 'extra'];
-    
-    ordenSecciones.forEach(sectionKey => {
-      const seccionInfo = seccionesDisponibles.find(s => s.key === sectionKey);
-      const seccionData = rutina[sectionKey] as any;
-      
-      if (seccionData && seccionData.ejercicios && seccionData.ejercicios.length > 0 && seccionInfo) {
-        texto += `${seccionInfo.nombre.toUpperCase()}\n`;
-        
-        if (seccionData.descripcion) {
-          texto += `${seccionData.descripcion}\n`;
-        }
-        
-        const infoAdicional = [];
-        if (seccionData.tiempo_total) infoAdicional.push(`Tiempo: ${seccionData.tiempo_total}`);
-        if (seccionData.series) infoAdicional.push(`Series: ${seccionData.series}`);
-        if (seccionData.time_cap) infoAdicional.push(`Time Cap: ${seccionData.time_cap}`);
-        
-        if (infoAdicional.length > 0) {
-          texto += `${infoAdicional.join(' | ')}\n`;
-        }
-        
-        seccionData.ejercicios.forEach((ejercicio: any) => {
-          let lineaEjercicio = ejercicio.nombre;
-          
-          const detalles = [];
-          if (ejercicio.repeticiones) detalles.push(`${ejercicio.repeticiones} reps`);
-          if (ejercicio.series) detalles.push(`x ${ejercicio.series}`);
-          if (ejercicio.duracion) detalles.push(`${ejercicio.duracion}`);
-          if (ejercicio.distancia) detalles.push(`${ejercicio.distancia}`);
-          if (ejercicio.peso) detalles.push(`${ejercicio.peso}`);
-          
-          if (detalles.length > 0) {
-            lineaEjercicio += ` - ${detalles.join(' ')}`;
-          }
-          
-          if (ejercicio.rpe) {
-            lineaEjercicio += ` (RPE ${ejercicio.rpe})`;
-          }
-          
-          if (ejercicio.observaciones) {
-            lineaEjercicio += ` - ${ejercicio.observaciones}`;
-          }
-          
-          texto += `${lineaEjercicio}\n`;
-        });
-        
-        texto += '\n';
-      }
-    });
-
-    if (rutina.tags && rutina.tags.length > 0) {
-      texto += `Tags: ${rutina.tags.map(tag => `#${tag}`).join(' ')}\n`;
-    }
-
-    return texto;
-  }
-
   formatDuracion(minutos?: number): string {
     if (!minutos) return 'N/A';
     const horas = Math.floor(minutos / 60);
@@ -312,35 +257,319 @@ export class CalendarioRutinasComponent implements OnInit {
     return horas > 0 ? `${horas}h ${mins}m` : `${mins}m`;
   }
 
+  getFileName(): string {
+    if (!this.selectedRutina || !this.selectedRutina.nombre) {
+      return 'rutina_calendario_rehabimovement.txt';
+    }
+    
+    // Limpiar nombre para usar como filename
+    const nombreLimpio = this.selectedRutina.nombre
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '_')
+      .substring(0, 30);
+    
+    const fecha = new Date().toISOString().split('T')[0];
+    return `${nombreLimpio}_calendario_${fecha}_rehabimovement.txt`;
+  }
+
+  // =====================================
+  // MÉTODO PRINCIPAL: getFormattedRutina MEJORADO
+  // =====================================
+  getFormattedRutina(rutina: Rutina | null, seguimiento?: SeguimientoDetalladoExtendido): string {
+    console.log('🎨 Formateando rutina CALENDARIO con NUEVO FORMATO:', rutina?.nombre);
+    
+    if (!rutina) return '';
+
+    let texto = '';
+    
+    // =====================================
+    // HEADER PRINCIPAL CON DISEÑO MEJORADO
+    // =====================================
+    texto += '╔' + '═'.repeat(78) + '╗\n';
+    texto += '║' + `🏋️  ${rutina.nombre.toUpperCase()}`.padEnd(78) + '║\n';
+    texto += '╚' + '═'.repeat(78) + '╝\n';
+    
+    texto += `${rutina.descripcion || 'Rutina de entrenamiento completa'}\n\n`;
+    
+    // Información básica con iconos
+    const nivelText = `Nivel: ${rutina.nivel.toUpperCase()}`;
+    const duracionText = `Duración: ${this.formatDuracion(rutina.duracion_estimada)}`;
+    const tipoText = `Tipo: ${rutina.tipo.toUpperCase()}`;
+    
+    texto += `🎯 ${nivelText} | ⏱️  ${duracionText} | 📋 ${tipoText}\n\n`;
+    
+    // =====================================
+    // SECCIÓN DE MI PROGRESO (si hay seguimiento)
+    // =====================================
+    if (seguimiento) {
+      texto += '┌' + '─'.repeat(78) + '┐\n';
+      texto += '│' + `📊 MI PROGRESO`.padEnd(78) + '│\n';
+      texto += '└' + '─'.repeat(78) + '┘\n';
+      
+      // Barra de progreso visual
+      const progreso = seguimiento.progreso || 0;
+      const barLength = 40;
+      const filledLength = Math.round((progreso / 100) * barLength);
+      const emptyLength = barLength - filledLength;
+      const progressBar = '█'.repeat(filledLength) + '░'.repeat(emptyLength);
+      
+      texto += `Estado: ${seguimiento.estado_individual.toUpperCase()} (${progreso}%)\n`;
+      texto += `Progreso: [${progressBar}] ${progreso}%\n`;
+      texto += `Período: ${this.formatDate(seguimiento.fecha_inicio_programada)} → ${this.formatDate(seguimiento.fecha_fin_programada)}\n`;
+      
+      if (seguimiento.estado_temporal === 'vigente') {
+        const diasIcon = seguimiento.dias_restantes > 7 ? '🟢' : seguimiento.dias_restantes > 0 ? '🟡' : '🔴';
+        texto += `${diasIcon} Días restantes: ${seguimiento.dias_restantes}\n`;
+      }
+      
+      if (seguimiento.fecha_inicio_real) {
+        texto += `✅ Iniciado: ${this.formatDate(seguimiento.fecha_inicio_real)}\n`;
+      }
+      
+      if (seguimiento.fecha_fin_real) {
+        texto += `🎉 Completado: ${this.formatDate(seguimiento.fecha_fin_real)}\n`;
+      }
+      
+      texto += '\n';
+    }
+
+    // =====================================
+    // PLAN DE ENTRENAMIENTO CON FORMATO MEJORADO
+    // =====================================
+    texto += '╔' + '═'.repeat(78) + '╗\n';
+    texto += '║' + `💪 PLAN DE ENTRENAMIENTO`.padEnd(78) + '║\n';
+    texto += '╚' + '═'.repeat(78) + '╝\n\n';
+
+    // Iconos para cada sección
+    const iconosSecciones: { [key: string]: string } = {
+      'warm_up': '🔥',
+      'met_con': '💨',
+      'strength': '🏋️',
+      'core': '🎯',
+      'extra': '✨'
+    };
+
+    // Procesar cada sección con formato mejorado
+    const ordenSecciones = ['warm_up', 'met_con', 'strength', 'core', 'extra'];
+    
+    let seccionesEncontradas = 0;
+    
+    ordenSecciones.forEach((sectionKey, index) => {
+      const seccionInfo = this.seccionesDisponibles.find((s: any) => s.key === sectionKey);
+      const seccionData = this.getSeccionData(rutina, sectionKey);
+      
+      if (seccionData && seccionData.ejercicios && seccionData.ejercicios.length > 0 && seccionInfo) {
+        seccionesEncontradas++;
+        
+        console.log(`📋 Procesando sección CALENDARIO: ${seccionInfo.nombre}`);
+        
+        // Header de sección con icono
+        const icono = iconosSecciones[sectionKey] || '📋';
+        texto += '┌' + '─'.repeat(76) + '┐\n';
+        texto += '│ ' + `${icono} ${seccionInfo.nombre.toUpperCase()}`.padEnd(75) + '│\n';
+        texto += '└' + '─'.repeat(76) + '┘\n';
+        
+        // Descripción de la sección si existe
+        if (seccionData.descripcion) {
+          texto += `📝 ${seccionData.descripcion}\n`;
+        }
+        
+        // Información adicional de la sección con iconos
+        const infoAdicional = [];
+        if (seccionData.tiempo_total) infoAdicional.push(`⏱️  Tiempo: ${seccionData.tiempo_total}`);
+        if (seccionData.series) infoAdicional.push(`🔄 Series: ${seccionData.series}`);
+        if (seccionData.time_cap) infoAdicional.push(`⏰ Time Cap: ${seccionData.time_cap}`);
+        
+        // Usar propiedades que existen en SeccionRutina o acceder de forma segura
+        const seccionAny = seccionData as any;
+        if (seccionAny.rest_between_exercises) infoAdicional.push(`⏸️  Descanso: ${seccionAny.rest_between_exercises}`);
+        if (seccionAny.rest_between_sets) infoAdicional.push(`💤 Descanso series: ${seccionAny.rest_between_sets}`);
+        
+        if (infoAdicional.length > 0) {
+          texto += `${infoAdicional.join(' | ')}\n`;
+        }
+        
+        texto += '─'.repeat(78) + '\n';
+        
+        // EJERCICIOS CON NUMERACIÓN Y FORMATO MEJORADO
+        seccionData.ejercicios.forEach((ejercicio: any, ejercicioIndex: number) => {
+          texto += `${(ejercicioIndex + 1).toString().padStart(2, '0')}. 🔹 ${ejercicio.nombre || 'Ejercicio'}\n`;
+          
+          // Detalles del ejercicio con iconos
+          const detalles = [];
+          if (ejercicio.repeticiones) detalles.push(`🔢 ${ejercicio.repeticiones} reps`);
+          if (ejercicio.series) detalles.push(`🔄 ${ejercicio.series} series`);
+          if (ejercicio.peso) detalles.push(`⚖️  ${ejercicio.peso}`);
+          if (ejercicio.distancia) detalles.push(`📏 ${ejercicio.distancia}`);
+          if (ejercicio.tiempo) detalles.push(`⏱️  ${ejercicio.tiempo}`);
+          if (ejercicio.duracion) detalles.push(`⏳ ${ejercicio.duracion}`);
+          
+          if (detalles.length > 0) {
+            texto += `    └─ ${detalles.join(' • ')}\n`;
+          }
+          
+          // RPE si existe
+          if (ejercicio.rpe) {
+            texto += `    💪 RPE: ${ejercicio.rpe}/10\n`;
+          }
+          
+          // Descanso si existe
+          if (ejercicio.descanso) {
+            texto += `    ⏸️  Descanso: ${ejercicio.descanso}\n`;
+          }
+          
+          // Observaciones si existen
+          if (ejercicio.observaciones) {
+            texto += `    📝 ${ejercicio.observaciones}\n`;
+          }
+          
+          // Notas adicionales si existen
+          if (ejercicio.notas) {
+            texto += `    💡 ${ejercicio.notas}\n`;
+          }
+          
+          // Espaciado entre ejercicios
+          if (ejercicioIndex < seccionData.ejercicios.length - 1) {
+            texto += '\n';
+          }
+        });
+        
+        // Separador entre secciones
+        if (index < ordenSecciones.length - 1 && seccionesEncontradas > 0) {
+          texto += '\n' + '═'.repeat(78) + '\n\n';
+        }
+      }
+    });
+
+    // Si no se encontraron secciones con ejercicios
+    if (seccionesEncontradas === 0) {
+      console.log('⚠️ No se encontraron secciones con ejercicios en CALENDARIO');
+      texto += `┌${'─'.repeat(76)}┐\n`;
+      texto += `│ ℹ️  RUTINA EN DESARROLLO${' '.repeat(51)}│\n`;
+      texto += `└${'─'.repeat(76)}┘\n`;
+      texto += `Esta rutina está siendo desarrollada.\n`;
+      texto += `Los ejercicios serán agregados próximamente.\n\n`;
+    }
+
+    // =====================================
+    // MIS NOTAS PERSONALES
+    // =====================================
+    if (seguimiento?.notas_individuales) {
+      texto += '┌' + '─'.repeat(78) + '┐\n';
+      texto += '│' + `📝 MIS NOTAS PERSONALES`.padEnd(78) + '│\n';
+      texto += '└' + '─'.repeat(78) + '┘\n';
+      texto += `${seguimiento.notas_individuales}\n\n`;
+    }
+
+    // =====================================
+    // TAGS DE LA RUTINA
+    // =====================================
+    if (rutina.tags && rutina.tags.length > 0) {
+      texto += `🏷️  Tags: ${rutina.tags.map((tag: string) => `#${tag}`).join(' ')}\n\n`;
+    }
+
+    // =====================================
+    // FOOTER CON RESUMEN E INFORMACIÓN DEL SISTEMA
+    // =====================================
+    texto += '╔' + '═'.repeat(78) + '╗\n';
+    texto += '║' + `📱 rehabiMovement - Sistema de Entrenamiento`.padEnd(78) + '║\n';
+    texto += '╠' + '═'.repeat(78) + '╣\n';
+    
+    // Resumen de la rutina
+    const totalEjercicios = this.getTotalEjercicios(rutina);
+    texto += '║' + `📈 RESUMEN: ${totalEjercicios} ejercicios total`.padEnd(78) + '║\n';
+    
+    if (rutina.duracion_estimada) {
+      texto += '║' + `⏱️  Duración estimada: ${this.formatDuracion(rutina.duracion_estimada)}`.padEnd(78) + '║\n';
+    }
+    
+    texto += '║' + `📅 Generado: ${this.formatDate(new Date().toISOString())}`.padEnd(78) + '║\n';
+    texto += '║' + `🆔 ID Rutina: ${rutina.id || 'N/A'}`.padEnd(78) + '║\n';
+    
+    if (seguimiento) {
+      texto += '║' + `👤 Atleta: ${seguimiento.full_name || seguimiento.username || 'N/A'}`.padEnd(78) + '║\n';
+    }
+    
+    texto += '╚' + '═'.repeat(78) + '╝\n';
+
+    console.log('✅ Nuevo formato CALENDARIO aplicado exitosamente!');
+    return texto;
+  }
+
+  // =====================================
+  // MÉTODOS PARA COPIAR Y EXPORTAR
+  // =====================================
+
   async copyToClipboard(text: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(text);
       this.copySuccess = true;
-      setTimeout(() => this.copySuccess = false, 2000);
+      console.log('Texto copiado al portapapeles desde calendario');
+      
+      setTimeout(() => {
+        this.copySuccess = false;
+      }, 2000);
     } catch (err) {
-      console.error('Error al copiar:', err);
+      console.error('Error al copiar al portapapeles:', err);
+      this.fallbackCopyTextToClipboard(text);
     }
   }
 
+  private fallbackCopyTextToClipboard(text: string): void {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.top = '0';
+    textArea.style.left = '0';
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        this.copySuccess = true;
+        setTimeout(() => {
+          this.copySuccess = false;
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Fallback: Error al copiar al portapapeles:', err);
+    }
+
+    document.body.removeChild(textArea);
+  }
+
   exportarRutina(rutina: Rutina, seguimiento?: SeguimientoDetalladoExtendido): void {
+    if (!rutina) {
+      console.warn('No hay rutina para exportar desde calendario');
+      return;
+    }
+    
     const texto = this.getFormattedRutina(rutina, seguimiento);
+    if (!texto) {
+      console.warn('No se pudo generar el contenido para exportar');
+      return;
+    }
+
     const blob = new Blob([texto], { type: 'text/plain;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${rutina.nombre.replace(/\s+/g, '_')}_calendario.txt`;
+    link.download = this.getFileName();
     link.click();
     window.URL.revokeObjectURL(url);
+    
+    console.log('Rutina exportada desde calendario:', rutina.nombre);
   }
 
-  getFileName(): string {
-    if (!this.selectedRutina || !this.selectedRutina.nombre) {
-      return 'rutina_calendario.txt';
-    }
-    return this.selectedRutina.nombre.replace(/\s+/g, '_') + '_calendario.txt';
-  }
+  // =====================================
+  // TRACKBY FUNCTIONS PARA OPTIMIZACIÓN
+  // =====================================
 
-  // TrackBy functions para optimización
   trackByDate(index: number, dia: DiaCalendario): any {
     return dia.fecha.getTime();
   }
