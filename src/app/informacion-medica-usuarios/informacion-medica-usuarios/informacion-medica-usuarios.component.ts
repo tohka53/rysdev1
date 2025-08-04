@@ -12,6 +12,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class InformacionMedicaUsuariosComponent implements OnInit {
   usuarios: UsuarioConInformacionMedica[] = [];
+  filteredUsuarios: UsuarioConInformacionMedica[] = [];
   selectedUsuario: UsuarioConInformacionMedica | null = null;
   informacionMedicaForm: FormGroup;
   loading = false;
@@ -21,6 +22,9 @@ export class InformacionMedicaUsuariosComponent implements OnInit {
   showModal = false;
   errorMessage: string = '';
   successMessage: string = '';
+  searchTerm: string = '';
+  currentScrollPage: number = 0;
+  itemsPerPage: number = 4;
 
   constructor(
     private fb: FormBuilder,
@@ -71,6 +75,7 @@ export class InformacionMedicaUsuariosComponent implements OnInit {
     
     try {
       this.usuarios = await this.informacionMedicaService.getInformacionMedicaConPermisos();
+      this.filteredUsuarios = [...this.usuarios];
       
       // Si no es admin y solo hay un usuario (el propio), lo selecciona automáticamente
       if (!this.isAdmin && this.usuarios.length === 1) {
@@ -88,6 +93,7 @@ export class InformacionMedicaUsuariosComponent implements OnInit {
             informacion_medica: null
           };
           this.usuarios = [emptyUser];
+          this.filteredUsuarios = [emptyUser];
           this.selectUsuario(emptyUser);
         }
       }
@@ -97,6 +103,44 @@ export class InformacionMedicaUsuariosComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  filterUsuarios(): void {
+    if (!this.searchTerm.trim()) {
+      this.filteredUsuarios = [...this.usuarios];
+      this.currentScrollPage = 0; // Reset scroll page when clearing search
+      return;
+    }
+
+    const term = this.searchTerm.toLowerCase().trim();
+    this.filteredUsuarios = this.usuarios.filter(usuario => {
+      // Buscar en nombre completo
+      const fullNameMatch = (usuario.full_name || '').toLowerCase().includes(term);
+      
+      // Buscar en username
+      const usernameMatch = (usuario.username || '').toLowerCase().includes(term);
+      
+      // Buscar en email
+      const emailMatch = (usuario.email || '').toLowerCase().includes(term);
+      
+      // Buscar en información médica si existe
+      let medicalInfoMatch = false;
+      if (usuario.informacion_medica) {
+        const info = usuario.informacion_medica;
+        medicalInfoMatch = 
+          (info.diagnostico_principal || '').toLowerCase().includes(term) ||
+          (info.historial_medico || '').toLowerCase().includes(term) ||
+          (info.medicamentos_actuales || '').toLowerCase().includes(term) ||
+          (info.alergias || '').toLowerCase().includes(term) ||
+          (info.limitaciones_fisicas || '').toLowerCase().includes(term) ||
+          (info.observaciones_generales || '').toLowerCase().includes(term) ||
+          (info.diagnosticos_secundarios || []).some(d => d.toLowerCase().includes(term));
+      }
+
+      return fullNameMatch || usernameMatch || emailMatch || medicalInfoMatch;
+    });
+    
+    this.currentScrollPage = 0; // Reset to first page after filtering
   }
 
   selectUsuario(usuario: UsuarioConInformacionMedica): void {
@@ -326,6 +370,25 @@ export class InformacionMedicaUsuariosComponent implements OnInit {
     this.informacionMedicaForm.patchValue({ diagnosticos_secundarios: diagnosticos });
   }
 
+  // Método para calcular la edad a partir de la fecha de nacimiento
+  getAge(fechaNacimiento: Date | string): number {
+    if (!fechaNacimiento) return 0;
+    
+    const today = new Date();
+    const birthDate = new Date(fechaNacimiento);
+    
+    if (isNaN(birthDate.getTime())) return 0;
+    
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age;
+  }
+
   // Método para resetear mensajes
   clearMessages(): void {
     this.errorMessage = '';
@@ -335,6 +398,7 @@ export class InformacionMedicaUsuariosComponent implements OnInit {
   // Método para recargar datos
   async reloadData(): Promise<void> {
     this.clearMessages();
+    this.searchTerm = '';
     await this.loadUsuarios();
   }
 
@@ -375,5 +439,88 @@ export class InformacionMedicaUsuariosComponent implements OnInit {
     if (field.errors['max']) return `Valor máximo: ${field.errors['max'].max}`;
 
     return 'Campo inválido';
+  }
+
+  // Método para formatear el texto del diagnóstico principal para mostrar en la tarjeta
+  getShortDiagnosis(diagnosis: string): string {
+    if (!diagnosis) return '';
+    return diagnosis.length > 50 ? diagnosis.substring(0, 50) + '...' : diagnosis;
+  }
+
+  // Método para verificar si el usuario tiene información médica completa
+  isProfileComplete(usuario: UsuarioConInformacionMedica): boolean {
+    const info = usuario.informacion_medica;
+    if (!info) return false;
+    
+    // Verificar campos esenciales
+    return !!(
+      info.fecha_nacimiento &&
+      info.genero &&
+      info.telefono &&
+      info.contacto_emergencia_nombre &&
+      info.contacto_emergencia_telefono
+    );
+  }
+
+  // Método para obtener el porcentaje de completitud del perfil
+  getProfileCompleteness(usuario: UsuarioConInformacionMedica): number {
+    const info = usuario.informacion_medica;
+    if (!info) return 0;
+    
+    const fields = [
+      'fecha_nacimiento',
+      'genero', 
+      'telefono',
+      'direccion',
+      'diagnostico_principal',
+      'historial_medico',
+      'contacto_emergencia_nombre',
+      'contacto_emergencia_telefono',
+      'contacto_emergencia_relacion',
+      'peso',
+      'altura'
+    ];
+    
+    let completedFields = 0;
+    fields.forEach(field => {
+      if (info[field as keyof typeof info]) {
+        completedFields++;
+      }
+    });
+    
+    return Math.round((completedFields / fields.length) * 100);
+  }
+
+  // Métodos para el scroll horizontal
+  getScrollPages(): number[] {
+    const totalItems = this.filteredUsuarios.length;
+    const totalPages = Math.ceil(totalItems / this.itemsPerPage);
+    return Array.from({ length: totalPages }, (_, i) => i);
+  }
+
+  getCurrentPageItems(): UsuarioConInformacionMedica[] {
+    const startIndex = this.currentScrollPage * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    return this.filteredUsuarios.slice(startIndex, endIndex);
+  }
+
+  nextScrollPage(): void {
+    const totalPages = Math.ceil(this.filteredUsuarios.length / this.itemsPerPage);
+    if (this.currentScrollPage < totalPages - 1) {
+      this.currentScrollPage++;
+    }
+  }
+
+  prevScrollPage(): void {
+    if (this.currentScrollPage > 0) {
+      this.currentScrollPage--;
+    }
+  }
+
+  goToScrollPage(page: number): void {
+    const totalPages = Math.ceil(this.filteredUsuarios.length / this.itemsPerPage);
+    if (page >= 0 && page < totalPages) {
+      this.currentScrollPage = page;
+    }
   }
 }
