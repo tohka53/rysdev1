@@ -1,5 +1,5 @@
-// src/app/shared/layout/layout.component.ts - Actualizado con Rutinas
-import { Component, OnInit, OnDestroy } from '@angular/core';
+// src/app/shared/layout/layout.component.ts - Actualizado con Rutinas y Sidebar Fijo
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -18,6 +18,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   currentUser: Profile | null = null;
   menuItems: MenuModule[] = [];
   isSidebarCollapsed = false;
+  isMobileMenuOpen = false;
   currentRoute = '';
   expandedModules: Set<number> = new Set();
   loading = false;
@@ -39,8 +40,19 @@ export class LayoutComponent implements OnInit, OnDestroy {
     private router: Router
   ) {}
 
+  // Escuchar cambios de tamaño de ventana para cerrar menú móvil
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any) {
+    if (event.target.innerWidth > 768 && this.isMobileMenuOpen) {
+      this.isMobileMenuOpen = false;
+    }
+  }
+
   async ngOnInit(): Promise<void> {
     console.log('Layout inicializado');
+    
+    // Verificar si estamos en móvil al cargar
+    this.checkMobileView();
     
     // Obtener usuario actual
     this.currentUser = this.authService.getCurrentUser();
@@ -63,6 +75,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
         .pipe(filter(event => event instanceof NavigationEnd))
         .subscribe((event: NavigationEnd) => {
           this.currentRoute = event.urlAfterRedirects;
+          // Cerrar menú móvil al navegar
+          if (this.isMobileMenuOpen) {
+            this.isMobileMenuOpen = false;
+          }
           console.log('Ruta actual en layout:', this.currentRoute);
         })
     );
@@ -73,6 +89,13 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
+  }
+
+  private checkMobileView(): void {
+    // Auto-colapsar en móviles
+    if (window.innerWidth <= 768) {
+      this.isSidebarCollapsed = true;
+    }
   }
 
   async loadUserMenu(): Promise<void> {
@@ -115,10 +138,48 @@ export class LayoutComponent implements OnInit, OnDestroy {
         icono: 'fas fa-dumbbell',
         ruta: '/rutinas',
         orden: 2,
-        es_padre: false,
+        es_padre: true,
         modulo_padre_id: null,
         permisos: ['view'],
-        expanded: false
+        expanded: false,
+        children: [
+          {
+            id_modulo: 7,
+            nombre: 'Ver Rutinas',
+            descripcion: 'Ver todas mis rutinas',
+            icono: 'fas fa-eye',
+            ruta: '/rutinas/lista',
+            orden: 1,
+            es_padre: false,
+            modulo_padre_id: 2,
+            permisos: ['view'],
+            expanded: false
+          },
+          {
+            id_modulo: 8,
+            nombre: 'Crear Rutina',
+            descripcion: 'Crear nueva rutina',
+            icono: 'fas fa-plus',
+            ruta: '/rutinas/crear',
+            orden: 2,
+            es_padre: false,
+            modulo_padre_id: 2,
+            permisos: ['create'],
+            expanded: false
+          },
+          {
+            id_modulo: 9,
+            nombre: 'Ejercicios',
+            descripcion: 'Biblioteca de ejercicios',
+            icono: 'fas fa-list',
+            ruta: '/rutinas/ejercicios',
+            orden: 3,
+            es_padre: false,
+            modulo_padre_id: 2,
+            permisos: ['view'],
+            expanded: false
+          }
+        ]
       },
       {
         id_modulo: 3,
@@ -127,10 +188,36 @@ export class LayoutComponent implements OnInit, OnDestroy {
         icono: 'fas fa-users',
         ruta: '/usuarios',
         orden: 3,
-        es_padre: false,
+        es_padre: true,
         modulo_padre_id: null,
         permisos: ['view'],
-        expanded: false
+        expanded: false,
+        children: [
+          {
+            id_modulo: 10,
+            nombre: 'Lista de Usuarios',
+            descripcion: 'Ver todos los usuarios',
+            icono: 'fas fa-list',
+            ruta: '/usuarios/lista',
+            orden: 1,
+            es_padre: false,
+            modulo_padre_id: 3,
+            permisos: ['view'],
+            expanded: false
+          },
+          {
+            id_modulo: 11,
+            nombre: 'Crear Usuario',
+            descripcion: 'Crear nuevo usuario',
+            icono: 'fas fa-user-plus',
+            ruta: '/usuarios/crear',
+            orden: 2,
+            es_padre: false,
+            modulo_padre_id: 3,
+            permisos: ['create'],
+            expanded: false
+          }
+        ]
       },
       {
         id_modulo: 4,
@@ -185,11 +272,32 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   toggleSidebar(): void {
+    // En móvil, no permitir colapsar/expandir, solo abrir/cerrar
+    if (window.innerWidth <= 768) {
+      this.toggleSidebarMobile();
+      return;
+    }
+    
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
     console.log('Sidebar colapsado:', this.isSidebarCollapsed);
+    
+    // Cerrar todos los módulos expandidos cuando se colapsa
+    if (this.isSidebarCollapsed) {
+      this.expandedModules.clear();
+    }
+  }
+
+  toggleSidebarMobile(): void {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+    console.log('Menú móvil abierto:', this.isMobileMenuOpen);
   }
 
   toggleModule(moduleId: number): void {
+    // No permitir expandir módulos si el sidebar está colapsado
+    if (this.isSidebarCollapsed) {
+      return;
+    }
+
     if (this.expandedModules.has(moduleId)) {
       this.expandedModules.delete(moduleId);
     } else {
@@ -258,18 +366,40 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.currentUser = null;
     this.menuItems = [];
     this.expandedModules.clear();
+    this.isSidebarCollapsed = false;
+    this.isMobileMenuOpen = false;
     this.authService.logout();
   }
 
   getPageTitle(): string {
-    switch (this.currentRoute) {
-      case '/dashboard': return 'Dashboard';
-      case '/rutinas': return 'Mis Rutinas';
-      case '/usuarios': return 'Gestión de Usuarios';
-      case '/reportes': return 'Reportes';
-      case '/configuracion': return 'Configuración';
-      default: return 'Sistema de Gestión';
+    const routeTitleMap: { [key: string]: string } = {
+      '/dashboard': 'Dashboard',
+      '/rutinas': 'Mis Rutinas',
+      '/rutinas/lista': 'Ver Rutinas',
+      '/rutinas/crear': 'Crear Rutina',
+      '/rutinas/editar': 'Editar Rutina',
+      '/rutinas/ejercicios': 'Biblioteca de Ejercicios',
+      '/usuarios': 'Gestión de Usuarios',
+      '/usuarios/lista': 'Lista de Usuarios',
+      '/usuarios/crear': 'Crear Usuario',
+      '/usuarios/editar': 'Editar Usuario',
+      '/reportes': 'Reportes',
+      '/configuracion': 'Configuración'
+    };
+
+    // Buscar coincidencia exacta primero
+    if (routeTitleMap[this.currentRoute]) {
+      return routeTitleMap[this.currentRoute];
     }
+
+    // Buscar coincidencia parcial para rutas dinámicas
+    for (const route in routeTitleMap) {
+      if (this.currentRoute.startsWith(route)) {
+        return routeTitleMap[route];
+      }
+    }
+
+    return 'Sistema de Gestión';
   }
 
   // Verificar si estamos en dashboard para mostrar las estadísticas
@@ -279,7 +409,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   // Verificar si estamos en rutinas
   isRutinasRoute(): boolean {
-    return this.currentRoute === '/rutinas';
+    return this.currentRoute.startsWith('/rutinas');
   }
 
   formatDate(dateString: string | undefined): string {
@@ -308,5 +438,50 @@ export class LayoutComponent implements OnInit, OnDestroy {
     } finally {
       this.loading = false;
     }
+  }
+
+  // Método para verificar si el dispositivo es móvil
+  isMobile(): boolean {
+    return window.innerWidth <= 768;
+  }
+
+  // Método para obtener el estado actual del sidebar
+  getSidebarState(): string {
+    if (this.isMobile()) {
+      return this.isMobileMenuOpen ? 'mobile-open' : 'mobile-closed';
+    }
+    return this.isSidebarCollapsed ? 'collapsed' : 'expanded';
+  }
+
+  // Métodos específicos para rutinas
+  getTotalRutinas(): number {
+    // Aquí conectarías con tu servicio de rutinas
+    return 12; // Ejemplo
+  }
+
+  getRutinasCompletadas(): number {
+    // Aquí conectarías con tu servicio de rutinas
+    return 8; // Ejemplo
+  }
+
+  getEjerciciosFavoritos(): number {
+    // Aquí conectarías con tu servicio de ejercicios
+    return 25; // Ejemplo
+  }
+
+  // Método para obtener iconos específicos según el módulo
+  getModuleIcon(moduleName: string): string {
+    const iconMap: { [key: string]: string } = {
+      'Dashboard': 'fas fa-tachometer-alt',
+      'Mis Rutinas': 'fas fa-dumbbell',
+      'Usuarios': 'fas fa-users',
+      'Reportes': 'fas fa-chart-bar',
+      'Configuración': 'fas fa-cog',
+      'Ver Rutinas': 'fas fa-eye',
+      'Crear Rutina': 'fas fa-plus',
+      'Ejercicios': 'fas fa-list'
+    };
+    
+    return iconMap[moduleName] || 'fas fa-circle';
   }
 }

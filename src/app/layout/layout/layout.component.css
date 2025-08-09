@@ -6,23 +6,90 @@
   background-color: #f9fafb;
 }
 
-/* Estilos para el sidebar */
+/* ===== SIDEBAR FIJO ===== */
 .sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 1000;
   background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
   transition: width 0.3s ease-in-out;
-  position: relative;
-  z-index: 10;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .sidebar-collapsed {
-  width: 4rem;
+  width: 4rem; /* 64px */
 }
 
 .sidebar-expanded {
-  width: 16rem;
+  width: 16rem; /* 256px */
 }
 
-/* Estilos para la navegación */
+/* ===== CONTENIDO PRINCIPAL ===== */
+.main-content {
+  transition: margin-left 0.3s ease-in-out;
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+.main-content-expanded {
+  margin-left: 16rem; /* 256px - coincide con sidebar expandido */
+}
+
+.main-content-collapsed {
+  margin-left: 4rem; /* 64px - coincide con sidebar colapsado */
+}
+
+/* ===== NAVEGACIÓN CON SCROLL ===== */
+.nav-scroll-container {
+  height: calc(100vh - 140px); /* Altura total menos header (72px) y footer (68px) */
+  overflow-y: auto;
+  padding-bottom: 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: #4B5563 #1F2937;
+}
+
+.nav-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nav-scroll-container::-webkit-scrollbar-track {
+  background: #1F2937;
+  border-radius: 3px;
+}
+
+.nav-scroll-container::-webkit-scrollbar-thumb {
+  background: #4B5563;
+  border-radius: 3px;
+}
+
+.nav-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #6B7280;
+}
+
+/* ===== HEADER DEL SIDEBAR ===== */
+.sidebar-header {
+  height: 72px; /* Altura fija para el header */
+  border-bottom: 1px solid #374151;
+  flex-shrink: 0;
+}
+
+/* ===== USER SECTION FIJO ===== */
+.user-section {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 68px; /* Altura fija para el footer */
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(75, 85, 99, 0.3);
+  flex-shrink: 0;
+}
+
+/* ===== ESTILOS PARA LA NAVEGACIÓN ===== */
 .nav-item {
   transition: all 0.2s ease-in-out;
   border-radius: 0.5rem;
@@ -42,36 +109,31 @@
   background-color: #4338ca;
 }
 
-/* Estilos para el contenido principal */
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+/* ===== ESTILOS PARA EL HEADER PRINCIPAL ===== */
+.main-header {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
+/* ===== ÁREA DE CONTENIDO ===== */
 .content-area {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Estilos para el header */
-.main-header {
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+/* ===== ANIMACIONES Y TRANSICIONES ===== */
+.sidebar-toggle-btn {
+  transition: all 0.2s ease-in-out;
 }
 
-/* Estilos para el usuario en el sidebar */
-.user-section {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(17, 24, 39, 0.8);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(75, 85, 99, 0.3);
+.sidebar-toggle-btn:hover {
+  background-color: rgba(55, 65, 81, 0.8);
+  transform: scale(1.05);
 }
 
 .user-avatar {
@@ -83,43 +145,88 @@
   transform: scale(1.05);
 }
 
-/* Animaciones para el sidebar */
-.sidebar-toggle-btn {
-  transition: all 0.2s ease-in-out;
-}
-
-.sidebar-toggle-btn:hover {
-  background-color: rgba(55, 65, 81, 0.8);
-  transform: scale(1.05);
-}
-
-/* Estilos responsive */
+/* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
   .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    z-index: 50;
-  }
-
-  .sidebar-collapsed {
     transform: translateX(-100%);
+    z-index: 1050;
   }
 
-  .main-content {
-    margin-left: 0;
+  .sidebar-mobile-open {
+    transform: translateX(0);
+  }
+
+  .main-content-expanded,
+  .main-content-collapsed {
+    margin-left: 0 !important;
   }
 
   .sidebar-overlay {
     position: fixed;
     inset: 0;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 40;
+    z-index: 1040;
+    display: none;
+  }
+
+  .sidebar-overlay.show {
+    display: block;
+  }
+
+  .main-header {
+    padding-left: 1rem;
   }
 }
 
-/* Estilos para las cards del dashboard */
+/* ===== ESTILOS PARA MÓDULOS EXPANDIDOS ===== */
+.module-expanded .module-arrow {
+  transform: rotate(90deg);
+}
+
+.submenu-enter {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out;
+}
+
+.submenu-enter-active {
+  max-height: 500px;
+}
+
+/* ===== ESTILOS PARA TOOLTIPS EN SIDEBAR COLAPSADO ===== */
+.tooltip-collapsed {
+  position: relative;
+}
+
+.tooltip-collapsed:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #1f2937;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  z-index: 1100;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.tooltip-collapsed:hover::before {
+  content: '';
+  position: absolute;
+  left: calc(100% + 5px);
+  top: 50%;
+  transform: translateY(-50%);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 5px solid #1f2937;
+  z-index: 1100;
+}
+
+/* ===== CARDS DEL DASHBOARD ===== */
 .dashboard-card {
   background: white;
   border-radius: 0.5rem;
@@ -132,7 +239,7 @@
   transform: translateY(-1px);
 }
 
-/* Estilos para las estadísticas */
+/* ===== ESTADÍSTICAS ===== */
 .stat-icon {
   border-radius: 0.375rem;
   padding: 0.75rem;
@@ -150,7 +257,7 @@
   font-weight: 500;
 }
 
-/* Estilos para la sección de bienvenida */
+/* ===== SECCIÓN DE BIENVENIDA ===== */
 .welcome-section {
   background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
   border-radius: 0.5rem;
@@ -163,7 +270,7 @@
   padding: 0.75rem;
 }
 
-/* Estilos para las acciones rápidas */
+/* ===== ACCIONES RÁPIDAS ===== */
 .quick-action-card {
   background: white;
   border: 1px solid #e5e7eb;
@@ -185,7 +292,7 @@
   margin-bottom: 1rem;
 }
 
-/* Estilos para el botón de logout */
+/* ===== BOTÓN DE LOGOUT ===== */
 .logout-btn {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   transition: all 0.2s ease-in-out;
@@ -197,7 +304,7 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* Estilos para animaciones de entrada */
+/* ===== ANIMACIONES DE ENTRADA ===== */
 .fade-in {
   animation: fadeIn 0.5s ease-in-out;
 }
@@ -228,7 +335,7 @@
   }
 }
 
-/* Estilos para el loading spinner */
+/* ===== LOADING SPINNER ===== */
 .loading-spinner {
   width: 3rem;
   height: 3rem;
@@ -247,40 +354,7 @@
   }
 }
 
-/* Estilos para los tooltips */
-.tooltip {
-  position: relative;
-}
-
-.tooltip:hover::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #1f2937;
-  color: white;
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  white-space: nowrap;
-  z-index: 100;
-  margin-bottom: 0.25rem;
-}
-
-.tooltip:hover::before {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 5px solid #1f2937;
-  z-index: 100;
-}
-
-/* Estilos para estados de éxito y error */
+/* ===== ESTADOS DE ÉXITO Y ERROR ===== */
 .success-message {
   background-color: #d1fae5;
   border: 1px solid #a7f3d0;
@@ -299,7 +373,7 @@
   margin-bottom: 1rem;
 }
 
-/* Estilos para la información del usuario */
+/* ===== INFORMACIÓN DEL USUARIO ===== */
 .user-info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -323,7 +397,7 @@
   color: #111827;
 }
 
-/* Utilidades adicionales */
+/* ===== UTILIDADES ADICIONALES ===== */
 .text-truncate {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -346,31 +420,31 @@
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-/* Estilos para el scroll personalizado */
+/* ===== SCROLL PERSONALIZADO PARA CONTENIDO PRINCIPAL ===== */
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #d1d5db #f3f4f6;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
   background: #f3f4f6;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #d1d5db;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
 
-/* Media queries para mejorar la responsividad */
+/* ===== MEDIA QUERIES PARA MEJORAR LA RESPONSIVIDAD ===== */
 @media (max-width: 1024px) {
   .dashboard-stats {
     grid-template-columns: repeat(2, 1fr);
@@ -400,5 +474,34 @@
   
   .welcome-section h2 {
     font-size: 1.5rem;
+  }
+
+  .nav-scroll-container {
+    height: calc(100vh - 120px);
+  }
+}
+
+/* ===== ESTILOS ESPECÍFICOS PARA MENÚ MÓVIL ===== */
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: block;
+  }
+
+  .sidebar-header {
+    height: 60px;
+  }
+
+  .user-section {
+    height: 60px;
+  }
+
+  .nav-scroll-container {
+    height: calc(100vh - 120px);
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-btn {
+    display: none;
   }
 }
