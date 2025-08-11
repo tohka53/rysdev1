@@ -18,9 +18,13 @@ import { TerapiasComponent } from './terapias/terapias/terapias.component';
 import { TerapiasUsuarioComponent } from './terapias-usuario/terapias-usuario/terapias-usuario.component';
 import { MisTerapiasComponent } from './mis-terapias/mis-terapias/mis-terapias.component';
 import { InformacionMedicaUsuariosComponent } from './informacion-medica-usuarios/informacion-medica-usuarios/informacion-medica-usuarios.component';
+
+// Componentes de Paquetes
 import { PaquetesComponent } from './paquetes/paquetes/paquetes.component';
 import { PaqueteFormComponent } from './paquete-form/paquete-form/paquete-form.component';
 import { PaqueteDetalleComponent } from './paquete-detalle/paquete-detalle/paquete-detalle.component';
+import { AsignarPaqueteComponent } from './asignar-paquete/asignar-paquete/asignar-paquete.component';
+import { AsignacionesListaComponent } from './asignaciones-lista/asignaciones-lista/asignaciones-lista.component';
 
 const routes: Routes = [
   // Ruta principal - Landing page
@@ -59,7 +63,6 @@ const routes: Routes = [
           profiles: [1, 3] // Admin, Usuario, Supervisor
         }
       },
-
       { 
         path: 'tipos-seccion', 
         component: TiposSeccionComponent,
@@ -76,14 +79,12 @@ const routes: Routes = [
           profiles: [1] // Solo administradores (id_perfil = 1)
         }
       },
-
       { 
         path: 'mis-rutinas', 
         component: MisRutinasComponent,
         canActivate: [AuthGuard]
       },
-
-     { 
+      { 
         path: 'terapias', 
         component: TerapiasComponent,
         canActivate: [PermissionGuard],
@@ -106,47 +107,24 @@ const routes: Routes = [
         component: MisTerapiasComponent,
         canActivate: [AuthGuard]
       },
-       { 
+      { 
         path: 'informacion-medica', 
         component: InformacionMedicaUsuariosComponent,
         canActivate: [AuthGuard]
       },
 
-         { 
-        path: 'paquetes', 
-        component: PaquetesComponent,
-        canActivate: [AuthGuard]
+      // ===============================================
+      // RUTAS ACTUALIZADAS DE PAQUETES
+      // ===============================================
+     {
+        path: 'paquetes',
+        loadChildren: () => import('./paquetes/paquetes/paquetes.module').then(m => m.PaquetesModule),
+        canActivate: [PermissionGuard],
+        data: { 
+          permissions: ['view', 'admin'],
+          profiles: [1, 2, 3] // Admin, terapeuta y supervisor
+        }
       },
-      {
-       path: 'paquetes',
-    children: [
-      {
-        path: '',
-        component: PaquetesComponent,
-        data: { title: 'Gestión de Paquetes' }
-      },
-      {
-        path: 'crear',
-        component: PaqueteFormComponent,
-        data: { title: 'Crear Paquete' }
-      },
-      {
-        path: 'editar/:id',
-        component: PaqueteFormComponent,
-        data: { title: 'Editar Paquete' }
-      },
-      {
-        path: 'detalle/:id',
-        component: PaqueteDetalleComponent,
-        data: { title: 'Detalle del Paquete' }
-      }
-    ]
-      },
-      
-
-      // Aquí puedes agregar más rutas protegidas
-      // { path: 'reportes', component: ReportesComponent },
-      // { path: 'configuracion', component: ConfiguracionComponent },
     ]
   },
   

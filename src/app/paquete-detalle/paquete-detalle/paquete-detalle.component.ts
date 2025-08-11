@@ -102,6 +102,22 @@ export class PaqueteDetalleComponent implements OnInit {
   }
 
   // ================================
+  // NUEVA FUNCIONALIDAD: ASIGNACIÓN
+  // ================================
+
+  irAAsignar(): void {
+    this.router.navigate(['/paquetes/asignar'], {
+      queryParams: { paquete_id: this.paqueteId }
+    });
+  }
+
+  verAsignaciones(): void {
+    this.router.navigate(['/paquetes/asignaciones'], {
+      queryParams: { paquete_id: this.paqueteId }
+    });
+  }
+
+  // ================================
   // ACCIONES DEL PAQUETE
   // ================================
 

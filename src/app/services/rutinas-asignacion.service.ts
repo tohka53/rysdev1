@@ -464,4 +464,9 @@ export class RutinasAsignacionService {
   puedeVerSeguimientoCompleto(): boolean {
     return this.puedeGestionarAsignaciones();
   }
+
+
+
+
+  
 }

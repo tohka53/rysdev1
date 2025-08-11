@@ -1,0 +1,387 @@
+<!-- src/app/components/paquetes/asignar-paquete/asignar-paquete.component.html - TEMPLATE COMPLETO -->
+<div class="container mx-auto px-4 py-6">
+  
+  <!-- Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
+      <a routerLink="/paquetes" class="hover:text-blue-600">Paquetes</a>
+      <span>/</span>
+      <span>Asignar a Usuarios</span>
+    </div>
+    
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Asignar Paquete a Usuarios</h1>
+        <p class="text-gray-600 mt-1">Asigna un paquete a múltiples usuarios y genera el seguimiento automático</p>
+      </div>
+      
+      <div class="flex space-x-3">
+        <button 
+          (click)="volver()"
+          class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensajes -->
+  <div *ngIf="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+    <div class="flex items-center">
+      <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+      </svg>
+      <pre class="whitespace-pre-wrap">{{ error }}</pre>
+    </div>
+  </div>
+
+  <div *ngIf="exito" class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+    <div class="flex items-center">
+      <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+      </svg>
+      <pre class="whitespace-pre-wrap">{{ exito }}</pre>
+    </div>
+  </div>
+
+  <!-- Formulario -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- Panel principal del formulario -->
+    <div class="lg:col-span-2 space-y-6">
+      
+      <!-- Selección de Paquete -->
+      <div class="bg-white rounded-lg shadow-sm border p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">1. Seleccionar Paquete</h3>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Paquete *
+          </label>
+          <select 
+            [(ngModel)]="asignacionForm.paquete_id"
+            (change)="onPaqueteSeleccionado(asignacionForm.paquete_id!)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option [value]="null">Seleccionar paquete...</option>
+            <option *ngFor="let paquete of paquetes" [value]="paquete.id">
+              {{ paquete.nombre }} - {{ paquete.tipo | titlecase }} 
+              ({{ paquete.cantidad_sesiones }} sesiones) - 
+              {{ formatearPrecio(paquete.precio_final || paquete.precio) }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Información del paquete seleccionado -->
+        <div *ngIf="paqueteSeleccionado" class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <h4 class="font-medium text-blue-900 mb-2">{{ paqueteSeleccionado?.nombre }}</h4>
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span class="text-blue-700">Tipo:</span> 
+              <span class="ml-1">{{ paqueteSeleccionado?.tipo | titlecase }}</span>
+            </div>
+            <div>
+              <span class="text-blue-700">Sesiones:</span> 
+              <span class="ml-1">{{ paqueteSeleccionado?.cantidad_sesiones }}</span>
+            </div>
+            <div>
+              <span class="text-blue-700">Precio base:</span> 
+              <span class="ml-1">{{ formatearPrecio(paqueteSeleccionado?.precio || 0) }}</span>
+            </div>
+            <div *ngIf="(paqueteSeleccionado?.descuento || 0) > 0">
+              <span class="text-blue-700">Descuento:</span> 
+              <span class="ml-1">{{ paqueteSeleccionado?.descuento }}%</span>
+            </div>
+          </div>
+          <p *ngIf="paqueteSeleccionado?.descripcion" class="text-blue-800 mt-2">
+            {{ paqueteSeleccionado?.descripcion }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Selección de Usuarios -->
+      <div class="bg-white rounded-lg shadow-sm border p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">2. Seleccionar Usuarios</h3>
+        
+        <!-- Búsqueda de usuarios -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Buscar Usuarios
+          </label>
+          <input 
+            type="text" 
+            [(ngModel)]="terminoBusquedaUsuarios"
+            (input)="buscarUsuarios()"
+            placeholder="Escribe nombre o email..."
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          
+          <div *ngIf="buscandoUsuarios" class="mt-2 text-sm text-gray-500">
+            Buscando usuarios...
+          </div>
+        </div>
+
+        <!-- Controles de selección -->
+        <div class="flex justify-between items-center mb-3">
+          <label class="block text-sm font-medium text-gray-700">
+            Usuarios *
+            <span class="text-gray-500">({{ asignacionForm.usuarios_seleccionados.length }} seleccionados)</span>
+          </label>
+          <div class="flex space-x-2">
+            <button
+              type="button"
+              (click)="selectAllUsuarios()"
+              class="text-xs text-blue-600 hover:text-blue-800">
+              Seleccionar todos
+            </button>
+            <button
+              type="button"
+              (click)="clearAllUsuarios()"
+              class="text-xs text-gray-600 hover:text-gray-800">
+              Limpiar selección
+            </button>
+          </div>
+        </div>
+
+        <!-- Lista de usuarios con checkboxes -->
+        <div class="border border-gray-300 rounded-md p-3 max-h-64 overflow-y-auto">
+          <div *ngIf="usuarios.length === 0 && !buscandoUsuarios" class="text-center py-4 text-gray-500">
+            <p>No se encontraron usuarios</p>
+         
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <label
+              *ngFor="let usuario of usuarios; trackBy: trackByUserId"
+              class="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+              [class.bg-blue-50]="isUsuarioSelected(usuario.id)"
+            >
+              <input
+                type="checkbox"
+                [checked]="isUsuarioSelected(usuario.id)"
+                (change)="toggleUsuario(usuario.id)"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <div class="ml-3 min-w-0 flex-1">
+                <p class="text-sm font-medium text-gray-900 truncate">
+                  {{ usuario.nombre }}
+                </p>
+                <p class="text-xs text-gray-500 truncate">
+                  {{ usuario.email }}
+                </p>
+                <p *ngIf="usuario.telefono" class="text-xs text-gray-500">
+                  {{ usuario.telefono }}
+                </p>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Configuración de la Asignación -->
+      <div class="bg-white rounded-lg shadow-sm border p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">3. Configuración de la Asignación</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <!-- Fecha de inicio -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Fecha de Inicio *
+            </label>
+            <input 
+              type="date" 
+              [(ngModel)]="asignacionForm.fecha_inicio"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          </div>
+
+          <!-- Método de pago -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Método de Pago *
+            </label>
+            <select 
+              [(ngModel)]="asignacionForm.metodo_pago"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <option *ngFor="let metodo of metodosPago" [value]="metodo.value">
+                {{ metodo.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Descuento adicional -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Descuento Adicional (%)
+            </label>
+            <input 
+              type="number" 
+              [(ngModel)]="asignacionForm.descuento_aplicado"
+              (input)="onDescuentoChange()"
+              min="0" 
+              max="100"
+              step="0.01"
+              placeholder="0.00"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          </div>
+
+          <!-- Precio por usuario -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Precio por Usuario *
+            </label>
+            <input 
+              type="number" 
+              [(ngModel)]="asignacionForm.precio_pagado"
+              min="0" 
+              step="0.01"
+              readonly
+              class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          </div>
+
+          <!-- Terapeuta asignado -->
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Terapeuta Asignado (Opcional)
+            </label>
+            <select 
+              [(ngModel)]="asignacionForm.terapeuta_asignado"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <option [value]="null">Sin terapeuta asignado</option>
+              <option *ngFor="let terapeuta of terapeutas" [value]="terapeuta.id">
+                {{ terapeuta.nombre }} - {{ terapeuta.email }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Notas administrativas -->
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Notas Administrativas
+            </label>
+            <textarea 
+              [(ngModel)]="asignacionForm.notas_administrativas"
+              rows="3"
+              placeholder="Notas internas sobre esta asignación..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel de resumen -->
+    <div class="lg:col-span-1">
+      <div class="sticky top-6">
+        
+        <!-- Resumen de la asignación -->
+        <div *ngIf="mostrarResumen" class="bg-white rounded-lg shadow-sm border p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Resumen de Asignación</h3>
+          
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span class="text-gray-600">Paquete:</span>
+              <span class="font-medium">{{ resumenAsignacion.paquete }}</span>
+            </div>
+            
+            <div class="flex justify-between">
+              <span class="text-gray-600">Tipo:</span>
+              <span class="font-medium capitalize">{{ resumenAsignacion.tipo }}</span>
+            </div>
+            
+            <div class="flex justify-between">
+              <span class="text-gray-600">Sesiones:</span>
+              <span class="font-medium">{{ resumenAsignacion.sesiones }}</span>
+            </div>
+            
+            <div class="flex justify-between">
+              <span class="text-gray-600">Usuarios seleccionados:</span>
+              <span class="font-medium">{{ resumenAsignacion.usuarios_count }}</span>
+            </div>
+            
+            <div class="flex justify-between">
+              <span class="text-gray-600">Fecha inicio:</span>
+              <span class="font-medium">{{ resumenAsignacion.fecha_inicio | date:'dd/MM/yyyy' }}</span>
+            </div>
+            
+            <hr class="my-3">
+            
+            <!-- Lista de usuarios seleccionados -->
+            <div class="mb-3">
+              <span class="text-sm font-medium text-gray-700">Usuarios:</span>
+              <div class="mt-1 max-h-32 overflow-y-auto">
+                <div *ngFor="let nombre of resumenAsignacion.usuarios_nombres" 
+                     class="text-sm text-gray-600 py-1 px-2 bg-gray-50 rounded mb-1">
+                  {{ nombre }}
+                </div>
+              </div>
+            </div>
+            
+            <hr class="my-3">
+            
+            <!-- Precios -->
+            <div class="space-y-2">
+              <div class="flex justify-between">
+                <span class="text-gray-600">Precio base por usuario:</span>
+                <span>{{ formatearPrecio(resumenAsignacion.precio_base) }}</span>
+              </div>
+              
+              <div *ngIf="resumenAsignacion.descuento > 0" class="flex justify-between text-green-600">
+                <span>Descuento ({{ resumenAsignacion.descuento }}%):</span>
+                <span>-{{ formatearPrecio(resumenAsignacion.ahorro_por_usuario) }}</span>
+              </div>
+              
+              <div class="flex justify-between font-medium">
+                <span>Precio final por usuario:</span>
+                <span>{{ formatearPrecio(resumenAsignacion.precio_final) }}</span>
+              </div>
+              
+              <hr class="my-2">
+              
+              <div class="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t">
+                <span>Total a cobrar:</span>
+                <span class="text-blue-600">{{ formatearPrecio(resumenAsignacion.precio_total) }}</span>
+              </div>
+              
+              <div *ngIf="resumenAsignacion.ahorro_total > 0" class="flex justify-between text-sm text-green-600">
+                <span>Ahorro total:</span>
+                <span>{{ formatearPrecio(resumenAsignacion.ahorro_total) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="bg-blue-50 rounded-lg border border-blue-200 p-4 mt-6">
+          <h4 class="font-medium text-blue-900 mb-2">ℹ️ Información Importante</h4>
+          <ul class="text-sm text-blue-800 space-y-1">
+            <li>• Se creará automáticamente el seguimiento para cada usuario</li>
+            <li>• Las sesiones se programarán según el tipo de paquete</li>
+            <li>• Cada usuario podrá ver su progreso individual</li>
+            <li>• Se notificará al terapeuta asignado (si aplica)</li>
+            <li>• El precio se aplicará por separado a cada usuario</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botones de acción -->
+  <div class="flex justify-end space-x-4 pt-6 border-t mt-6">
+    <button 
+      type="button"
+      (click)="volver()"
+      class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+      Cancelar
+    </button>
+    
+    <button 
+      type="button"
+      (click)="onSubmit()"
+      [disabled]="!mostrarResumen || cargando"
+      class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+      <svg *ngIf="cargando" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      {{ cargando ? 'Asignando...' : 'Asignar a ' + (asignacionForm.usuarios_seleccionados.length || 0) + ' Usuario(s)' }}
+    </button>
+  </div>
+</div>
