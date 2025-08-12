@@ -1,5 +1,5 @@
 // src/app/components/paquetes/asignaciones-lista/asignaciones-lista.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { 
   AsignacionPaquetesService, 
@@ -13,7 +13,7 @@ import {
   templateUrl: './asignaciones-lista.component.html',
   styleUrls: ['./asignaciones-lista.component.css']
 })
-export class AsignacionesListaComponent implements OnInit {
+export class AsignacionesListaComponent implements OnInit, AfterViewInit {
 
   // ================================
   // PROPIEDADES
@@ -296,7 +296,7 @@ export class AsignacionesListaComponent implements OnInit {
     this.mostrandoMenuEstado = this.mostrandoMenuEstado === asignacionId ? null : asignacionId;
   }
 
-  // Cerrar menú al hacer clic fuera (agregar en ngOnInit)
+  // Cerrar menú al hacer clic fuera
   ngAfterViewInit(): void {
     document.addEventListener('click', (event) => {
       if (this.mostrandoMenuEstado !== null) {
@@ -308,17 +308,22 @@ export class AsignacionesListaComponent implements OnInit {
     });
   }
 
-  Math = Math; // Para usar Math.min en el template
+  // Exponer Math para usar en el template
+  Math = Math;
+
+  // ================================
+  // MENSAJES Y NOTIFICACIONES
+  // ================================
 
   private mostrarMensajeExito(mensaje: string): void {
     console.log('Éxito:', mensaje);
-    // Implementar notificación de éxito
+    // Aquí puedes implementar un sistema de notificaciones como SweetAlert, Toastr, etc.
   }
 
   private mostrarMensajeError(mensaje: string): void {
     console.error('Error:', mensaje);
     this.error = mensaje;
-    // Implementar notificación de error
+    // Aquí puedes implementar un sistema de notificaciones como SweetAlert, Toastr, etc.
   }
 
   limpiarError(): void {

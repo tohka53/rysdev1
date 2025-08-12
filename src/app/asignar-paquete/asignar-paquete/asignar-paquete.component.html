@@ -363,25 +363,90 @@
     </div>
   </div>
 
+ <!-- ACTUALIZAR la sección de botones de acción en el template -->
+
   <!-- Botones de acción -->
-  <div class="flex justify-end space-x-4 pt-6 border-t mt-6">
-    <button 
-      type="button"
-      (click)="volver()"
-      class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-      Cancelar
-    </button>
+  <div class="flex flex-col space-y-4 pt-6 border-t mt-6">
     
-    <button 
-      type="button"
-      (click)="onSubmit()"
-      [disabled]="!mostrarResumen || cargando"
-      class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
-      <svg *ngIf="cargando" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-      {{ cargando ? 'Asignando...' : 'Asignar a ' + (asignacionForm.usuarios_seleccionados.length || 0) + ' Usuario(s)' }}
-    </button>
+    <!-- Botón de debug temporal (QUITAR EN PRODUCCIÓN) -->
+    
+    <!-- Información de validación -->
+    <div class="bg-gray-50 p-4 rounded-lg">
+      <h4 class="text-sm font-medium text-gray-700 mb-2">Estado del Formulario:</h4>
+      <div class="grid grid-cols-2 gap-4 text-sm">
+        <div class="flex items-center">
+          <span [class]="paqueteSeleccionado ? 'text-green-600' : 'text-red-600'" class="mr-2">
+            {{ paqueteSeleccionado ? '✅' : '❌' }}
+          </span>
+          Paquete seleccionado
+        </div>
+        
+        <div class="flex items-center">
+          <span [class]="asignacionForm.usuarios_seleccionados.length > 0 ? 'text-green-600' : 'text-red-600'" class="mr-2">
+            {{ asignacionForm.usuarios_seleccionados.length > 0 ? '✅' : '❌' }}
+          </span>
+          Usuarios seleccionados ({{ asignacionForm.usuarios_seleccionados.length }})
+        </div>
+        
+        <div class="flex items-center">
+          <span [class]="asignacionForm.fecha_inicio ? 'text-green-600' : 'text-red-600'" class="mr-2">
+            {{ asignacionForm.fecha_inicio ? '✅' : '❌' }}
+          </span>
+          Fecha de inicio
+        </div>
+        
+        <div class="flex items-center">
+          <span [class]="asignacionForm.precio_pagado > 0 ? 'text-green-600' : 'text-red-600'" class="mr-2">
+            {{ asignacionForm.precio_pagado > 0 ? '✅' : '❌' }}
+          </span>
+          Precio válido ({{ formatearPrecio(asignacionForm.precio_pagado) }})
+        </div>
+      </div>
+      
+      <div class="mt-3 pt-3 border-t border-gray-200">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium">Estado general:</span>
+          <span [class]="mostrarResumen ? 'text-green-600' : 'text-red-600'" class="text-sm font-bold">
+            {{ mostrarResumen ? '✅ Listo para asignar' : '❌ Faltan campos' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones de acción principales -->
+    <div class="flex justify-end space-x-4">
+      <button 
+        type="button"
+        (click)="volver()"
+        class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+        Cancelar
+      </button>
+      
+      <button 
+        type="button"
+        (click)="onSubmit()"
+        [disabled]="!mostrarResumen || cargando"
+        [class]="(!mostrarResumen || cargando) ? 
+          'bg-gray-400 cursor-not-allowed' : 
+          'bg-blue-600 hover:bg-blue-700 cursor-pointer'"
+        class="px-6 py-2 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center">
+        
+        <svg *ngIf="cargando" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        
+        <!-- Texto del botón más descriptivo -->
+        <span *ngIf="!cargando && !mostrarResumen" class="text-gray-300">
+          Completar formulario
+        </span>
+        <span *ngIf="!cargando && mostrarResumen">
+          Asignar a {{ asignacionForm.usuarios_seleccionados.length }} Usuario{{ asignacionForm.usuarios_seleccionados.length !== 1 ? 's' : '' }}
+        </span>
+        <span *ngIf="cargando">
+          Asignando...
+        </span>
+      </button>
+    </div>
   </div>
 </div>

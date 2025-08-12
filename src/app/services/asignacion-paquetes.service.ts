@@ -11,6 +11,18 @@ export interface Usuario {
   estado?: string;
 }
 
+export interface Paquete {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  precio: number;
+  cantidad_sesiones: number;
+  tipo: 'terapia' | 'rutina';
+  descuento: number;
+  precio_final?: number;
+  status: number;
+}
+
 export interface AsignacionPaquete {
   usuario_id: number;
   paquete_id: number;
@@ -39,7 +51,7 @@ export interface UsuarioPaquete {
   terapeuta_asignado?: number;
   // Datos relacionados
   usuario?: Usuario;
-  paquete?: any;
+  paquete?: Paquete;
   terapeuta?: Usuario;
 }
 
@@ -70,377 +82,250 @@ export class AsignacionPaquetesService {
   // GESTIÓN DE USUARIOS
   // ===============================================
 
-async obtenerUsuarios(): Promise<Usuario[]> {
-  try {
-    console.log('🔍 Iniciando carga de usuarios...');
-    
-    // Usar la estructura real de la tabla profiles
-    const { data, error } = await this.supabaseService.client
-      .from('profiles')
-      .select('id, username, full_name, created_at, status')
-      .eq('status', 1)
-      .order('full_name');
-
-    if (error) {
-      console.error('❌ Error obteniendo usuarios:', error);
-      throw error;
-    }
-
-    console.log('✅ Usuarios cargados:', data?.length || 0);
-    console.log('📋 Usuarios:', data);
-
-    // Mapear a la interface Usuario
-    const usuarios = (data || []).map(user => ({
-      id: user.id,
-      nombre: user.full_name || user.username || 'Usuario sin nombre',
-      email: user.username || `usuario${user.id}@example.com`, // username parece ser el email
-      telefono: undefined, // No está en la estructura actual
-      fecha_nacimiento: undefined, // No está en la estructura actual  
-      estado: user.status
-    }));
-
-    return usuarios;
-
-  } catch (error) {
-    console.error('💥 Error en obtenerUsuarios:', error);
-    throw error;
-  }
-}
-
-async buscarUsuarios(termino: string): Promise<Usuario[]> {
-  try {
-    console.log('🔍 Buscando usuarios con término:', termino);
-    
-    if (!termino || termino.trim().length === 0) {
-      return await this.obtenerUsuarios();
-    }
-
-    const terminoLimpio = termino.trim();
-    
-    // Usar la estructura real de la tabla
-    const { data, error } = await this.supabaseService.client
-      .from('profiles')
-      .select('id, username, full_name, created_at, status')
-      .eq('status', 1)
-      .or(`full_name.ilike.%${terminoLimpio}%,username.ilike.%${terminoLimpio}%`)
-      .order('full_name')
-      .limit(50);
-
-    if (error) {
-      console.error('❌ Error buscando usuarios:', error);
-      throw error;
-    }
-
-    console.log('✅ Usuarios encontrados:', data?.length || 0);
-
-    // Mapear a la interface Usuario
-    const usuarios = (data || []).map(user => ({
-      id: user.id,
-      nombre: user.full_name || user.username || 'Usuario sin nombre',
-      email: user.username || `usuario${user.id}@example.com`,
-      telefono: undefined,
-      fecha_nacimiento: undefined,  
-      estado: user.status
-    }));
-
-    return usuarios;
-
-  } catch (error) {
-    console.error('💥 Error en buscarUsuarios:', error);
-    throw error;
-  }
-}
-
-async verificarTablaUsuarios(): Promise<void> {
-  try {
-    console.log('🔍 Verificando tabla profiles...');
-    
-    // Contar registros totales
-    const { count, error: errorCount } = await this.supabaseService.client
-      .from('profiles')
-      .select('*', { count: 'exact', head: true });
-
-    if (errorCount) {
-      console.error('❌ Error contando registros:', errorCount);
-      return;
-    }
-
-    console.log(`📊 Total de registros en profiles: ${count}`);
-
-    // Obtener muestra de registros
-    const { data: muestra, error: errorMuestra } = await this.supabaseService.client
-      .from('profiles')
-      .select('id, username, full_name, status')
-      .limit(3);
-
-    if (errorMuestra) {
-      console.error('❌ Error obteniendo muestra:', errorMuestra);
-      return;
-    }
-
-    console.log('📋 Estructura confirmada de profiles:');
-    if (muestra && muestra.length > 0) {
-      console.log('✅ Columnas disponibles:', Object.keys(muestra[0]));
-      console.log('📄 Ejemplos de usuarios:');
-      muestra.forEach((user, index) => {
-        console.log(`  ${index + 1}. ID: ${user.id}, Username: ${user.username}, Full Name: ${user.full_name}, Status: ${user.status}`);
-      });
-    }
-
-    // Contar usuarios activos
-    const { count: activos, error: errorActivos } = await this.supabaseService.client
-      .from('profiles')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 1);
-
-    if (!errorActivos) {
-      console.log(`👥 Usuarios activos (status=1): ${activos}`);
-    }
-
-  } catch (error) {
-    console.error('💥 Error verificando tabla usuarios:', error);
-  }
-}
-
-  async obtenerTerapeutas(): Promise<Usuario[]> {
+  async obtenerUsuarios(): Promise<Usuario[]> {
     try {
+      console.log('🔍 Iniciando carga de usuarios...');
+      
+      // Usar la estructura real de la tabla profiles
       const { data, error } = await this.supabaseService.client
         .from('profiles')
-        .select('id, nombre, email')
+        .select('id, username, full_name, created_at, status')
         .eq('status', 1)
-        .eq('rol', 'terapeuta') // Ajusta según tu estructura de roles
-        .order('nombre');
+        .order('full_name');
 
       if (error) {
-        console.error('Error obteniendo terapeutas:', error);
+        console.error('❌ Error obteniendo usuarios:', error);
         throw error;
       }
 
-      return data || [];
+      console.log('✅ Usuarios cargados:', data?.length || 0);
+
+      // Mapear a la interface Usuario
+      const usuarios = (data || []).map(user => ({
+        id: user.id,
+        nombre: user.full_name || user.username || 'Usuario sin nombre',
+        email: user.username || `usuario${user.id}@example.com`,
+        telefono: undefined,
+        fecha_nacimiento: undefined,
+        estado: user.status === 1 ? 'activo' : 'inactivo'
+      }));
+
+      return usuarios;
+
     } catch (error) {
-      console.error('Error en obtenerTerapeutas:', error);
-      return []; // Devolver array vacío si no hay tabla de roles
+      console.error('❌ Error en obtenerUsuarios:', error);
+      throw new Error('No se pudieron cargar los usuarios');
     }
   }
 
   // ===============================================
-  // ASIGNACIÓN DE PAQUETES
+  // GESTIÓN DE TERAPEUTAS
   // ===============================================
 
-  async asignarPaqueteAUsuario(asignacion: AsignacionPaquete): Promise<AsignacionResponse> {
+  async obtenerTerapeutas(): Promise<Usuario[]> {
     try {
-      // Validar datos de entrada
-      if (!asignacion.usuario_id || !asignacion.paquete_id) {
-        return {
-          success: false,
-          message: 'Usuario y paquete son requeridos'
-        };
-      }
-
-      // Llamar a la función SQL que creamos
+      console.log('🔍 Iniciando carga de terapeutas...');
+      
+      // Obtener usuarios con perfil de terapeuta (ajusta el id_perfil según tu sistema)
       const { data, error } = await this.supabaseService.client
-        .rpc('asignar_paquete_a_usuario', {
-          p_usuario_id: asignacion.usuario_id,
-          p_paquete_id: asignacion.paquete_id,
-          p_fecha_inicio: asignacion.fecha_inicio,
-          p_precio_pagado: asignacion.precio_pagado,
-          p_terapeuta_id: asignacion.terapeuta_asignado || null,
-          p_metodo_pago: asignacion.metodo_pago || null
-        });
+        .from('profiles')
+        .select('id, username, full_name, created_at, status, id_perfil')
+        .eq('status', 1)
+        .in('id_perfil', [1, 3]) // Administradores y Supervisores pueden ser terapeutas
+        .order('full_name');
 
       if (error) {
-        console.error('Error asignando paquete:', error);
-        return {
-          success: false,
-          message: error.message || 'Error al asignar el paquete',
-          error: error
-        };
+        console.error('❌ Error obteniendo terapeutas:', error);
+        throw error;
       }
 
-      // Actualizar notas administrativas si se proporcionaron
-      if (asignacion.notas_administrativas && data) {
-        await this.actualizarNotasAsignacion(data, asignacion.notas_administrativas);
-      }
+      console.log('✅ Terapeutas cargados:', data?.length || 0);
 
-      return {
-        success: true,
-        message: 'Paquete asignado exitosamente',
-        data: data
-      };
+      // Mapear a la interface Usuario
+      const terapeutas = (data || []).map(user => ({
+        id: user.id,
+        nombre: user.full_name || user.username || 'Terapeuta sin nombre',
+        email: user.username || `terapeuta${user.id}@example.com`,
+        telefono: undefined,
+        fecha_nacimiento: undefined,
+        estado: user.status === 1 ? 'activo' : 'inactivo'
+      }));
+
+      return terapeutas;
+
     } catch (error) {
-      console.error('Error en asignarPaqueteAUsuario:', error);
-      return {
-        success: false,
-        message: 'Error interno al asignar el paquete',
-        error: error
-      };
+      console.error('❌ Error en obtenerTerapeutas:', error);
+      throw new Error('No se pudieron cargar los terapeutas');
     }
   }
 
-  private async actualizarNotasAsignacion(usuarioPaqueteId: number, notas: string): Promise<void> {
-    await this.supabaseService.client
-      .from('usuario_paquetes')
-      .update({ notas_administrativas: notas })
-      .eq('id', usuarioPaqueteId);
+  async buscarUsuarios(termino: string): Promise<Usuario[]> {
+    try {
+      console.log('🔍 Buscando usuarios con término:', termino);
+      
+      const { data, error } = await this.supabaseService.client
+        .from('profiles')
+        .select('id, username, full_name, created_at, status')
+        .eq('status', 1)
+        .or(`full_name.ilike.%${termino}%,username.ilike.%${termino}%`)
+        .order('full_name')
+        .limit(50); // Limitar resultados
+
+      if (error) {
+        console.error('❌ Error buscando usuarios:', error);
+        throw error;
+      }
+
+      console.log('✅ Usuarios encontrados:', data?.length || 0);
+
+      // Mapear a la interface Usuario
+      const usuarios = (data || []).map(user => ({
+        id: user.id,
+        nombre: user.full_name || user.username || 'Usuario sin nombre',
+        email: user.username || `usuario${user.id}@example.com`,
+        telefono: undefined,
+        fecha_nacimiento: undefined,
+        estado: user.status === 1 ? 'activo' : 'inactivo'
+      }));
+
+      return usuarios;
+
+    } catch (error) {
+      console.error('❌ Error en buscarUsuarios:', error);
+      throw new Error('No se pudieron buscar los usuarios');
+    }
+  }
+
+  async obtenerPaquetes(): Promise<Paquete[]> {
+    try {
+      console.log('🔍 Iniciando carga de paquetes...');
+      
+      const { data, error } = await this.supabaseService.client
+        .from('paquetes')
+        .select('*')
+        .eq('status', 1)
+        .order('nombre');
+
+      if (error) {
+        console.error('❌ Error obteniendo paquetes:', error);
+        throw error;
+      }
+
+      console.log('✅ Paquetes cargados:', data?.length || 0);
+      return data || [];
+
+    } catch (error) {
+      console.error('❌ Error en obtenerPaquetes:', error);
+      throw new Error('No se pudieron cargar los paquetes');
+    }
   }
 
   // ===============================================
-  // CONSULTA DE ASIGNACIONES
+  // GESTIÓN DE ASIGNACIONES
   // ===============================================
 
-  async obtenerAsignaciones(filtros?: FiltrosAsignaciones): Promise<UsuarioPaquete[]> {
+  async obtenerAsignaciones(filtros: FiltrosAsignaciones = {}): Promise<UsuarioPaquete[]> {
     try {
+      console.log('🔍 Iniciando carga de asignaciones con filtros:', filtros);
+
       let query = this.supabaseService.client
         .from('usuario_paquetes')
         .select(`
           *,
-          usuario:profiles!usuario_paquetes_usuario_id_fkey (
-            id, nombre, email, telefono
-          ),
-          paquete:paquetes!usuario_paquetes_paquete_id_fkey (
-            id, nombre, tipo, cantidad_sesiones, precio, precio_final
-          ),
-          terapeuta:profiles!usuario_paquetes_terapeuta_asignado_fkey (
-            id, nombre, email
-          )
+          usuario:profiles!usuario_paquetes_usuario_id_fkey(id, username, full_name),
+          paquete:paquetes!usuario_paquetes_paquete_id_fkey(id, nombre, tipo, precio, cantidad_sesiones),
+          terapeuta:profiles!usuario_paquetes_terapeuta_asignado_fkey(id, username, full_name)
         `);
 
       // Aplicar filtros
-      if (filtros) {
-        if (filtros.usuario_id) {
-          query = query.eq('usuario_id', filtros.usuario_id);
-        }
-        if (filtros.paquete_id) {
-          query = query.eq('paquete_id', filtros.paquete_id);
-        }
-        if (filtros.estado) {
-          query = query.eq('estado', filtros.estado);
-        }
-        if (filtros.terapeuta_id) {
-          query = query.eq('terapeuta_asignado', filtros.terapeuta_id);
-        }
-        if (filtros.fecha_inicio) {
-          query = query.gte('fecha_inicio', filtros.fecha_inicio);
-        }
-        if (filtros.fecha_fin) {
-          query = query.lte('fecha_fin', filtros.fecha_fin);
-        }
+      if (filtros.usuario_id) {
+        query = query.eq('usuario_id', filtros.usuario_id);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      if (filtros.paquete_id) {
+        query = query.eq('paquete_id', filtros.paquete_id);
+      }
+
+      if (filtros.estado) {
+        query = query.eq('estado', filtros.estado);
+      }
+
+      if (filtros.fecha_inicio) {
+        query = query.gte('fecha_inicio', filtros.fecha_inicio);
+      }
+
+      if (filtros.fecha_fin) {
+        query = query.lte('fecha_fin', filtros.fecha_fin);
+      }
+
+      if (filtros.terapeuta_id) {
+        query = query.eq('terapeuta_asignado', filtros.terapeuta_id);
+      }
+
+      // Ordenar por fecha más reciente
+      query = query.order('created_at', { ascending: false });
+
+      const { data, error } = await query;
 
       if (error) {
-        console.error('Error obteniendo asignaciones:', error);
+        console.error('❌ Error obteniendo asignaciones:', error);
         throw error;
       }
 
-      return data || [];
+      console.log('✅ Asignaciones cargadas:', data?.length || 0);
+
+      // Mapear los datos
+      const asignaciones = (data || []).map(item => ({
+        ...item,
+        usuario: item.usuario ? {
+          id: item.usuario.id,
+          nombre: item.usuario.full_name || item.usuario.username || 'Sin nombre',
+          email: item.usuario.username || 'Sin email'
+        } : undefined,
+        paquete: item.paquete ? {
+          ...item.paquete
+        } : undefined,
+        terapeuta: item.terapeuta ? {
+          id: item.terapeuta.id,
+          nombre: item.terapeuta.full_name || item.terapeuta.username || 'Sin nombre',
+          email: item.terapeuta.username || 'Sin email'
+        } : undefined
+      }));
+
+      return asignaciones;
+
     } catch (error) {
-      console.error('Error en obtenerAsignaciones:', error);
-      throw error;
+      console.error('❌ Error en obtenerAsignaciones:', error);
+      throw new Error('No se pudieron cargar las asignaciones');
     }
   }
-
-  async obtenerAsignacionesPorUsuario(usuarioId: number): Promise<UsuarioPaquete[]> {
-    return await this.obtenerAsignaciones({ usuario_id: usuarioId });
-  }
-
-  async obtenerAsignacionesPorPaquete(paqueteId: number): Promise<UsuarioPaquete[]> {
-    return await this.obtenerAsignaciones({ paquete_id: paqueteId });
-  }
-
-  // ===============================================
-  // SEGUIMIENTO DE PROGRESO
-  // ===============================================
-
-  async obtenerSeguimientoPaquete(usuarioPaqueteId: number): Promise<any[]> {
-    try {
-      const { data, error } = await this.supabaseService.client
-        .from('paquete_seguimiento')
-        .select(`
-          *,
-          rutina:rutinas (id, nombre, descripcion),
-          terapia:terapias (id, nombre, descripcion)
-        `)
-        .eq('usuario_paquete_id', usuarioPaqueteId)
-        .order('fecha_programada');
-
-      if (error) {
-        console.error('Error obteniendo seguimiento:', error);
-        throw error;
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Error en obtenerSeguimientoPaquete:', error);
-      throw error;
-    }
-  }
-
-  async actualizarEstadoAsignacion(usuarioPaqueteId: number, nuevoEstado: string): Promise<AsignacionResponse> {
-    try {
-      const { data, error } = await this.supabaseService.client
-        .from('usuario_paquetes')
-        .update({ estado: nuevoEstado })
-        .eq('id', usuarioPaqueteId)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error actualizando estado:', error);
-        return {
-          success: false,
-          message: 'Error al actualizar el estado',
-          error: error
-        };
-      }
-
-      return {
-        success: true,
-        message: 'Estado actualizado exitosamente',
-        data: data
-      };
-    } catch (error) {
-      console.error('Error en actualizarEstadoAsignacion:', error);
-      return {
-        success: false,
-        message: 'Error interno al actualizar el estado',
-        error: error
-      };
-    }
-  }
-
-  // ===============================================
-  // ESTADÍSTICAS Y REPORTES
-  // ===============================================
 
   async obtenerEstadisticasAsignaciones(): Promise<any> {
     try {
+      console.log('🔍 Obteniendo estadísticas de asignaciones...');
+
       const { data, error } = await this.supabaseService.client
         .from('usuario_paquetes')
-        .select('estado')
-        .then(({ data, error }) => {
-          if (error) throw error;
-
-          const stats = {
-            total: data?.length || 0,
-            activos: data?.filter(a => a.estado === 'activo').length || 0,
-            completados: data?.filter(a => a.estado === 'completado').length || 0,
-            pausados: data?.filter(a => a.estado === 'pausado').length || 0,
-            cancelados: data?.filter(a => a.estado === 'cancelado').length || 0
-          };
-
-          return { data: stats, error: null };
-        });
+        .select('estado');
 
       if (error) {
-        console.error('Error obteniendo estadísticas:', error);
+        console.error('❌ Error obteniendo estadísticas:', error);
         throw error;
       }
 
-      return data;
+      const estadisticas = {
+        total: data?.length || 0,
+        activos: data?.filter(item => item.estado === 'activo').length || 0,
+        completados: data?.filter(item => item.estado === 'completado').length || 0,
+        pausados: data?.filter(item => item.estado === 'pausado').length || 0,
+        cancelados: data?.filter(item => item.estado === 'cancelado').length || 0
+      };
+
+      console.log('✅ Estadísticas calculadas:', estadisticas);
+      return estadisticas;
+
     } catch (error) {
-      console.error('Error en obtenerEstadisticasAsignaciones:', error);
+      console.error('❌ Error en obtenerEstadisticasAsignaciones:', error);
       return {
         total: 0,
         activos: 0,
@@ -451,68 +336,159 @@ async verificarTablaUsuarios(): Promise<void> {
     }
   }
 
-  // ===============================================
-  // VALIDACIONES
-  // ===============================================
-
-  async validarAsignacion(usuarioId: number, paqueteId: number): Promise<{
-    esValida: boolean;
-    mensaje: string;
-    paquetesActivos?: UsuarioPaquete[];
-  }> {
+  async crearAsignacion(asignacion: AsignacionPaquete): Promise<AsignacionResponse> {
     try {
-      // Verificar si el usuario ya tiene paquetes activos del mismo tipo
-      const paquetesActivos = await this.obtenerAsignaciones({
-        usuario_id: usuarioId,
-        estado: 'activo'
-      });
+      console.log('🔄 Creando nueva asignación:', asignacion);
 
-      // Obtener información del paquete que se quiere asignar
+      // Obtener información del paquete
       const { data: paquete, error: paqueteError } = await this.supabaseService.client
         .from('paquetes')
-        .select('tipo, nombre')
-        .eq('id', paqueteId)
+        .select('cantidad_sesiones, precio, duracion_dias')
+        .eq('id', asignacion.paquete_id)
         .single();
 
-      if (paqueteError) {
-        return {
-          esValida: false,
-          mensaje: 'Paquete no encontrado'
-        };
+      if (paqueteError || !paquete) {
+        throw new Error('Paquete no encontrado');
       }
 
-      // Verificar conflictos por tipo
-      const conflictos = paquetesActivos.filter(asignacion => 
-        asignacion.paquete?.tipo === paquete.tipo
-      );
+      // Calcular fecha fin
+      const fechaInicio = new Date(asignacion.fecha_inicio);
+      const fechaFin = new Date(fechaInicio);
+      fechaFin.setDate(fechaFin.getDate() + (paquete.duracion_dias || 30));
 
-      if (conflictos.length > 0) {
-        return {
-          esValida: false,
-          mensaje: `El usuario ya tiene un paquete de ${paquete.tipo} activo`,
-          paquetesActivos: conflictos
-        };
+      // Crear la asignación
+      const { data, error } = await this.supabaseService.client
+        .from('usuario_paquetes')
+        .insert([{
+          usuario_id: asignacion.usuario_id,
+          paquete_id: asignacion.paquete_id,
+          fecha_inicio: asignacion.fecha_inicio,
+          fecha_fin: fechaFin.toISOString().split('T')[0],
+          sesiones_totales: paquete.cantidad_sesiones,
+          precio_pagado: asignacion.precio_pagado,
+          descuento_aplicado: asignacion.descuento_aplicado || 0,
+          terapeuta_asignado: asignacion.terapeuta_asignado,
+          metodo_pago: asignacion.metodo_pago,
+          notas_administrativas: asignacion.notas_administrativas,
+          estado: 'activo'
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error creando asignación:', error);
+        throw error;
       }
+
+      console.log('✅ Asignación creada exitosamente:', data);
 
       return {
-        esValida: true,
-        mensaje: 'La asignación es válida'
+        success: true,
+        message: 'Asignación creada exitosamente',
+        data: data
       };
+
     } catch (error) {
-      console.error('Error en validarAsignacion:', error);
+      console.error('❌ Error en crearAsignacion:', error);
       return {
-        esValida: false,
-        mensaje: 'Error al validar la asignación'
+        success: false,
+        message: 'Error al crear la asignación',
+        error: error
+      };
+    }
+  }
+
+  async actualizarEstadoAsignacion(asignacionId: number, nuevoEstado: string): Promise<AsignacionResponse> {
+    try {
+      console.log('🔄 Actualizando estado de asignación:', asignacionId, 'a', nuevoEstado);
+
+      const { data, error } = await this.supabaseService.client
+        .from('usuario_paquetes')
+        .update({ 
+          estado: nuevoEstado,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', asignacionId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error actualizando estado:', error);
+        throw error;
+      }
+
+      console.log('✅ Estado actualizado exitosamente:', data);
+
+      return {
+        success: true,
+        message: `Estado cambiado a ${nuevoEstado} exitosamente`,
+        data: data
+      };
+
+    } catch (error) {
+      console.error('❌ Error en actualizarEstadoAsignacion:', error);
+      return {
+        success: false,
+        message: 'Error al actualizar el estado',
+        error: error
+      };
+    }
+  }
+
+  async asignarPaqueteAUsuario(asignacion: AsignacionPaquete): Promise<AsignacionResponse> {
+    try {
+      console.log('🔄 Asignando paquete a usuario:', asignacion);
+
+      // Intentar usar la función de base de datos primero
+      try {
+        const { data, error } = await this.supabaseService.client
+          .rpc('asignar_paquete_a_usuario', {
+            p_usuario_id: asignacion.usuario_id,
+            p_paquete_id: asignacion.paquete_id,
+            p_fecha_inicio: asignacion.fecha_inicio,
+            p_precio_pagado: asignacion.precio_pagado,
+            p_terapeuta_id: asignacion.terapeuta_asignado,
+            p_metodo_pago: asignacion.metodo_pago
+          });
+
+        if (error) throw error;
+
+        console.log('✅ Asignación creada con función RPC:', data);
+        return {
+          success: true,
+          message: 'Paquete asignado exitosamente',
+          data: data
+        };
+
+      } catch (rpcError) {
+        console.log('⚠️ Función RPC no disponible, usando método manual');
+        return await this.crearAsignacion(asignacion);
+      }
+
+    } catch (error) {
+      console.error('❌ Error en asignarPaqueteAUsuario:', error);
+      return {
+        success: false,
+        message: 'Error al asignar el paquete',
+        error: error
       };
     }
   }
 
   // ===============================================
-  // UTILIDADES
+  // UTILIDADES Y CÁLCULOS
   // ===============================================
 
   calcularPrecioFinal(precioBase: number, descuento: number): number {
-    return precioBase - (precioBase * descuento / 100);
+    if (precioBase <= 0 || descuento < 0 || descuento > 100) {
+      return precioBase;
+    }
+    
+    const descuentoDecimal = descuento / 100;
+    const precioFinal = precioBase - (precioBase * descuentoDecimal);
+    
+    // Redondear a 2 decimales
+    return Math.round(precioFinal * 100) / 100;
   }
 
   formatearPrecio(precio: number): string {

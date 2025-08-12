@@ -81,7 +81,7 @@ export class AsignarPaqueteComponent implements OnInit {
 
   ngOnInit(): void {
     this.inicializarDatos();
-    this.verificarParametrosURL();
+    // REMOVER: this.verificarParametrosURL(); - Se hace después de cargar paquetes
   }
 
   // ================================
@@ -96,6 +96,10 @@ export class AsignarPaqueteComponent implements OnInit {
         this.cargarTerapeutas(),
         this.cargarUsuarios() // Cargar usuarios inicialmente
       ]);
+      
+      // IMPORTANTE: Verificar parámetros URL DESPUÉS de cargar los paquetes
+      this.verificarParametrosURL();
+      
     } catch (error) {
       console.error('Error inicializando datos:', error);
       this.mostrarError('Error al cargar los datos iniciales');
@@ -108,9 +112,24 @@ export class AsignarPaqueteComponent implements OnInit {
     // Verificar si se pasó un paquete específico por parámetro
     const paqueteId = this.route.snapshot.queryParams['paquete_id'];
 
+    console.log('🔗 Parámetros URL:', this.route.snapshot.queryParams);
+    console.log('📦 Paquete ID desde URL:', paqueteId);
+
     if (paqueteId) {
-      this.asignacionForm.paquete_id = parseInt(paqueteId);
-      this.onPaqueteSeleccionado(this.asignacionForm.paquete_id);
+      const paqueteIdNum = parseInt(paqueteId);
+      console.log('🔢 Paquete ID convertido:', paqueteIdNum);
+      
+      // Verificar que el paquete existe en la lista cargada
+      const paqueteEncontrado = this.paquetes.find(p => p.id === paqueteIdNum);
+      console.log('🎯 Paquete encontrado:', paqueteEncontrado?.nombre);
+      
+      if (paqueteEncontrado) {
+        this.asignacionForm.paquete_id = paqueteIdNum;
+        this.onPaqueteSeleccionado(paqueteIdNum);
+        console.log('✅ Paquete asignado desde URL exitosamente');
+      } else {
+        console.warn('⚠️ Paquete ID no encontrado en lista de paquetes disponibles');
+      }
     }
   }
 
@@ -137,27 +156,13 @@ export class AsignarPaqueteComponent implements OnInit {
   }
 
   private async cargarUsuarios(): Promise<void> {
-  try {
-    console.log('🚀 Iniciando carga inicial de usuarios...');
-    
-    // Verificar tabla primero (opcional, para depuración)
-    await this.asignacionService.verificarTablaUsuarios();
-    
-    this.usuarios = await this.asignacionService.obtenerUsuarios();
-    
-    console.log('✅ Usuarios cargados en componente:', this.usuarios.length);
-    
-    if (this.usuarios.length === 0) {
-      console.warn('⚠️ No se encontraron usuarios activos');
-      this.mostrarError('No se encontraron usuarios activos en el sistema');
+    try {
+      this.usuarios = await this.asignacionService.obtenerUsuarios();
+    } catch (error) {
+      console.error('Error cargando usuarios:', error);
+      this.usuarios = [];
     }
-    
-  } catch (error) {
-    console.error('💥 Error cargando usuarios en componente:', error);
-    this.usuarios = [];
-    this.mostrarError('Error al cargar la lista de usuarios. Verifique su conexión.');
   }
-}
 
   async buscarUsuarios(): Promise<void> {
     if (this.terminoBusquedaUsuarios.length < 2) {
@@ -218,11 +223,16 @@ export class AsignarPaqueteComponent implements OnInit {
     this.paqueteSeleccionado = this.paquetes.find(p => p.id === paqueteId) || null;
     
     if (this.paqueteSeleccionado) {
-      // Establecer precio base
-      this.asignacionForm.precio_pagado = this.paqueteSeleccionado.precio_final || this.paqueteSeleccionado.precio;
+      // Establecer precio base y descuento del paquete
       this.asignacionForm.descuento_aplicado = this.paqueteSeleccionado.descuento || 0;
       
+      // Calcular el precio final basado en el precio base y descuento
       this.calcularPrecioFinal();
+      
+      console.log('📦 Paquete seleccionado:', this.paqueteSeleccionado.nombre);
+      console.log('💰 Precio base:', this.paqueteSeleccionado.precio);
+      console.log('🏷️ Descuento:', this.paqueteSeleccionado.descuento);
+      console.log('💵 Precio final por usuario:', this.precioFinal);
     }
   }
 
@@ -283,7 +293,6 @@ export class AsignarPaqueteComponent implements OnInit {
             fecha_inicio: this.asignacionForm.fecha_inicio,
             precio_pagado: this.asignacionForm.precio_pagado,
             descuento_aplicado: this.asignacionForm.descuento_aplicado,
-           
             metodo_pago: this.asignacionForm.metodo_pago,
             notas_administrativas: this.asignacionForm.notas_administrativas
           };
@@ -344,6 +353,55 @@ export class AsignarPaqueteComponent implements OnInit {
 
   formatearPrecio(precio: number): string {
     return this.asignacionService.formatearPrecio(precio);
+  }
+
+  // ================================
+  // MÉTODOS DE CARGA Y RECARGA
+  // ================================
+
+  async reintentarCargaUsuarios(): Promise<void> {
+    console.log('🔄 Reintentando carga de usuarios...');
+    this.buscandoUsuarios = true;
+    this.limpiarMensajes();
+    
+    try {
+      this.usuarios = await this.asignacionService.obtenerUsuarios();
+      console.log('✅ Usuarios recargados:', this.usuarios.length);
+      
+      if (this.usuarios.length === 0) {
+        this.mostrarError('No se encontraron usuarios activos en el sistema');
+      } else {
+        this.mostrarExito(`Se cargaron ${this.usuarios.length} usuarios correctamente`);
+        // Limpiar mensaje de éxito después de 3 segundos
+        setTimeout(() => this.limpiarMensajes(), 3000);
+      }
+    } catch (error) {
+      console.error('Error en reintento:', error);
+      this.mostrarError('Error al cargar usuarios. Verifica tu conexión.');
+    } finally {
+      this.buscandoUsuarios = false;
+    }
+  }
+
+  async refrescarTodosLosDatos(): Promise<void> {
+    console.log('🔄 Refrescando todos los datos...');
+    this.cargando = true;
+    this.limpiarMensajes();
+    
+    try {
+      await Promise.all([
+        this.cargarPaquetes(),
+        this.cargarTerapeutas(),
+        this.cargarUsuarios()
+      ]);
+      this.mostrarExito('Datos actualizados correctamente');
+      setTimeout(() => this.limpiarMensajes(), 3000);
+    } catch (error) {
+      console.error('Error refrescando datos:', error);
+      this.mostrarError('Error al actualizar los datos');
+    } finally {
+      this.cargando = false;
+    }
   }
 
   // ================================
@@ -408,6 +466,20 @@ export class AsignarPaqueteComponent implements OnInit {
   }
 
   get mostrarResumen(): boolean {
-    return !!(this.paqueteSeleccionado && this.asignacionForm.usuarios_seleccionados.length > 0);
+    const tieneUsuarios = this.asignacionForm.usuarios_seleccionados.length > 0;
+    const tienePaquete = !!this.paqueteSeleccionado;
+    const tieneFecha = !!this.asignacionForm.fecha_inicio;
+    const tienePrecio = this.asignacionForm.precio_pagado > 0;
+    
+    const resultado = tieneUsuarios && tienePaquete && tieneFecha && tienePrecio;
+    
+    console.log('🎯 Validación mostrarResumen:');
+    console.log('- Usuarios seleccionados:', tieneUsuarios, '(', this.asignacionForm.usuarios_seleccionados.length, ')');
+    console.log('- Paquete seleccionado:', tienePaquete, '(', this.paqueteSeleccionado?.nombre || 'none', ')');
+    console.log('- Fecha de inicio:', tieneFecha, '(', this.asignacionForm.fecha_inicio, ')');
+    console.log('- Precio válido:', tienePrecio, '(', this.asignacionForm.precio_pagado, ')');
+    console.log('- Mostrar resumen:', resultado);
+    
+    return resultado;
   }
 }
