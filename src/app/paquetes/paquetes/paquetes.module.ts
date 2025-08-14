@@ -1,27 +1,32 @@
+// ===============================================
+// 2. ACTUALIZAR paquetes.module.ts
+// ===============================================
 // src/app/paquetes/paquetes.module.ts
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-
 import { PaquetesRoutingModule } from './paquetes-routing.module';
 
-// Importar todos los componentes
+// Importar todos los componentes existentes
 import { PaquetesComponent } from '../paquetes/paquetes.component';
-
 import { PaqueteFormComponent } from '../../paquete-form/paquete-form/paquete-form.component';
 import { PaqueteDetalleComponent } from '../../paquete-detalle/paquete-detalle/paquete-detalle.component';
 import { AsignarPaqueteComponent } from '../../asignar-paquete/asignar-paquete/asignar-paquete.component';
 import { AsignacionesListaComponent } from '../../asignaciones-lista/asignaciones-lista/asignaciones-lista.component';
+// NUEVO: Importar calendario de paquetes
+import { CalendarioPaquetesComponent } from '../../calendario-paquetes/calendario-paquetes/calendario-paquetes.component';
 
 @NgModule({
   declarations: [
-    // Declarar todos los componentes del módulo
+    // Componentes existentes
     PaquetesComponent,
     PaqueteFormComponent,
     PaqueteDetalleComponent,
     AsignarPaqueteComponent,
-    AsignacionesListaComponent
+    AsignacionesListaComponent,
+    // NUEVO: Calendario de paquetes
+    CalendarioPaquetesComponent
   ],
   imports: [
     CommonModule,           // Para ngIf, ngFor, pipes básicos

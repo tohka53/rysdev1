@@ -22,6 +22,7 @@ import { MisTerapiasComponent } from './mis-terapias/mis-terapias/mis-terapias.c
 import { InformacionMedicaUsuariosComponent } from './informacion-medica-usuarios/informacion-medica-usuarios/informacion-medica-usuarios.component';
 import { CalendarioRutinasComponent } from './calendario-rutinas/calendario-rutinas/calendario-rutinas.component';
 import { CalendarioTerapiasComponent } from './calendario-terapias/calendario-terapias/calendario-terapias.component';
+import { CalendarioPaquetesComponent } from './calendario-paquetes/calendario-paquetes/calendario-paquetes.component';
 
 // Componentes de paquetes
 
@@ -44,6 +45,7 @@ import { CalendarioTerapiasComponent } from './calendario-terapias/calendario-te
     InformacionMedicaUsuariosComponent,
     CalendarioRutinasComponent,
     CalendarioTerapiasComponent
+
    
   ],
   imports: [
