@@ -1,11 +1,11 @@
 <!-- src/app/shared/layout/layout.component.html -->
 <div class="min-h-screen bg-gray-50">
-  <!-- Sidebar Fijo -->
-  <div [class]="'sidebar text-white transition-all duration-300 ease-in-out ' + (isSidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded')">
+  <!-- Sidebar Fijo para Desktop / Drawer para Móvil -->
+  <div [class]="getSidebarClasses()">
     
     <!-- Sidebar Header -->
     <div class="sidebar-header flex items-center justify-between p-4 border-b border-gray-700">
-      <div [class]="isSidebarCollapsed ? 'hidden' : 'block'">
+      <div [class]="isSidebarCollapsed && !isMobile() ? 'hidden' : 'block'">
         <h1 class="text-xl font-bold">Rehabimovementgt</h1>
         <p class="text-sm text-gray-300">Sistema de Gestión</p>
       </div>
@@ -16,7 +16,7 @@
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                [attr.d]="isSidebarCollapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'">
+                [attr.d]="isSidebarCollapsed && !isMobile() ? 'M9 5l7 7-7 7' : isMobile() ? 'M6 18L18 6M6 6l12 12' : 'M15 19l-7-7 7-7'">
           </path>
         </svg>
       </button>
@@ -33,14 +33,15 @@
             routerLinkActive="bg-indigo-600 text-white"
             [routerLinkActiveOptions]="{exact: true}"
             class="tooltip-collapsed group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-gray-300 hover:bg-gray-800 hover:text-white"
-            [attr.data-tooltip]="isSidebarCollapsed ? 'Dashboard' : null"
+            [attr.data-tooltip]="isSidebarCollapsed && !isMobile() ? 'Dashboard' : null"
+            (click)="handleNavigation()"
           >
             <svg class="flex-shrink-0 w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                     d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v14l-6-3-6 3V5z"></path>
             </svg>
-            <span [class]="isSidebarCollapsed ? 'hidden' : 'block'">Dashboard</span>
+            <span [class]="(isSidebarCollapsed && !isMobile()) ? 'hidden' : 'block'">Dashboard</span>
           </a>
 
           <!-- Mis Rutinas Link -->
@@ -48,10 +49,11 @@
             [routerLink]="['/rutinas']"
             routerLinkActive="bg-indigo-600 text-white"
             class="tooltip-collapsed group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-gray-300 hover:bg-gray-800 hover:text-white"
-            [attr.data-tooltip]="isSidebarCollapsed ? 'Mis Rutinas' : null"
+            [attr.data-tooltip]="isSidebarCollapsed && !isMobile() ? 'Mis Rutinas' : null"
+            (click)="handleNavigation()"
           >
             <i class="fas fa-dumbbell flex-shrink-0 w-5 h-5 mr-3"></i>
-            <span [class]="isSidebarCollapsed ? 'hidden' : 'block'">Mis Rutinas</span>
+            <span [class]="(isSidebarCollapsed && !isMobile()) ? 'hidden' : 'block'">Mis Rutinas</span>
           </a>
 
           <!-- Dynamic Menu Items -->
@@ -62,16 +64,16 @@
               <button 
                 class="tooltip-collapsed group w-full flex items-center px-3 py-2 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-colors duration-200"
                 (click)="toggleModule(module.id_modulo)"
-                [attr.data-tooltip]="isSidebarCollapsed ? module.nombre : null"
-                [disabled]="isSidebarCollapsed"
+                [attr.data-tooltip]="isSidebarCollapsed && !isMobile() ? module.nombre : null"
+                [disabled]="isSidebarCollapsed && !isMobile()"
               >
                 <i [class]="'flex-shrink-0 w-5 h-5 mr-3 ' + module.icono" *ngIf="module.icono"></i>
                 <svg *ngIf="!module.icono" class="flex-shrink-0 w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2m0 0h14"></path>
                 </svg>
-                <span [class]="isSidebarCollapsed ? 'hidden' : 'flex-1 text-left'">{{ module.nombre }}</span>
+                <span [class]="(isSidebarCollapsed && !isMobile()) ? 'hidden' : 'flex-1 text-left'">{{ module.nombre }}</span>
                 <svg 
-                  *ngIf="!isSidebarCollapsed" 
+                  *ngIf="!isSidebarCollapsed || isMobile()" 
                   [class]="'w-4 h-4 transition-transform duration-200 module-arrow ' + (isModuleExpanded(module.id_modulo) ? 'module-expanded' : '')" 
                   fill="none" stroke="currentColor" viewBox="0 0 24 24"
                 >
@@ -81,7 +83,7 @@
 
               <!-- Submódulos -->
               <div 
-                *ngIf="isModuleExpanded(module.id_modulo) && !isSidebarCollapsed" 
+                *ngIf="isModuleExpanded(module.id_modulo) && (!isSidebarCollapsed || isMobile())" 
                 class="ml-6 space-y-1 submenu-enter submenu-enter-active"
               >
                 <a 
@@ -89,6 +91,7 @@
                   [routerLink]="[child.ruta]"
                   routerLinkActive="bg-indigo-600 text-white"
                   class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-gray-400 hover:bg-gray-800 hover:text-white"
+                  (click)="handleNavigation()"
                 >
                   <i [class]="'flex-shrink-0 w-4 h-4 mr-3 ' + child.icono" *ngIf="child.icono"></i>
                   <svg *ngIf="!child.icono" class="flex-shrink-0 w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,13 +108,14 @@
               [routerLink]="[module.ruta]"
               routerLinkActive="bg-indigo-600 text-white"
               class="tooltip-collapsed group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-gray-300 hover:bg-gray-800 hover:text-white"
-              [attr.data-tooltip]="isSidebarCollapsed ? module.nombre : null"
+              [attr.data-tooltip]="isSidebarCollapsed && !isMobile() ? module.nombre : null"
+              (click)="handleNavigation()"
             >
               <i [class]="'flex-shrink-0 w-5 h-5 mr-3 ' + module.icono" *ngIf="module.icono"></i>
               <svg *ngIf="!module.icono" class="flex-shrink-0 w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2m0 0h14"></path>
               </svg>
-              <span [class]="isSidebarCollapsed ? 'hidden' : 'block'">{{ module.nombre }}</span>
+              <span [class]="(isSidebarCollapsed && !isMobile()) ? 'hidden' : 'block'">{{ module.nombre }}</span>
             </a>
           </div>
         </div>
@@ -120,7 +124,7 @@
 
     <!-- User Menu (Fijo en la parte inferior) -->
     <div class="user-section p-4">
-      <div [class]="'flex items-center ' + (isSidebarCollapsed ? 'justify-center' : '')">
+      <div [class]="'flex items-center ' + ((isSidebarCollapsed && !isMobile()) ? 'justify-center' : '')">
         <div class="flex-shrink-0">
           <div class="user-avatar h-8 w-8 rounded-full flex items-center justify-center">
             <span class="text-xs font-medium text-white">
@@ -128,7 +132,7 @@
             </span>
           </div>
         </div>
-        <div [class]="isSidebarCollapsed ? 'hidden' : 'ml-3 flex-1'">
+        <div [class]="(isSidebarCollapsed && !isMobile()) ? 'hidden' : 'ml-3 flex-1'">
           <p class="text-sm font-medium text-white truncate">
             {{ currentUser?.full_name || 'Usuario' }}
           </p>
@@ -137,7 +141,7 @@
           </p>
         </div>
         <button
-          *ngIf="!isSidebarCollapsed"
+          *ngIf="!isSidebarCollapsed || isMobile()"
           (click)="logout()"
           class="logout-btn ml-2 p-1 rounded-lg hover:bg-gray-800 transition-colors duration-200"
           title="Cerrar Sesión"
@@ -154,11 +158,11 @@
   <div 
     *ngIf="isMobileMenuOpen" 
     class="sidebar-overlay show"
-    (click)="toggleSidebarMobile()"
+    (click)="closeMobileMenu()"
   ></div>
 
   <!-- Main Content Area -->
-  <div [class]="'transition-smooth flex flex-col min-h-screen ' + (isSidebarCollapsed ? 'main-content-collapsed' : 'main-content-expanded')">
+  <div [class]="getMainContentClasses()">
     
     <!-- Top Navigation -->
     <header class="main-header bg-white shadow-sm border-b border-gray-200">
@@ -167,8 +171,9 @@
           <div class="flex items-center">
             <!-- Botón para menú móvil -->
             <button
-              class="mobile-menu-btn mr-3 p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-              (click)="toggleSidebarMobile()"
+              *ngIf="isMobile()"
+              class="mobile-menu-btn mr-3 p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+              (click)="openMobileMenu()"
             >
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -195,7 +200,7 @@
               <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
               </svg>
-              Cerrar Sesión
+              <span class="hidden sm:block">Cerrar Sesión</span>
             </button>
           </div>
         </div>

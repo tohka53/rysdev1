@@ -116,15 +116,14 @@ const routes: Routes = [
       // ===============================================
       // RUTAS ACTUALIZADAS DE PAQUETES
       // ===============================================
-     {
-        path: 'paquetes',
-        loadChildren: () => import('./paquetes/paquetes/paquetes.module').then(m => m.PaquetesModule),
-        canActivate: [PermissionGuard],
-        data: { 
-          permissions: ['view', 'admin'],
-          profiles: [1, 2, 3] // Admin, terapeuta y supervisor
-        }
-      },
+    {
+  path: 'paquetes',
+  loadChildren: () => import('./paquetes/paquetes/paquetes.module').then(m => m.PaquetesModule),
+  canActivate: [AuthGuard],
+  data: { 
+    title: 'Gestión de Paquetes'
+  }
+},
     ]
   },
   

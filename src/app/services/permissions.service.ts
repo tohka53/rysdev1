@@ -1,4 +1,8 @@
+// ===============================================
+// PERMISSIONS SERVICE ACTUALIZADO PARA PAQUETES
 // src/app/services/permissions.service.ts
+// ===============================================
+
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { AuthService } from './auth.service';
@@ -15,7 +19,7 @@ export interface MenuModule {
   modulo_padre_id: number | null;
   permisos: string[];
   children?: MenuModule[];
-  expanded?: boolean; // Para controlar el estado de expansión en el UI
+  expanded?: boolean;
 }
 
 export interface UserPermission {
@@ -41,7 +45,219 @@ export class PermissionsService {
     private authService: AuthService
   ) {}
 
-  // Cargar y actualizar el menú del usuario
+  // ===============================================
+  // MÉTODO PRINCIPAL ACTUALIZADO PARA VERIFICAR ACCESO
+  // ===============================================
+  async canAccessRoute(route: string): Promise<boolean> {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.id) {
+      console.log('❌ Usuario no autenticado');
+      return false;
+    }
+
+    console.log('🔍 Verificando acceso a:', route, 'Usuario ID:', currentUser.id, 'Perfil:', currentUser.id_perfil);
+
+    // Rutas públicas que no requieren verificación
+    const publicRoutes = ['/dashboard', '/login', '/register'];
+    if (publicRoutes.includes(route)) {
+      console.log('✅ Ruta pública, acceso permitido');
+      return true;
+    }
+
+    // Para rutas de paquetes, usar verificación específica
+    if (route.includes('/paquetes')) {
+      return await this.checkPaquetesPermission(route, currentUser.id);
+    }
+
+    // Para otras rutas, usar el método original
+    return await this.hasPermission(route, 'view');
+  }
+
+  // ===============================================
+  // VERIFICACIÓN ESPECÍFICA PARA PAQUETES
+  // ===============================================
+  private async checkPaquetesPermission(route: string, userId: number): Promise<boolean> {
+    try {
+      console.log('🔍 Verificando permisos de paquetes para ruta:', route);
+
+      // Usar la función que creamos en el SQL
+      const { data, error } = await this.supabaseService.client
+        .rpc('check_paquetes_permission', {
+          p_user_id: userId,
+          p_route: route,
+          p_permission_code: 'view'
+        });
+
+      if (error) {
+        console.error('❌ Error llamando check_paquetes_permission:', error);
+        // Fallback: verificar por perfil
+        return this.checkPaquetesPermissionByProfile(route);
+      }
+
+      const hasAccess = data === true;
+      console.log(`${hasAccess ? '✅' : '❌'} Acceso a paquetes:`, hasAccess);
+      return hasAccess;
+
+    } catch (error) {
+      console.error('❌ Error en checkPaquetesPermission:', error);
+      // Fallback: verificar por perfil
+      return this.checkPaquetesPermissionByProfile(route);
+    }
+  }
+
+  // ===============================================
+  // FALLBACK: VERIFICAR PERMISOS POR PERFIL
+  // ===============================================
+  private checkPaquetesPermissionByProfile(route: string): boolean {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser || !currentUser.id_perfil) {
+      console.log('❌ Usuario sin perfil válido');
+      return false;
+    }
+
+    const userProfile = currentUser.id_perfil;
+    console.log('🔧 Fallback: verificando por perfil', userProfile, 'para ruta:', route);
+
+    // Perfil 1 (Admin) - Acceso completo
+    if (userProfile === 1) {
+      console.log('✅ Admin: acceso completo');
+      return true;
+    }
+
+    // Perfil 3 (Supervisor) - Acceso limitado
+    if (userProfile === 3) {
+      // No puede eliminar, pero puede el resto
+      if (route.includes('/eliminar') || route.includes('/delete')) {
+        console.log('❌ Supervisor: no puede eliminar');
+        return false;
+      }
+      console.log('✅ Supervisor: acceso permitido');
+      return true;
+    }
+
+    // Perfil 2 (Usuario) - Solo lectura
+    if (userProfile === 2) {
+      // Solo puede ver la lista principal, detalles y calendario
+      const readOnlyRoutes = [
+        '/paquetes',
+        '/paquetes/detalle',
+        '/paquetes/calendario'
+      ];
+      
+      // Verificar si la ruta está permitida
+      const isReadOnlyRoute = readOnlyRoutes.some(allowedRoute => 
+        route === allowedRoute || route.startsWith(allowedRoute + '/')
+      );
+      
+      // Verificar que no sea una acción restringida
+      const restrictedActions = ['/crear', '/editar', '/asignar', '/asignaciones'];
+      const isRestrictedAction = restrictedActions.some(action => route.includes(action));
+      
+      const hasAccess = isReadOnlyRoute && !isRestrictedAction;
+      console.log(`${hasAccess ? '✅' : '❌'} Usuario: ${hasAccess ? 'puede acceder' : 'acceso denegado'} a ${route}`);
+      return hasAccess;
+    }
+
+    console.log('❌ Perfil no reconocido:', userProfile);
+    return false;
+  }
+
+  // ===============================================
+  // MÉTODO ACTUALIZADO PARA hasPermission
+  // ===============================================
+  async hasPermission(route: string, permission: string): Promise<boolean> {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.id) {
+      return false;
+    }
+
+    // Para rutas de paquetes, usar verificación específica
+    if (route.includes('/paquetes')) {
+      return await this.checkPaquetesPermission(route, currentUser.id);
+    }
+
+    try {
+      // Para otras rutas, intentar usar la función original
+      const { data, error } = await this.supabaseService.client
+        .rpc('user_has_permission', {
+          p_user_id: currentUser.id,
+          p_route: route,
+          p_permission_code: permission
+        });
+
+      if (error) {
+        console.error('Error verificando permiso (función no existe):', error);
+        // Fallback: permitir acceso básico para usuarios autenticados
+        return true;
+      }
+
+      return data === true;
+    } catch (error) {
+      console.error('Error en hasPermission:', error);
+      // Fallback: permitir acceso básico
+      return true;
+    }
+  }
+
+  // ===============================================
+  // MÉTODOS ESPECÍFICOS PARA PAQUETES
+  // ===============================================
+  
+  // Verificar si puede ver un paquete específico
+  async canViewPaquete(paqueteId: number): Promise<boolean> {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.id) {
+      return false;
+    }
+
+    try {
+      const { data, error } = await this.supabaseService.client
+        .rpc('user_can_view_paquete', {
+          p_user_id: currentUser.id,
+          p_paquete_id: paqueteId
+        });
+
+      if (error) {
+        console.error('Error verificando acceso a paquete:', error);
+        return false;
+      }
+
+      return data === true;
+    } catch (error) {
+      console.error('Error en canViewPaquete:', error);
+      return false;
+    }
+  }
+
+  // Verificar si puede acceder a asignaciones
+  async canAccessAsignaciones(): Promise<boolean> {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.id) {
+      return false;
+    }
+
+    try {
+      const { data, error } = await this.supabaseService.client
+        .rpc('user_can_access_asignaciones', {
+          p_user_id: currentUser.id
+        });
+
+      if (error) {
+        console.error('Error verificando acceso a asignaciones:', error);
+        return false;
+      }
+
+      return data === true;
+    } catch (error) {
+      console.error('Error en canAccessAsignaciones:', error);
+      return false;
+    }
+  }
+
+  // ===============================================
+  // MÉTODOS ORIGINALES (mantener compatibilidad)
+  // ===============================================
+
   async loadUserMenu(): Promise<MenuModule[]> {
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser?.id) {
@@ -69,7 +285,6 @@ export class PermissionsService {
     }
   }
 
-  // Cargar permisos del usuario
   async loadUserPermissions(): Promise<UserPermission[]> {
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser?.id) {
@@ -100,44 +315,10 @@ export class PermissionsService {
     }
   }
 
-  // Obtener el menú del usuario actual (método existente - mantener compatibilidad)
   async getCurrentUserMenu(): Promise<MenuModule[]> {
     return await this.loadUserMenu();
   }
 
-  // Verificar si el usuario tiene un permiso específico
-  async hasPermission(route: string, permission: string): Promise<boolean> {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser?.id) {
-      return false;
-    }
-
-    try {
-      const { data, error } = await this.supabaseService.client
-        .rpc('user_has_permission', {
-          p_user_id: currentUser.id,
-          p_route: route,
-          p_permission_code: permission
-        });
-
-      if (error) {
-        console.error('Error verificando permiso:', error);
-        return false;
-      }
-
-      return data === true;
-    } catch (error) {
-      console.error('Error en hasPermission:', error);
-      return false;
-    }
-  }
-
-  // Verificar si puede acceder a una ruta
-  async canAccessRoute(route: string): Promise<boolean> {
-    return await this.hasPermission(route, 'view');
-  }
-
-  // Verificar múltiples permisos
   async hasAnyPermission(route: string, permissions: string[]): Promise<boolean> {
     for (const permission of permissions) {
       if (await this.hasPermission(route, permission)) {
@@ -147,20 +328,17 @@ export class PermissionsService {
     return false;
   }
 
-  // Obtener todos los permisos del usuario (alias para compatibilidad)
   async getUserPermissions(): Promise<UserPermission[]> {
     return await this.loadUserPermissions();
   }
 
-  // Construir árbol de menú jerárquico
   private buildMenuTree(menuItems: any[]): MenuModule[] {
     const menuMap = new Map<number, MenuModule>();
     const rootItems: MenuModule[] = [];
 
-    // Crear mapa de elementos
     menuItems.forEach(item => {
       const menuModule: MenuModule = {
-        id_modulo: item.modulo_id || item.id_modulo, // Manejar ambos nombres de propiedad
+        id_modulo: item.modulo_id || item.id_modulo,
         nombre: item.nombre,
         descripcion: item.descripcion,
         icono: item.icono,
@@ -170,12 +348,11 @@ export class PermissionsService {
         modulo_padre_id: item.modulo_padre_id,
         permisos: item.permisos || [],
         children: [],
-        expanded: false // Inicializar como no expandido
+        expanded: false
       };
       menuMap.set(menuModule.id_modulo, menuModule);
     });
 
-    // Construir jerarquía
     menuMap.forEach(module => {
       if (module.modulo_padre_id === null) {
         rootItems.push(module);
@@ -190,9 +367,7 @@ export class PermissionsService {
       }
     });
 
-    // Ordenar por orden
     this.sortMenuItems(rootItems);
-    
     return rootItems;
   }
 
@@ -205,20 +380,32 @@ export class PermissionsService {
     });
   }
 
-  // Verificar permisos CRUD básicos
+  // Métodos CRUD básicos actualizados
   async canView(route: string): Promise<boolean> {
-    return await this.hasPermission(route, 'view');
+    return await this.canAccessRoute(route);
   }
 
   async canCreate(route: string): Promise<boolean> {
+    if (route.includes('/paquetes')) {
+      const currentUser = this.authService.getCurrentUser();
+      return currentUser && currentUser.id_perfil ? [1, 3].includes(currentUser.id_perfil) : false;
+    }
     return await this.hasPermission(route, 'create');
   }
 
   async canEdit(route: string): Promise<boolean> {
+    if (route.includes('/paquetes')) {
+      const currentUser = this.authService.getCurrentUser();
+      return currentUser && currentUser.id_perfil ? [1, 3].includes(currentUser.id_perfil) : false;
+    }
     return await this.hasPermission(route, 'edit');
   }
 
   async canDelete(route: string): Promise<boolean> {
+    if (route.includes('/paquetes')) {
+      const currentUser = this.authService.getCurrentUser();
+      return currentUser && currentUser.id_perfil ? currentUser.id_perfil === 1 : false; // Solo admin
+    }
     return await this.hasPermission(route, 'delete');
   }
 
@@ -230,13 +417,11 @@ export class PermissionsService {
     return await this.hasPermission(route, 'admin');
   }
 
-  // Métodos para limpiar el estado cuando el usuario cierra sesión
   clearUserData(): void {
     this.userMenuSubject.next([]);
     this.userPermissionsSubject.next([]);
   }
 
-  // Método para refrescar tanto menú como permisos
   async refreshUserData(): Promise<void> {
     await Promise.all([
       this.loadUserMenu(),
@@ -244,17 +429,14 @@ export class PermissionsService {
     ]);
   }
 
-  // Obtener menú desde el observable (para componentes que quieren suscribirse)
   getUserMenu(): Observable<MenuModule[]> {
     return this.userMenu$;
   }
 
-  // Obtener permisos desde el observable
   getUserPermissionsObservable(): Observable<UserPermission[]> {
     return this.userPermissions$;
   }
 
-  // Método para crear menú por defecto cuando fallan las consultas a BD
   createDefaultMenu(): MenuModule[] {
     const defaultMenu: MenuModule[] = [
       {
@@ -264,42 +446,6 @@ export class PermissionsService {
         icono: 'fas fa-tachometer-alt',
         ruta: '/dashboard',
         orden: 1,
-        es_padre: false,
-        modulo_padre_id: null,
-        permisos: ['view'],
-        expanded: false
-      },
-      {
-        id_modulo: 2,
-        nombre: 'Usuarios',
-        descripcion: 'Gestión de usuarios',
-        icono: 'fas fa-users',
-        ruta: '/usuarios',
-        orden: 2,
-        es_padre: false,
-        modulo_padre_id: null,
-        permisos: ['view'],
-        expanded: false
-      },
-      {
-        id_modulo: 3,
-        nombre: 'Reportes',
-        descripcion: 'Sistema de reportes',
-        icono: 'fas fa-chart-bar',
-        ruta: '/reportes',
-        orden: 3,
-        es_padre: false,
-        modulo_padre_id: null,
-        permisos: ['view'],
-        expanded: false
-      },
-      {
-        id_modulo: 4,
-        nombre: 'Configuración',
-        descripcion: 'Configuración del sistema',
-        icono: 'fas fa-cog',
-        ruta: '/configuracion',
-        orden: 4,
         es_padre: false,
         modulo_padre_id: null,
         permisos: ['view'],

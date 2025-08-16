@@ -73,27 +73,27 @@
 
         <!-- Información del paquete seleccionado -->
         <div *ngIf="paqueteSeleccionado" class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h4 class="font-medium text-blue-900 mb-2">{{ paqueteSeleccionado?.nombre }}</h4>
+          <h4 class="font-medium text-blue-900 mb-2">{{ paqueteSeleccionado.nombre }}</h4>
           <div class="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span class="text-blue-700">Tipo:</span> 
-              <span class="ml-1">{{ paqueteSeleccionado?.tipo | titlecase }}</span>
+            <span class="ml-1">{{ paqueteSeleccionado.cantidad_sesiones }}</span>
             </div>
             <div>
               <span class="text-blue-700">Sesiones:</span> 
-              <span class="ml-1">{{ paqueteSeleccionado?.cantidad_sesiones }}</span>
+              <span class="ml-1">{{ paqueteSeleccionado.cantidad_sesiones }}</span>
             </div>
             <div>
               <span class="text-blue-700">Precio base:</span> 
-              <span class="ml-1">{{ formatearPrecio(paqueteSeleccionado?.precio || 0) }}</span>
+              <span class="ml-1">{{ formatearPrecio(paqueteSeleccionado.precio || 0) }}</span>
             </div>
             <div *ngIf="(paqueteSeleccionado?.descuento || 0) > 0">
               <span class="text-blue-700">Descuento:</span> 
-              <span class="ml-1">{{ paqueteSeleccionado?.descuento }}%</span>
+              <span class="ml-1">{{ paqueteSeleccionado.descuento }}%</span>
             </div>
           </div>
           <p *ngIf="paqueteSeleccionado?.descripcion" class="text-blue-800 mt-2">
-            {{ paqueteSeleccionado?.descripcion }}
+            {{ paqueteSeleccionado.descripcion }}
           </p>
         </div>
       </div>

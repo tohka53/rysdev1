@@ -1,13 +1,13 @@
 // ===============================================
-// INTEGRACIÓN COMPLETA DEL CALENDARIO DE PAQUETES
-// En tu estructura existente
+// PAQUETES ROUTING CORREGIDO CON GUARDS
+// src/app/paquetes/paquetes-routing.module.ts
 // ===============================================
 
-// 1. ACTUALIZAR paquetes-routing.module.ts
-// src/app/paquetes/paquetes-routing.module.ts
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { PermissionGuard, RoleGuard } from '../../guards/auth.guard';
+
+// Importar guards correctamente
+import { AuthGuard, PermissionGuard, RoleGuard } from '../../guards/auth.guard';
 
 // Importar componentes existentes
 import { PaquetesComponent } from './paquetes.component';
@@ -15,101 +15,122 @@ import { PaqueteFormComponent } from '../../paquete-form/paquete-form/paquete-fo
 import { PaqueteDetalleComponent } from '../../paquete-detalle/paquete-detalle/paquete-detalle.component';
 import { AsignarPaqueteComponent } from '../../asignar-paquete/asignar-paquete/asignar-paquete.component';
 import { AsignacionesListaComponent } from '../../asignaciones-lista/asignaciones-lista/asignaciones-lista.component';
+
 // NUEVO: Importar calendario de paquetes
 import { CalendarioPaquetesComponent } from '../../calendario-paquetes/calendario-paquetes/calendario-paquetes.component';
 
+
 const routes: Routes = [
-  // Ruta principal del módulo - lista de paquetes
+  // ==================================================
+  // LISTA DE PAQUETES - TODOS PUEDEN VER
+  // ==================================================
   { 
     path: '', 
     component: PaquetesComponent,
-    canActivate: [PermissionGuard],
+    canActivate: [AuthGuard], // Solo verificación de autenticación
     data: { 
-      permissions: ['view'],
-      profiles: [1, 2, 3] // Admin, Usuario, Supervisor
+      title: 'Lista de Paquetes'
     }
   },
   
-  // Gestión de paquetes
+  // ==================================================
+  // CREAR PAQUETE - SOLO ADMIN Y SUPERVISOR
+  // ==================================================
   { 
     path: 'crear', 
     component: PaqueteFormComponent,
-    canActivate: [PermissionGuard],
+    canActivate: [AuthGuard, RoleGuard], // AuthGuard + RoleGuard
     data: { 
-      permissions: ['create'],
-      profiles: [1, 3] // Solo Admin y Supervisor
+      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
+      title: 'Crear Paquete'
     }
   },
+  
+  // ==================================================
+  // EDITAR PAQUETE - SOLO ADMIN Y SUPERVISOR  
+  // ==================================================
   { 
     path: 'editar/:id', 
     component: PaqueteFormComponent,
-    canActivate: [PermissionGuard],
+    canActivate: [AuthGuard, RoleGuard], // AuthGuard + RoleGuard
     data: { 
-      permissions: ['edit'],
-      profiles: [1, 3] // Solo Admin y Supervisor
+      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
+      title: 'Editar Paquete'
     }
   },
+  
+  // ==================================================
+  // VER DETALLE - TODOS PUEDEN VER
+  // ==================================================
   { 
     path: 'detalle/:id', 
     component: PaqueteDetalleComponent,
-    canActivate: [PermissionGuard],
-    data: { 
-      permissions: ['view'],
-      profiles: [1, 2, 3] // Todos pueden ver detalles
+    canActivate: [AuthGuard], // Solo verificación de autenticación
+   data: { 
+      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
+      title: 'Editar Paquete'
     }
   },
   
-  // Asignaciones
+  // ==================================================
+  // ASIGNAR PAQUETE - SOLO ADMIN Y SUPERVISOR
+  // ==================================================
   { 
     path: 'asignar', 
     component: AsignarPaqueteComponent,
-    canActivate: [PermissionGuard],
+    canActivate: [AuthGuard, RoleGuard], // AuthGuard + RoleGuard
     data: { 
-      permissions: ['create'],
-      profiles: [1, 3] // Solo Admin y Supervisor
+      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
+      title: 'Asignar Paquete'
     }
   },
+  
   { 
     path: 'asignar/:id', 
     component: AsignarPaqueteComponent,
-    canActivate: [PermissionGuard],
+    canActivate: [AuthGuard, RoleGuard], // AuthGuard + RoleGuard
     data: { 
-      permissions: ['create'],
-      profiles: [1, 3]
+      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
+      title: 'Asignar Paquete Específico'
     }
   },
+  
+  // ==================================================
+  // GESTIÓN DE ASIGNACIONES - SOLO ADMIN Y SUPERVISOR
+  // ==================================================
   { 
     path: 'asignaciones', 
     component: AsignacionesListaComponent,
-    canActivate: [PermissionGuard],
+    canActivate: [AuthGuard, RoleGuard], // AuthGuard + RoleGuard
     data: { 
-      permissions: ['view'],
-      profiles: [1, 3] // Solo Admin y Supervisor
+      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
+      title: 'Gestión de Asignaciones'
     }
   },
+  
   { 
     path: 'asignaciones/detalle/:id', 
     component: AsignacionesListaComponent,
-    canActivate: [PermissionGuard],
+    canActivate: [AuthGuard, RoleGuard], // AuthGuard + RoleGuard
     data: { 
-      permissions: ['view'],
-      profiles: [1, 3]
+      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
+      title: 'Detalle de Asignación'
     }
   },
   
-  // NUEVO: Calendario de Paquetes - ACCESO PARA TODOS
+  // ==================================================
+  // CALENDARIO - TODOS PUEDEN ACCEDER
+  // ==================================================
   { 
     path: 'calendario', 
     component: CalendarioPaquetesComponent,
-    // Solo AuthGuard básico - todos los usuarios autenticados pueden acceder
+    canActivate: [AuthGuard], // Solo verificación de autenticación
     data: { 
-      // Sin restricciones de perfil = acceso para todos
-      title: 'Calendario de Paquetes',
-      description: 'Visualiza y gestiona tus sesiones de paquetes'
+      title: 'Calendario de Paquetes'
     }
   },
   
-  // Redirect de rutas no encontradas a la lista principal
+  // Redirect para rutas no encontradas
   { path: '**', redirectTo: '' }
 ];
 
@@ -118,3 +139,24 @@ const routes: Routes = [
   exports: [RouterModule]
 })
 export class PaquetesRoutingModule { }
+
+// ===============================================
+// DEBUGGING - AGREGAR AL CONSTRUCTOR DE TU COMPONENTE
+// Para verificar que los guards están funcionando
+// ===============================================
+
+/*
+constructor(private authService: AuthService) {
+  // Debug para verificar usuario actual
+  const user = this.authService.getCurrentUser();
+  console.log('🔍 Usuario actual en paquetes:', {
+    id: user?.id,
+    username: user?.username,
+    perfil: user?.id_perfil,
+    puede_crear: [1, 3].includes(user?.id_perfil || 0),
+    puede_editar: [1, 3].includes(user?.id_perfil || 0),
+    puede_asignar: [1, 3].includes(user?.id_perfil || 0),
+    puede_ver_asignaciones: [1, 3].includes(user?.id_perfil || 0)
+  });
+}
+*/

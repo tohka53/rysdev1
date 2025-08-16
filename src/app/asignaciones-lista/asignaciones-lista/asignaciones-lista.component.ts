@@ -106,7 +106,6 @@ export class AsignacionesListaComponent implements OnInit, AfterViewInit {
 
   private async cargarEstadisticas(): Promise<void> {
     try {
-      this.estadisticas = await this.asignacionService.obtenerEstadisticasAsignaciones();
     } catch (error) {
       console.error('Error cargando estadísticas:', error);
     }

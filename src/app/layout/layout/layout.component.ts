@@ -1,4 +1,4 @@
-// src/app/shared/layout/layout.component.ts - Actualizado con Rutinas y Sidebar Fijo
+// src/app/shared/layout/layout.component.ts - Actualizado con correcciones para móvil
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -22,6 +22,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   currentRoute = '';
   expandedModules: Set<number> = new Set();
   loading = false;
+  isMobileView = false;
   
   // Stats para el dashboard
   stats = {
@@ -40,19 +41,17 @@ export class LayoutComponent implements OnInit, OnDestroy {
     private router: Router
   ) {}
 
-  // Escuchar cambios de tamaño de ventana para cerrar menú móvil
+  // Escuchar cambios de tamaño de ventana
   @HostListener('window:resize', ['$event'])
   onResize(event: any) {
-    if (event.target.innerWidth > 768 && this.isMobileMenuOpen) {
-      this.isMobileMenuOpen = false;
-    }
+    this.checkViewportSize();
   }
 
   async ngOnInit(): Promise<void> {
     console.log('Layout inicializado');
     
-    // Verificar si estamos en móvil al cargar
-    this.checkMobileView();
+    // Verificar tamaño de pantalla inicial
+    this.checkViewportSize();
     
     // Obtener usuario actual
     this.currentUser = this.authService.getCurrentUser();
@@ -77,7 +76,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
           this.currentRoute = event.urlAfterRedirects;
           // Cerrar menú móvil al navegar
           if (this.isMobileMenuOpen) {
-            this.isMobileMenuOpen = false;
+            this.closeMobileMenu();
           }
           console.log('Ruta actual en layout:', this.currentRoute);
         })
@@ -91,11 +90,60 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.subscriptions.unsubscribe();
   }
 
-  private checkMobileView(): void {
-    // Auto-colapsar en móviles
-    if (window.innerWidth <= 768) {
-      this.isSidebarCollapsed = true;
+  /**
+   * Verificar el tamaño de la pantalla y ajustar configuraciones
+   */
+  private checkViewportSize(): void {
+    const wasMobile = this.isMobileView;
+    this.isMobileView = window.innerWidth <= 768;
+    
+    // Si cambió de móvil a desktop o viceversa
+    if (wasMobile !== this.isMobileView) {
+      if (this.isMobileView) {
+        // Cambió a móvil
+        this.isMobileMenuOpen = false;
+        this.isSidebarCollapsed = false; // En móvil no usamos collapsed
+      } else {
+        // Cambió a desktop
+        this.isMobileMenuOpen = false;
+        // Mantener el estado collapsed si estaba activo
+      }
     }
+  }
+
+  /**
+   * Verificar si estamos en vista móvil
+   */
+  isMobile(): boolean {
+    return this.isMobileView;
+  }
+
+  /**
+   * Obtener las clases CSS del sidebar según el estado
+   */
+  getSidebarClasses(): string {
+    let classes = 'sidebar text-white transition-all duration-300 ease-in-out ';
+    
+    if (this.isMobile()) {
+      classes += this.isMobileMenuOpen ? 'sidebar-mobile-open' : '';
+    } else {
+      classes += this.isSidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded';
+    }
+    
+    return classes;
+  }
+
+  /**
+   * Obtener las clases CSS del contenido principal
+   */
+  getMainContentClasses(): string {
+    let classes = 'transition-smooth flex flex-col min-h-screen ';
+    
+    if (!this.isMobile()) {
+      classes += this.isSidebarCollapsed ? 'main-content-collapsed' : 'main-content-expanded';
+    }
+    
+    return classes;
   }
 
   async loadUserMenu(): Promise<void> {
@@ -271,30 +319,73 @@ export class LayoutComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Toggle del sidebar - comportamiento diferente para móvil vs desktop
+   */
   toggleSidebar(): void {
-    // En móvil, no permitir colapsar/expandir, solo abrir/cerrar
-    if (window.innerWidth <= 768) {
-      this.toggleSidebarMobile();
-      return;
-    }
-    
-    this.isSidebarCollapsed = !this.isSidebarCollapsed;
-    console.log('Sidebar colapsado:', this.isSidebarCollapsed);
-    
-    // Cerrar todos los módulos expandidos cuando se colapsa
-    if (this.isSidebarCollapsed) {
-      this.expandedModules.clear();
+    if (this.isMobile()) {
+      // En móvil, toggle del menú móvil
+      this.toggleMobileMenu();
+    } else {
+      // En desktop, toggle collapsed/expanded
+      this.isSidebarCollapsed = !this.isSidebarCollapsed;
+      console.log('Sidebar colapsado:', this.isSidebarCollapsed);
+      
+      // Cerrar todos los módulos expandidos cuando se colapsa
+      if (this.isSidebarCollapsed) {
+        this.expandedModules.clear();
+        this.menuItems.forEach(module => {
+          module.expanded = false;
+        });
+      }
     }
   }
 
-  toggleSidebarMobile(): void {
+  /**
+   * Toggle específico para menú móvil
+   */
+  toggleMobileMenu(): void {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
     console.log('Menú móvil abierto:', this.isMobileMenuOpen);
+    
+    // Prevenir scroll del body cuando el menú está abierto
+    if (this.isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }
+
+  /**
+   * Abrir menú móvil
+   */
+  openMobileMenu(): void {
+    if (this.isMobile()) {
+      this.isMobileMenuOpen = true;
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  /**
+   * Cerrar menú móvil
+   */
+  closeMobileMenu(): void {
+    this.isMobileMenuOpen = false;
+    document.body.style.overflow = '';
+  }
+
+  /**
+   * Manejar navegación - cerrar menú móvil al navegar
+   */
+  handleNavigation(): void {
+    if (this.isMobile() && this.isMobileMenuOpen) {
+      this.closeMobileMenu();
+    }
   }
 
   toggleModule(moduleId: number): void {
-    // No permitir expandir módulos si el sidebar está colapsado
-    if (this.isSidebarCollapsed) {
+    // En desktop colapsado, no permitir expandir módulos
+    if (!this.isMobile() && this.isSidebarCollapsed) {
       return;
     }
 
@@ -336,6 +427,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
     if (route && route !== '#') {
       console.log('Navegando a:', route);
       this.router.navigate([route]);
+      // Cerrar menú móvil después de navegar
+      this.handleNavigation();
     }
   }
 
@@ -362,12 +455,16 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   logout(): void {
     console.log('Cerrando sesión desde layout');
+    
+    // Limpiar estado del componente
     this.permissionsService.clearUserData();
     this.currentUser = null;
     this.menuItems = [];
     this.expandedModules.clear();
     this.isSidebarCollapsed = false;
-    this.isMobileMenuOpen = false;
+    this.closeMobileMenu();
+    
+    // Ejecutar logout
     this.authService.logout();
   }
 
@@ -440,11 +537,6 @@ export class LayoutComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Método para verificar si el dispositivo es móvil
-  isMobile(): boolean {
-    return window.innerWidth <= 768;
-  }
-
   // Método para obtener el estado actual del sidebar
   getSidebarState(): string {
     if (this.isMobile()) {
@@ -483,5 +575,19 @@ export class LayoutComponent implements OnInit, OnDestroy {
     };
     
     return iconMap[moduleName] || 'fas fa-circle';
+  }
+
+  /**
+   * Método para debugging - eliminar en producción
+   */
+  debugSidebarState(): void {
+    console.log('Debug Sidebar State:', {
+      isMobile: this.isMobile(),
+      isMobileView: this.isMobileView,
+      isSidebarCollapsed: this.isSidebarCollapsed,
+      isMobileMenuOpen: this.isMobileMenuOpen,
+      windowWidth: window.innerWidth,
+      sidebarState: this.getSidebarState()
+    });
   }
 }

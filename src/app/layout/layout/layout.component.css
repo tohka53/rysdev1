@@ -17,6 +17,8 @@
   transition: width 0.3s ease-in-out;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-collapsed {
@@ -27,11 +29,32 @@
   width: 16rem; /* 256px */
 }
 
+/* ===== MOBILE SIDEBAR ===== */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 16rem !important; /* Siempre expandido en móvil */
+    transform: translateX(-100%);
+    z-index: 1050;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .sidebar-mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-collapsed,
+  .sidebar-expanded {
+    width: 16rem !important;
+  }
+}
+
 /* ===== CONTENIDO PRINCIPAL ===== */
 .main-content {
   transition: margin-left 0.3s ease-in-out;
   min-height: 100vh;
   background-color: #f9fafb;
+  display: flex;
+  flex-direction: column;
 }
 
 .main-content-expanded {
@@ -42,13 +65,23 @@
   margin-left: 4rem; /* 64px - coincide con sidebar colapsado */
 }
 
+@media (max-width: 768px) {
+  .main-content-expanded,
+  .main-content-collapsed {
+    margin-left: 0 !important;
+  }
+}
+
 /* ===== NAVEGACIÓN CON SCROLL ===== */
 .nav-scroll-container {
-  height: calc(100vh - 140px); /* Altura total menos header (72px) y footer (68px) */
+  flex: 1;
   overflow-y: auto;
   padding-bottom: 1rem;
   scrollbar-width: thin;
   scrollbar-color: #4B5563 #1F2937;
+  /* Asegurar que tome el espacio restante */
+  height: 0;
+  min-height: 0;
 }
 
 .nav-scroll-container::-webkit-scrollbar {
@@ -78,11 +111,7 @@
 
 /* ===== USER SECTION FIJO ===== */
 .user-section {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 68px; /* Altura fija para el footer */
+  height: 80px; /* Altura fija para el footer */
   background: rgba(17, 24, 39, 0.95);
   backdrop-filter: blur(10px);
   border-top: 1px solid rgba(75, 85, 99, 0.3);
@@ -117,6 +146,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
+  flex-shrink: 0;
 }
 
 /* ===== ÁREA DE CONTENIDO ===== */
@@ -124,6 +154,7 @@
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  min-height: 0;
 }
 
 /* ===== ANIMACIONES Y TRANSICIONES ===== */
@@ -145,36 +176,44 @@
   transform: scale(1.05);
 }
 
+/* ===== OVERLAY PARA MÓVILES ===== */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.sidebar-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-    z-index: 1050;
+  .main-header {
+    padding-left: 1rem;
   }
 
-  .sidebar-mobile-open {
-    transform: translateX(0);
-  }
-
-  .main-content-expanded,
-  .main-content-collapsed {
-    margin-left: 0 !important;
-  }
-
-  .sidebar-overlay {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1040;
-    display: none;
-  }
-
-  .sidebar-overlay.show {
+  .mobile-menu-btn {
     display: block;
   }
 
-  .main-header {
-    padding-left: 1rem;
+  .sidebar-header {
+    height: 64px;
+  }
+
+  .user-section {
+    height: 72px;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-btn {
+    display: none;
   }
 }
 
@@ -198,32 +237,47 @@
   position: relative;
 }
 
-.tooltip-collapsed:hover::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: calc(100% + 10px);
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: #1f2937;
-  color: white;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  white-space: nowrap;
-  z-index: 1100;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+@media (min-width: 769px) {
+  .tooltip-collapsed:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #1f2937;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    z-index: 1100;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    animation: tooltipFadeIn 0.2s ease-in-out forwards;
+  }
+
+  .tooltip-collapsed:hover::before {
+    content: '';
+    position: absolute;
+    left: calc(100% + 5px);
+    top: 50%;
+    transform: translateY(-50%);
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 5px solid #1f2937;
+    z-index: 1100;
+    opacity: 0;
+    animation: tooltipFadeIn 0.2s ease-in-out forwards;
+  }
 }
 
-.tooltip-collapsed:hover::before {
-  content: '';
-  position: absolute;
-  left: calc(100% + 5px);
-  top: 50%;
-  transform: translateY(-50%);
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-  border-right: 5px solid #1f2937;
-  z-index: 1100;
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* ===== CARDS DEL DASHBOARD ===== */
@@ -444,6 +498,66 @@
   background: #9ca3af;
 }
 
+/* ===== MEJORAS ESPECÍFICAS PARA MÓVILES ===== */
+@media (max-width: 768px) {
+  /* Hacer el sidebar completamente funcional en móvil */
+  .sidebar {
+    -webkit-transform: translateX(-100%);
+    transform: translateX(-100%);
+  }
+
+  .sidebar-mobile-open {
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+  }
+
+  /* Asegurar que el contenido no se solape */
+  .main-content {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  /* Mejorar la navegación en móvil */
+  .nav-scroll-container {
+    height: calc(100vh - 136px); /* Header 64px + Footer 72px */
+  }
+
+  /* Mejorar botones en móvil */
+  .sidebar-toggle-btn {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Espaciado mejor en móvil */
+  .nav-scroll-container nav {
+    padding: 0.5rem;
+  }
+
+  .nav-scroll-container .space-y-1 > * + * {
+    margin-top: 0.25rem;
+  }
+
+  /* Enlaces más grandes para tocar en móvil */
+  .nav-scroll-container a,
+  .nav-scroll-container button {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Prevenir zoom en inputs en móvil */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* ===== MEDIA QUERIES PARA MEJORAR LA RESPONSIVIDAD ===== */
 @media (max-width: 1024px) {
   .dashboard-stats {
@@ -469,39 +583,74 @@
   }
   
   .main-header h1 {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
   }
   
   .welcome-section h2 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
   }
 
-  .nav-scroll-container {
-    height: calc(100vh - 120px);
-  }
-}
-
-/* ===== ESTILOS ESPECÍFICOS PARA MENÚ MÓVIL ===== */
-@media (max-width: 768px) {
-  .mobile-menu-btn {
-    display: block;
-  }
-
+  /* Ajustes específicos para pantallas muy pequeñas */
   .sidebar-header {
-    height: 60px;
+    padding: 1rem;
   }
 
   .user-section {
-    height: 60px;
+    padding: 1rem;
   }
 
-  .nav-scroll-container {
-    height: calc(100vh - 120px);
+  .content-area {
+    padding: 1rem;
   }
 }
 
-@media (min-width: 769px) {
-  .mobile-menu-btn {
-    display: none;
+/* ===== ACCESIBILIDAD ===== */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .main-content,
+  .sidebar-overlay,
+  .submenu-enter,
+  .tooltip-collapsed::after,
+  .tooltip-collapsed::before {
+    transition: none;
+  }
+
+  .fade-in,
+  .slide-in {
+    animation: none;
+  }
+}
+
+/* ===== FOCUS STATES PARA ACCESIBILIDAD ===== */
+.sidebar-toggle-btn:focus,
+.mobile-menu-btn:focus,
+.logout-btn:focus {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}
+
+.nav-scroll-container a:focus,
+.nav-scroll-container button:focus {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
+/* ===== HIGH CONTRAST MODE ===== */
+@media (prefers-contrast: high) {
+  .sidebar {
+    background: #000000;
+    border-right: 2px solid #ffffff;
+  }
+
+  .nav-scroll-container a,
+  .nav-scroll-container button {
+    border: 1px solid #ffffff;
+  }
+
+  .nav-scroll-container a:hover,
+  .nav-scroll-container button:hover {
+    background-color: #ffffff;
+    color: #000000;
   }
 }
