@@ -5,8 +5,8 @@ import {
   browser_default,
   fetch,
   init_browser
-} from "./chunk-5JB4KNXG.js";
-import "./chunk-S35DAJRX.js";
+} from "./chunk-DY3IB5W3.js";
+import "./chunk-SOUAK7E5.js";
 init_browser();
 export {
   Headers,

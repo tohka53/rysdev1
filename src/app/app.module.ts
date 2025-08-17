@@ -25,9 +25,9 @@ import { CalendarioTerapiasComponent } from './calendario-terapias/calendario-te
 import { CalendarioPaquetesComponent } from './calendario-paquetes/calendario-paquetes/calendario-paquetes.component';
 import { AvatarComponent } from './avatar/avatar/avatar.component';
 import { MotivationalQuotesComponent } from './motivational-quotes/motivational-quotes/motivational-quotes.component';
-
+import { inject } from '@vercel/analytics';
 // Componentes de paquetes
-
+inject();
 @NgModule({
   declarations: [
     AppComponent,

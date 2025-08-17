@@ -1,7 +1,7 @@
 import {
   __esm,
   __export
-} from "./chunk-S35DAJRX.js";
+} from "./chunk-SOUAK7E5.js";
 
 // node_modules/@supabase/node-fetch/browser.js
 var browser_exports = {};
@@ -45,4 +45,4 @@ export {
   browser_exports,
   init_browser
 };
-//# sourceMappingURL=chunk-5JB4KNXG.js.map
+//# sourceMappingURL=chunk-DY3IB5W3.js.map
