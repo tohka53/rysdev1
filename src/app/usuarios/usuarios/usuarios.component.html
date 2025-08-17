@@ -176,21 +176,48 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <tr *ngFor="let user of filteredUsuarios; trackBy: trackByUserId" class="hover:bg-gray-50 transition-colors duration-150">
+            
+            <!-- Columna Usuario con Avatar Actualizada -->
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center">
-                <div class="h-10 w-10 flex-shrink-0">
-                  <div [class]="'h-10 w-10 rounded-full flex items-center justify-center ' + getAvatarColor(user)">
-                    <span class="text-sm font-medium text-white">
-                      {{ getUserInitials(user) }}
-                    </span>
+                <!-- Avatar con imagen real o iniciales -->
+                <div class="h-10 w-10 flex-shrink-0 relative">
+                  <div class="h-10 w-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <!-- Imagen de avatar si existe -->
+                    <img 
+                      *ngIf="user.avatar_url; else userInitialsTemplate"
+                      [src]="getUserAvatarUrl(user)" 
+                      [alt]="user.full_name || 'Avatar'"
+                      class="w-full h-full object-cover"
+                      (error)="$any($event.target).style.display='none'"
+                    />
+                    
+                    <!-- Template para iniciales -->
+                    <ng-template #userInitialsTemplate>
+                      <span class="text-sm font-medium text-white">
+                        {{ getUserInitials(user) }}
+                      </span>
+                    </ng-template>
+                  </div>
+
+                  <!-- Indicador de usuario activo/inactivo -->
+                  <div class="absolute -bottom-0 -right-0 h-3 w-3 rounded-full border-2 border-white"
+                       [ngClass]="{
+                         'bg-green-400': user.status === 1,
+                         'bg-red-400': user.status === 0
+                       }">
                   </div>
                 </div>
+                
+                <!-- Información del usuario -->
                 <div class="ml-4">
                   <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
                   <div class="text-sm text-gray-500">ID: {{ user.id }}</div>
                 </div>
               </div>
             </td>
+            
+            <!-- Resto de columnas sin cambios -->
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="text-sm text-gray-900">{{ user.full_name }}</div>
             </td>
@@ -222,6 +249,18 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <div class="flex justify-end space-x-2">
+                <!-- Botón para cambiar avatar -->
+                <button
+                  (click)="changeUserAvatar(user)"
+                  class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors duration-150"
+                  title="Cambiar foto de perfil"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+
                 <!-- Botón Editar -->
                 <button
                   (click)="openEditModal(user)"
@@ -325,6 +364,48 @@
       <!-- Modal Body -->
       <div class="bg-white px-4 pb-4 sm:px-6">
         <form class="space-y-4">
+          <!-- Avatar Preview (solo en modo edición) -->
+          <div *ngIf="modalMode === 'edit'" class="flex justify-center">
+            <div class="relative">
+              <div class="h-20 w-20 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <img 
+                  *ngIf="userForm.avatar_url; else modalInitialsTemplate"
+                  [src]="getUserAvatarUrl(userForm)" 
+                  [alt]="userForm.full_name || 'Avatar'"
+                  class="w-full h-full object-cover"
+                  (error)="$any($event.target).style.display='none'"
+                />
+                
+                <ng-template #modalInitialsTemplate>
+                  <span class="text-lg font-medium text-white">
+                    {{ getUserInitials(userForm) }}
+                  </span>
+                </ng-template>
+              </div>
+              
+              <button 
+                type="button"
+                (click)="avatarFileInput.click()"
+                class="absolute bottom-0 right-0 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-1 shadow-lg transition-all duration-200 transform hover:scale-110"
+                title="Cambiar foto"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+              
+              <!-- Input oculto para avatar -->
+              <input 
+                #avatarFileInput
+                type="file" 
+                accept="image/*" 
+                (change)="onAvatarSelected($event)"
+                class="hidden"
+              />
+            </div>
+          </div>
+
           <!-- Username -->
           <div>
             <label for="username" class="block text-sm font-medium text-gray-700">
@@ -451,3 +532,12 @@
     </div>
   </div>
 </div>
+
+<!-- Input oculto para cambiar avatar desde la tabla -->
+<input 
+  #userAvatarFileInput
+  type="file" 
+  accept="image/*" 
+  (change)="onUserAvatarSelected($event)"
+  class="hidden"
+/>

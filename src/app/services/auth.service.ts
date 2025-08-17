@@ -66,7 +66,8 @@ export class AuthService {
         password: user.password,
         status: user.status,
         id_perfil: user.id_perfil,
-        created_at: user.created_at
+        created_at: user.created_at,
+        avatar_url: user.avatar_url // Incluir avatar_url
       };
 
       // Guardar usuario
@@ -109,7 +110,8 @@ export class AuthService {
         full_name: profile.full_name,
         password: profile.password,
         status: 1,
-        id_perfil: profile.id_perfil || 2 // Asignar perfil "Usuario" por defecto
+        id_perfil: profile.id_perfil || 2, // Asignar perfil "Usuario" por defecto
+        avatar_url: profile.avatar_url || null // Incluir avatar_url si se proporciona
       };
 
       console.log('Datos a insertar:', dataToInsert);
@@ -137,7 +139,8 @@ export class AuthService {
           password: newUser[0].password,
           status: newUser[0].status,
           id_perfil: newUser[0].id_perfil,
-          created_at: newUser[0].created_at
+          created_at: newUser[0].created_at,
+          avatar_url: newUser[0].avatar_url
         };
         
         return { success: true, message: 'Usuario creado exitosamente', user: createdUser };
@@ -150,6 +153,224 @@ export class AuthService {
       return { success: false, message: 'Error inesperado del servidor' };
     }
   }
+
+  // ========================================
+  // NUEVOS MÉTODOS PARA MANEJO DE AVATARES
+  // ========================================
+
+  /**
+   * Validar archivo de imagen
+   */
+  private validateImageFile(file: File): { valid: boolean; error?: string } {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+
+    if (!allowedTypes.includes(file.type)) {
+      return { valid: false, error: 'Tipo de archivo no permitido. Use JPG, PNG o GIF.' };
+    }
+
+    if (file.size > maxSize) {
+      return { valid: false, error: 'El archivo es demasiado grande. Máximo 5MB.' };
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * Convertir archivo a Base64
+   */
+  private fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  }
+
+  /**
+   * Redimensionar imagen usando canvas
+   */
+  private resizeImage(file: File, maxWidth: number = 300, maxHeight: number = 300, quality: number = 0.8): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+
+      img.onload = () => {
+        // Calcular nuevas dimensiones manteniendo aspecto
+        let { width, height } = img;
+        
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height;
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // Dibujar imagen redimensionada
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Convertir a base64
+        const base64 = canvas.toDataURL(file.type, quality);
+        resolve(base64);
+      };
+
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  /**
+   * Actualizar avatar del usuario actual
+   */
+  async updateUserAvatar(file: File): Promise<AuthResponse> {
+    try {
+      if (!this.currentUser) {
+        return { success: false, message: 'Usuario no autenticado' };
+      }
+
+      // Validar archivo
+      const validation = this.validateImageFile(file);
+      if (!validation.valid) {
+        return { success: false, message: validation.error || 'Archivo inválido' };
+      }
+
+      // Redimensionar y convertir a base64
+      const base64Image = await this.resizeImage(file, 300, 300, 0.8);
+      
+      // Actualizar en la base de datos
+      const { data, error } = await this.supabaseService.client
+        .from('profiles')
+        .update({ avatar_url: base64Image })
+        .eq('id', this.currentUser.id)
+        .select();
+
+      if (error) {
+        console.error('Error actualizando avatar:', error);
+        return { success: false, message: 'Error al actualizar la foto de perfil' };
+      }
+
+      if (data && data.length > 0) {
+        // Actualizar usuario actual en memoria y localStorage
+        this.currentUser.avatar_url = base64Image;
+        localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+        
+        return { 
+          success: true, 
+          message: 'Foto de perfil actualizada correctamente',
+          user: this.currentUser 
+        };
+      }
+
+      return { success: false, message: 'No se pudo actualizar la foto' };
+
+    } catch (error) {
+      console.error('Error en updateUserAvatar:', error);
+      return { success: false, message: 'Error interno del servidor' };
+    }
+  }
+
+  /**
+   * Actualizar perfil del usuario (incluyendo avatar)
+   */
+  async updateUserProfile(updates: Partial<Profile>): Promise<AuthResponse> {
+    try {
+      if (!this.currentUser) {
+        return { success: false, message: 'Usuario no autenticado' };
+      }
+
+      // Actualizar en la base de datos
+      const { data, error } = await this.supabaseService.client
+        .from('profiles')
+        .update(updates)
+        .eq('id', this.currentUser.id)
+        .select();
+
+      if (error) {
+        console.error('Error actualizando perfil:', error);
+        return { success: false, message: 'Error al actualizar el perfil' };
+      }
+
+      if (data && data.length > 0) {
+        // Actualizar usuario actual
+        const updatedUser = { ...this.currentUser, ...updates };
+        this.currentUser = updatedUser;
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        
+        return { 
+          success: true, 
+          message: 'Perfil actualizado correctamente',
+          user: updatedUser 
+        };
+      }
+
+      return { success: false, message: 'No se pudo actualizar el perfil' };
+
+    } catch (error) {
+      console.error('Error en updateUserProfile:', error);
+      return { success: false, message: 'Error interno del servidor' };
+    }
+  }
+
+  /**
+   * Obtener URL del avatar con fallback
+   */
+  getAvatarUrl(user?: Profile): string {
+    const targetUser = user || this.currentUser;
+    
+    if (targetUser?.avatar_url) {
+      return targetUser.avatar_url;
+    }
+    
+    // Fallback: generar avatar con iniciales usando servicio externo
+    if (targetUser?.full_name) {
+      const initials = targetUser.full_name
+        .split(' ')
+        .map(word => word.charAt(0))
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+      
+      // Generar color consistente basado en el nombre
+      const colors = ['6366f1', '8b5cf6', 'ec4899', 'ef4444', 'f59e0b', '10b981', '06b6d4', '3b82f6'];
+      const colorIndex = (targetUser.full_name?.charCodeAt(0) || 0) % colors.length;
+      const backgroundColor = colors[colorIndex];
+      
+      return `https://ui-avatars.com/api/?name=${initials}&background=${backgroundColor}&color=fff&size=150`;
+    }
+    
+    return 'https://ui-avatars.com/api/?name=User&background=6366f1&color=fff&size=150';
+  }
+
+  /**
+   * Obtener iniciales del usuario
+   */
+  getUserInitials(user?: Profile): string {
+    const targetUser = user || this.currentUser;
+    
+    if (targetUser?.full_name) {
+      const names = targetUser.full_name.split(' ');
+      if (names.length >= 2) {
+        return (names[0].charAt(0) + names[1].charAt(0)).toUpperCase();
+      }
+      return targetUser.full_name.charAt(0).toUpperCase();
+    }
+    
+    return 'U';
+  }
+
+  // ========================================
+  // MÉTODOS EXISTENTES (sin cambios)
+  // ========================================
 
   logout(): void {
     console.log('Cerrando sesión');

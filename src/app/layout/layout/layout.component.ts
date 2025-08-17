@@ -23,7 +23,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
   expandedModules: Set<number> = new Set();
   loading = false;
   isMobileView = false;
-  
+ showDropdown = false;
+  isUploadingAvatar = false; 
   // Stats para el dashboard
   stats = {
     totalUsers: 0,
@@ -590,4 +591,114 @@ export class LayoutComponent implements OnInit, OnDestroy {
       sidebarState: this.getSidebarState()
     });
   }
+
+// Agregar estos métodos a tu layout.component.ts existente
+
+// ========================================
+// MÉTODOS PARA MANEJO DE AVATAR
+// ========================================
+
+/**
+ * Cerrar dropdown al hacer clic fuera
+ */
+@HostListener('document:click', ['$event'])
+closeDropdown(event: Event): void {
+  const target = event.target as HTMLElement;
+  const dropdown = target.closest('.user-dropdown');
+  
+  if (!dropdown) {
+    this.showDropdown = false;
+  }
+}
+
+/**
+ * Toggle del dropdown del usuario
+ */
+toggleDropdown(): void {
+  this.showDropdown = !this.showDropdown;
+}
+
+/**
+ * Manejar selección de archivo para avatar
+ */
+onAvatarFileSelected(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files[0]) {
+    this.uploadAvatar(input.files[0]);
+  }
+}
+
+/**
+ * Subir nueva foto de avatar
+ */
+async uploadAvatar(file: File): Promise<void> {
+  if (!this.currentUser) return;
+
+  this.isUploadingAvatar = true;
+  
+  try {
+    const result = await this.authService.updateUserAvatar(file);
+    
+    if (result.success && result.user) {
+      this.currentUser = result.user;
+      console.log(result.message);
+      
+      // Mostrar notificación de éxito
+      this.showSuccessNotification('Foto de perfil actualizada correctamente');
+    } else {
+      console.error(result.message);
+      this.showErrorNotification(result.message);
+    }
+  } catch (error) {
+    console.error('Error uploading avatar:', error);
+    this.showErrorNotification('Error al subir la imagen');
+  } finally {
+    this.isUploadingAvatar = false;
+  }
+}
+
+/**
+ * Obtener URL del avatar del usuario actual
+ */
+getCurrentUserAvatarUrl(): string {
+  return this.authService.getAvatarUrl(this.currentUser || undefined);
+}
+
+/**
+ * Mostrar notificación de éxito
+ */
+private showSuccessNotification(message: string): void {
+  console.log('Success:', message);
+  // Puedes reemplazar esto con tu sistema de notificaciones
+  // Por ejemplo: this.toastr.success(message);
+}
+
+/**
+ * Mostrar notificación de error
+ */
+private showErrorNotification(message: string): void {
+  console.error('Error:', message);
+  alert(message); // Reemplazar por tu sistema de notificaciones
+}
+
+/**
+ * Abrir modal de perfil (opcional)
+ */
+openProfileModal(): void {
+  this.showDropdown = false;
+  console.log('Abrir modal de perfil');
+  // Implementar modal de perfil si es necesario
+}
+
+/**
+ * Navegar a configuración
+ */
+goToSettings(): void {
+  this.showDropdown = false;
+  this.router.navigate(['/configuracion']);
+}
+
+
+
+
 }

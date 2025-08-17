@@ -12,6 +12,7 @@ export interface Profile {
   updated_at?: string;
   avatar_url?: string;
   provider?: string;
+  
 }
 
 // Interface para credenciales de login
@@ -58,6 +59,8 @@ export interface RegisterData {
   password: string;
   status?: number;
   id_perfil?: number;
+  avatar_url?: string; // Nueva propiedad para la foto
+
 }
 
 // Interface para actualización de perfil
@@ -67,4 +70,5 @@ export interface ProfileUpdate {
   avatar_url?: string;
   id_perfil?: number;
   status?: number;
+  
 }
