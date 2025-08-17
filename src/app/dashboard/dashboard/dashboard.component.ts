@@ -22,12 +22,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   currentRoute = '';
   expandedModules: Set<number> = new Set();
 
-  // Stats data
+  // Stats data para rehabilitación
   stats = {
-    totalUsers: 0,
-    activeProjects: 0,
-    pendingTasks: 0,
-    totalReports: 0
+    todayProgress: 0,
+    sessionsCompleted: 0,
+    daysActive: 0,
+    achievementPoints: 0
   };
 
   private subscriptions: Subscription = new Subscription();
@@ -173,15 +173,73 @@ export class DashboardComponent implements OnInit, OnDestroy {
   async loadDashboardStats(): Promise<void> {
     try {
       // Aquí puedes hacer llamadas a servicios para obtener estadísticas reales
+      // Por ahora, simulamos datos de progreso de rehabilitación
       this.stats = {
-        totalUsers: 1247,
-        activeProjects: 23,
-        pendingTasks: 47,
-        totalReports: 156
+        todayProgress: this.calculateTodayProgress(),
+        sessionsCompleted: this.getSessionsCompleted(),
+        daysActive: this.getDaysActive(),
+        achievementPoints: this.getAchievementPoints()
       };
     } catch (error) {
       console.error('Error cargando estadísticas:', error);
     }
+  }
+
+  /**
+   * Calcular progreso del día basado en actividades
+   */
+  private calculateTodayProgress(): number {
+    // Simular progreso basado en la fecha actual
+    const today = new Date();
+    const hour = today.getHours();
+    
+    // Progreso basado en la hora del día (más realista)
+    if (hour < 8) return 10;
+    if (hour < 12) return 35;
+    if (hour < 16) return 65;
+    if (hour < 20) return 85;
+    return 95;
+  }
+
+  /**
+   * Obtener sesiones completadas (ejemplo)
+   */
+  private getSessionsCompleted(): number {
+    // Simular basado en días desde el registro
+    const daysActive = this.getDaysActive();
+    return Math.floor(daysActive * 0.8) + 15; // Aproximadamente 0.8 sesiones por día activo
+  }
+
+  /**
+   * Calcular días activos desde el registro
+   */
+  private getDaysActive(): number {
+    if (!this.currentUser?.created_at) return 1;
+    
+    const createdDate = new Date(this.currentUser.created_at);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - createdDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return Math.max(1, diffDays);
+  }
+
+  /**
+   * Calcular puntos de logro
+   */
+  private getAchievementPoints(): number {
+    const sessions = this.getSessionsCompleted();
+    const days = this.getDaysActive();
+    
+    // Fórmula simple para calcular puntos
+    return (sessions * 10) + (days * 5) + Math.floor(this.calculateTodayProgress() / 10) * 25;
+  }
+
+  /**
+   * Obtener URL del avatar del usuario
+   */
+  getUserAvatarUrl(): string {
+    return this.authService.getAvatarUrl(this.currentUser || undefined);
   }
 
   toggleSidebar(): void {
@@ -243,14 +301,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Métodos de utilidad
   getUserInitials(): string {
-    if (!this.currentUser?.full_name) {
-      return 'U';
-    }
-    const names = this.currentUser.full_name.split(' ');
-    if (names.length >= 2) {
-      return (names[0].charAt(0) + names[1].charAt(0)).toUpperCase();
-    }
-    return this.currentUser.full_name.charAt(0).toUpperCase();
+    return this.authService.getUserInitials(this.currentUser || undefined);
   }
 
   getUserRole(): string {

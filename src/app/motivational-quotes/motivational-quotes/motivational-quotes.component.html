@@ -1,0 +1,127 @@
+<!-- src/app/components/motivational-quotes/motivational-quotes.component.html -->
+<div class="motivational-quotes-container">
+  <!-- Marca de agua de fondo -->
+  <div class="watermark">
+    <img src="/rh.png" alt="RehabiMovement" />
+  </div>
+  
+  <!-- Tarjeta principal de frase motivacional -->
+  <div class="quote-card">
+    <!-- Header de la tarjeta -->
+    <div class="quote-header">
+      <div class="quote-category">
+        <span class="category-badge">{{ currentQuote.category }}</span>
+      </div>
+      <div class="quote-controls">
+        <!-- Indicador de progreso -->
+        <div class="progress-indicator">
+          <span class="progress-text">{{ currentQuoteIndex + 1 }}/{{ motivationalQuotes.length }}</span>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="getProgressPercentage()"></div>
+          </div>
+        </div>
+        
+        <!-- Control de auto-rotación -->
+        <button 
+          (click)="toggleAutoRotation()" 
+          class="auto-rotation-btn"
+          [class.active]="isAutoRotating"
+          title="{{ isAutoRotating ? 'Desactivar rotación automática' : 'Activar rotación automática' }}"
+        >
+          <svg *ngIf="isAutoRotating" class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <svg *ngIf="!isAutoRotating" class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Contenido de la frase -->
+    <div class="quote-content">
+      <div class="quote-icon">
+        <svg class="icon" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h4v10h-10z"/>
+        </svg>
+      </div>
+      
+      <blockquote class="quote-text">
+        {{ currentQuote.text }}
+      </blockquote>
+      
+      <div class="quote-author">
+        <cite>- {{ currentQuote.author }}</cite>
+      </div>
+    </div>
+    
+    <!-- Controles de navegación -->
+    <div class="quote-navigation">
+      <button 
+        (click)="previousQuote()" 
+        class="nav-btn prev-btn"
+        title="Frase anterior"
+      >
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+      
+      <div class="nav-info">
+        <div class="next-update-info">
+          <span class="update-label">Próxima actualización automática:</span>
+          <span class="update-time">{{ getTimeUntilNextUpdate() }}</span>
+        </div>
+        
+        <button 
+          (click)="forceUpdate()" 
+          class="force-update-btn"
+          title="Cambiar frase ahora"
+        >
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Cambiar ahora
+        </button>
+      </div>
+      
+      <button 
+        (click)="nextQuote()" 
+        class="nav-btn next-btn"
+        title="Siguiente frase"
+      >
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Indicadores de puntos (dots) -->
+  <div class="quote-dots">
+    <button 
+      *ngFor="let quote of motivationalQuotes; let i = index" 
+      (click)="goToQuote(i)"
+      class="dot"
+      [class.active]="i === currentQuoteIndex"
+      [title]="quote.category + ': ' + quote.text.substring(0, 50) + '...'"
+    ></button>
+  </div>
+  
+  <!-- Mini tarjetas de vista previa (opcional) -->
+  <div class="preview-cards" *ngIf="motivationalQuotes.length > 0">
+    <h4 class="preview-title">Otras frases motivacionales:</h4>
+    <div class="preview-grid">
+      <div 
+        *ngFor="let quote of motivationalQuotes.slice(0, 6); let i = index" 
+        class="preview-card"
+        [class.current]="i === currentQuoteIndex"
+        (click)="goToQuote(i)"
+      >
+        <div class="preview-category">{{ quote.category }}</div>
+        <div class="preview-text">{{ quote.text.substring(0, 80) }}...</div>
+        <div class="preview-author">{{ quote.author }}</div>
+      </div>
+    </div>
+  </div>
+</div>

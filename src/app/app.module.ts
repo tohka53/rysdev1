@@ -24,6 +24,7 @@ import { CalendarioRutinasComponent } from './calendario-rutinas/calendario-ruti
 import { CalendarioTerapiasComponent } from './calendario-terapias/calendario-terapias/calendario-terapias.component';
 import { CalendarioPaquetesComponent } from './calendario-paquetes/calendario-paquetes/calendario-paquetes.component';
 import { AvatarComponent } from './avatar/avatar/avatar.component';
+import { MotivationalQuotesComponent } from './motivational-quotes/motivational-quotes/motivational-quotes.component';
 
 // Componentes de paquetes
 
@@ -46,7 +47,8 @@ import { AvatarComponent } from './avatar/avatar/avatar.component';
     InformacionMedicaUsuariosComponent,
     CalendarioRutinasComponent,
     CalendarioTerapiasComponent,
-    AvatarComponent
+    AvatarComponent,
+    MotivationalQuotesComponent
 
    
   ],
