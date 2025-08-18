@@ -26,6 +26,7 @@ import { CalendarioPaquetesComponent } from './calendario-paquetes/calendario-pa
 import { AvatarComponent } from './avatar/avatar/avatar.component';
 import { MotivationalQuotesComponent } from './motivational-quotes/motivational-quotes/motivational-quotes.component';
 import { inject } from '@vercel/analytics';
+import { ChatDiscussionComponent } from './chat-discussion/chat-discussion/chat-discussion.component';
 // Componentes de paquetes
 inject();
 @NgModule({
@@ -48,7 +49,8 @@ inject();
     CalendarioRutinasComponent,
     CalendarioTerapiasComponent,
     AvatarComponent,
-    MotivationalQuotesComponent
+    MotivationalQuotesComponent,
+    ChatDiscussionComponent
 
    
   ],

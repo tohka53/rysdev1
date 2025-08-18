@@ -19,13 +19,6 @@ import { TerapiasUsuarioComponent } from './terapias-usuario/terapias-usuario/te
 import { MisTerapiasComponent } from './mis-terapias/mis-terapias/mis-terapias.component';
 import { InformacionMedicaUsuariosComponent } from './informacion-medica-usuarios/informacion-medica-usuarios/informacion-medica-usuarios.component';
 
-// Componentes de Paquetes
-import { PaquetesComponent } from './paquetes/paquetes/paquetes.component';
-import { PaqueteFormComponent } from './paquete-form/paquete-form/paquete-form.component';
-import { PaqueteDetalleComponent } from './paquete-detalle/paquete-detalle/paquete-detalle.component';
-import { AsignarPaqueteComponent } from './asignar-paquete/asignar-paquete/asignar-paquete.component';
-import { AsignacionesListaComponent } from './asignaciones-lista/asignaciones-lista/asignaciones-lista.component';
-
 const routes: Routes = [
   // Ruta principal - Landing page
   { path: '', component: LandingComponent },
@@ -114,16 +107,43 @@ const routes: Routes = [
       },
 
       // ===============================================
-      // RUTAS ACTUALIZADAS DE PAQUETES
+      // RUTAS DE PAQUETES - LAZY LOADING
       // ===============================================
-    {
-  path: 'paquetes',
-  loadChildren: () => import('./paquetes/paquetes/paquetes.module').then(m => m.PaquetesModule),
-  canActivate: [AuthGuard],
-  data: { 
-    title: 'Gestión de Paquetes'
-  }
-},
+      {
+        path: 'paquetes',
+        loadChildren: () => import('./paquetes/paquetes/paquetes.module').then(m => m.PaquetesModule),
+        canActivate: [AuthGuard],
+        data: { 
+          title: 'Gestión de Paquetes'
+        }
+      },
+
+      // ===============================================
+      // RUTAS DE CHAT/DISCUSIONES - LAZY LOADING
+      // ===============================================
+      {
+        path: 'chat-discussions',
+        loadChildren: () => import('./chat-discussion/chat-discussion/chat-discussion.module').then(m => m.ChatDiscussionModule),
+        canActivate: [AuthGuard],
+        data: { 
+          title: 'Sistema de Discusiones',
+          requiredPermissions: ['view'] // Permisos mínimos requeridos
+        }
+      },
+
+      // Alias alternativo para el chat
+      {
+        path: 'discusiones',
+        redirectTo: 'chat-discussions',
+        pathMatch: 'full'
+      },
+
+      // Ruta de chat simple (redirige a chat-discussions)
+      {
+        path: 'chat',
+        redirectTo: 'chat-discussions',
+        pathMatch: 'full'
+      }
     ]
   },
   
