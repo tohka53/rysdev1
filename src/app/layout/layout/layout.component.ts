@@ -41,6 +41,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
     private supabaseService: SupabaseService,
     private router: Router
   ) {}
+    showPaquetesMenu = false; // ← AGREGAR ESTA LÍNEA
+
 
   // Escuchar cambios de tamaño de ventana
   @HostListener('window:resize', ['$event'])
@@ -617,7 +619,9 @@ closeDropdown(event: Event): void {
 toggleDropdown(): void {
   this.showDropdown = !this.showDropdown;
 }
-
+ togglePaquetesMenu(): void {
+    this.showPaquetesMenu = !this.showPaquetesMenu;
+  }
 /**
  * Manejar selección de archivo para avatar
  */

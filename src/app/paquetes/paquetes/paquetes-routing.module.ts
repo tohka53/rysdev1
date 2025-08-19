@@ -22,101 +22,37 @@ import { CalendarioPaquetesComponent } from '../../calendario-paquetes/calendari
 
 const routes: Routes = [
   // ==================================================
-  // LISTA DE PAQUETES - TODOS PUEDEN VER
+  // LISTA DE PAQUETES ADMINISTRATIVOS - SOLO ADMIN/SUPERVISOR
   // ==================================================
   { 
     path: '', 
     component: PaquetesComponent,
-    canActivate: [AuthGuard], // Solo verificación de autenticación
+    canActivate: [AuthGuard, RoleGuard],
     data: { 
-      title: 'Lista de Paquetes'
+      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
+      title: 'Gestión de Paquetes'
     }
   },
   
   // ==================================================
-  // CREAR PAQUETE - SOLO ADMIN Y SUPERVISOR
+  // CATÁLOGO PÚBLICO DE PAQUETES - ACCESIBLE PARA TODOS
   // ==================================================
-  { 
-    path: 'crear', 
-    component: PaqueteFormComponent,
-    canActivate: [AuthGuard, RoleGuard], // AuthGuard + RoleGuard
-    data: { 
-      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
-      title: 'Crear Paquete'
-    }
-  },
+
   
   // ==================================================
-  // EDITAR PAQUETE - SOLO ADMIN Y SUPERVISOR  
+  // PROCESO DE COMPRA - USUARIOS AUTENTICADOS
   // ==================================================
-  { 
-    path: 'editar/:id', 
-    component: PaqueteFormComponent,
-    canActivate: [AuthGuard, RoleGuard], // AuthGuard + RoleGuard
-    data: { 
-      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
-      title: 'Editar Paquete'
-    }
-  },
+  
   
   // ==================================================
-  // VER DETALLE - TODOS PUEDEN VER
+  // MIS PAQUETES - USUARIOS AUTENTICADOS
   // ==================================================
-  { 
-    path: 'detalle/:id', 
-    component: PaqueteDetalleComponent,
-    canActivate: [AuthGuard], // Solo verificación de autenticación
-   data: { 
-      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
-      title: 'Editar Paquete'
-    }
-  },
+  
   
   // ==================================================
-  // ASIGNAR PAQUETE - SOLO ADMIN Y SUPERVISOR
+  // VALIDACIÓN DE COMPRAS - SOLO ADMIN
   // ==================================================
-  { 
-    path: 'asignar', 
-    component: AsignarPaqueteComponent,
-    canActivate: [AuthGuard, RoleGuard], // AuthGuard + RoleGuard
-    data: { 
-      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
-      title: 'Asignar Paquete'
-    }
-  },
-  
-  { 
-    path: 'asignar/:id', 
-    component: AsignarPaqueteComponent,
-    canActivate: [AuthGuard, RoleGuard], // AuthGuard + RoleGuard
-    data: { 
-      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
-      title: 'Asignar Paquete Específico'
-    }
-  },
-  
-  // ==================================================
-  // GESTIÓN DE ASIGNACIONES - SOLO ADMIN Y SUPERVISOR
-  // ==================================================
-  { 
-    path: 'asignaciones', 
-    component: AsignacionesListaComponent,
-    canActivate: [AuthGuard, RoleGuard], // AuthGuard + RoleGuard
-    data: { 
-      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
-      title: 'Gestión de Asignaciones'
-    }
-  },
-  
-  { 
-    path: 'asignaciones/detalle/:id', 
-    component: AsignacionesListaComponent,
-    canActivate: [AuthGuard, RoleGuard], // AuthGuard + RoleGuard
-    data: { 
-      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
-      title: 'Detalle de Asignación'
-    }
-  },
+
   
   // ==================================================
   // CALENDARIO - TODOS PUEDEN ACCEDER
@@ -130,6 +66,78 @@ const routes: Routes = [
     }
   },
   
+  // ==================================================
+  // GESTIÓN ADMINISTRATIVA - SOLO ADMIN Y SUPERVISOR
+  // ==================================================
+  { 
+    path: 'crear', 
+    component: PaqueteFormComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { 
+      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
+      title: 'Crear Paquete'
+    }
+  },
+  
+  { 
+    path: 'editar/:id', 
+    component: PaqueteFormComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { 
+      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
+      title: 'Editar Paquete'
+    }
+  },
+  
+  { 
+    path: 'detalle/:id', 
+    component: PaqueteDetalleComponent,
+    canActivate: [AuthGuard],
+    data: { 
+      title: 'Detalle de Paquete'
+    }
+  },
+  
+  { 
+    path: 'asignar', 
+    component: AsignarPaqueteComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { 
+      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
+      title: 'Asignar Paquete'
+    }
+  },
+  
+  { 
+    path: 'asignar/:id', 
+    component: AsignarPaqueteComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { 
+      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
+      title: 'Asignar Paquete Específico'
+    }
+  },
+  
+  { 
+    path: 'asignaciones', 
+    component: AsignacionesListaComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { 
+      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
+      title: 'Gestión de Asignaciones'
+    }
+  },
+  
+  { 
+    path: 'asignaciones/detalle/:id', 
+    component: AsignacionesListaComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { 
+      profiles: [1, 3], // Solo Admin (1) y Supervisor (3)
+      title: 'Detalle de Asignación'
+    }
+  },
+  
   // Redirect para rutas no encontradas
   { path: '**', redirectTo: '' }
 ];
@@ -139,24 +147,3 @@ const routes: Routes = [
   exports: [RouterModule]
 })
 export class PaquetesRoutingModule { }
-
-// ===============================================
-// DEBUGGING - AGREGAR AL CONSTRUCTOR DE TU COMPONENTE
-// Para verificar que los guards están funcionando
-// ===============================================
-
-/*
-constructor(private authService: AuthService) {
-  // Debug para verificar usuario actual
-  const user = this.authService.getCurrentUser();
-  console.log('🔍 Usuario actual en paquetes:', {
-    id: user?.id,
-    username: user?.username,
-    perfil: user?.id_perfil,
-    puede_crear: [1, 3].includes(user?.id_perfil || 0),
-    puede_editar: [1, 3].includes(user?.id_perfil || 0),
-    puede_asignar: [1, 3].includes(user?.id_perfil || 0),
-    puede_ver_asignaciones: [1, 3].includes(user?.id_perfil || 0)
-  });
-}
-*/

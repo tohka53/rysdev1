@@ -22,7 +22,7 @@ import { InformacionMedicaUsuariosComponent } from './informacion-medica-usuario
 const routes: Routes = [
   // Ruta principal - Landing page
   { path: '', component: LandingComponent },
-  { path: 'home', component: LandingComponent }, // Alias alternativo
+  { path: 'home', component: LandingComponent },
   
   // Rutas de autenticación (sin layout)
   { path: 'login', component: LoginComponent },
@@ -44,7 +44,7 @@ const routes: Routes = [
         canActivate: [PermissionGuard],
         data: { 
           permissions: ['view', 'admin'],
-          profiles: [1, 3] // Solo admin y supervisor
+          profiles: [1, 3]
         }
       },
       { 
@@ -53,7 +53,7 @@ const routes: Routes = [
         canActivate: [PermissionGuard],
         data: { 
           permissions: ['view'],
-          profiles: [1, 3] // Admin, Usuario, Supervisor
+          profiles: [1, 3]
         }
       },
       { 
@@ -61,15 +61,15 @@ const routes: Routes = [
         component: TiposSeccionComponent,
         canActivate: [RoleGuard],
         data: { 
-          profiles: [1] // Solo administradores
+          profiles: [1]
         }
       },
       {
         path: 'rutinas-usuario',
         component: RutinasUsuarioComponent,
-        canActivate: [RoleGuard], // Usar RoleGuard para validar solo por perfil
+        canActivate: [RoleGuard],
         data: { 
-          profiles: [1] // Solo administradores (id_perfil = 1)
+          profiles: [1]
         }
       },
       { 
@@ -83,7 +83,7 @@ const routes: Routes = [
         canActivate: [PermissionGuard],
         data: { 
           permissions: ['view'],
-          profiles: [1, 3] // Admin, Usuario, Supervisor
+          profiles: [1, 3]
         }
       }, 
       { 
@@ -92,7 +92,7 @@ const routes: Routes = [
         canActivate: [PermissionGuard],
         data: { 
           permissions: ['view'],
-          profiles: [1, 3] // Admin, Usuario, Supervisor
+          profiles: [1, 3]
         }
       }, 
       { 
@@ -107,7 +107,7 @@ const routes: Routes = [
       },
 
       // ===============================================
-      // RUTAS DE PAQUETES - LAZY LOADING
+      // RUTAS DE PAQUETES - LAZY LOADING (RUTA CORREGIDA)
       // ===============================================
       {
         path: 'paquetes',
@@ -127,7 +127,7 @@ const routes: Routes = [
         canActivate: [AuthGuard],
         data: { 
           title: 'Sistema de Discusiones',
-          requiredPermissions: ['view'] // Permisos mínimos requeridos
+          requiredPermissions: ['view']
         }
       },
 
@@ -153,12 +153,9 @@ const routes: Routes = [
 
 @NgModule({
   imports: [RouterModule.forRoot(routes, {
-    // Configuraciones adicionales
     enableTracing: false, // Set to true for debugging
     scrollPositionRestoration: 'top',
-    anchorScrolling: 'enabled',
-    // Opcional: precargar módulos lazy-loaded
-    preloadingStrategy: undefined
+    anchorScrolling: 'enabled'
   })],
   exports: [RouterModule]
 })

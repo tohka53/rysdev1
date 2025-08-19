@@ -1,32 +1,38 @@
 // ===============================================
-// 2. ACTUALIZAR paquetes.module.ts
-// ===============================================
+// PAQUETES MODULE CORREGIDO
 // src/app/paquetes/paquetes.module.ts
+// ===============================================
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { PaquetesRoutingModule } from './paquetes-routing.module';
 
-// Importar todos los componentes existentes
+// Importar componentes existentes del sistema administrativo
 import { PaquetesComponent } from '../paquetes/paquetes.component';
 import { PaqueteFormComponent } from '../../paquete-form/paquete-form/paquete-form.component';
 import { PaqueteDetalleComponent } from '../../paquete-detalle/paquete-detalle/paquete-detalle.component';
 import { AsignarPaqueteComponent } from '../../asignar-paquete/asignar-paquete/asignar-paquete.component';
 import { AsignacionesListaComponent } from '../../asignaciones-lista/asignaciones-lista/asignaciones-lista.component';
-// NUEVO: Importar calendario de paquetes
+
+// NUEVO: Importar componentes del sistema de compras
 import { CalendarioPaquetesComponent } from '../../calendario-paquetes/calendario-paquetes/calendario-paquetes.component';
+
+// Servicios
+import { PaquetesService } from '../../services/paquetes.service';
 
 @NgModule({
   declarations: [
-    // Componentes existentes
+    // Componentes administrativos existentes
     PaquetesComponent,
     PaqueteFormComponent,
     PaqueteDetalleComponent,
     AsignarPaqueteComponent,
     AsignacionesListaComponent,
-    // NUEVO: Calendario de paquetes
+    
+    // NUEVO: Componentes del sistema de compras
     CalendarioPaquetesComponent
+            // Catálogo público
   ],
   imports: [
     CommonModule,           // Para ngIf, ngFor, pipes básicos
@@ -36,7 +42,7 @@ import { CalendarioPaquetesComponent } from '../../calendario-paquetes/calendari
     PaquetesRoutingModule  // Rutas del módulo
   ],
   providers: [
-    // Aquí puedes agregar servicios específicos del módulo si es necesario
+    PaquetesService       // Servicio para gestión administrativa
   ]
 })
 export class PaquetesModule { }
