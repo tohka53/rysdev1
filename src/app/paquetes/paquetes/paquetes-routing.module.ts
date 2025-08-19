@@ -18,6 +18,7 @@ import { AsignacionesListaComponent } from '../../asignaciones-lista/asignacione
 
 // NUEVO: Importar calendario de paquetes
 import { CalendarioPaquetesComponent } from '../../calendario-paquetes/calendario-paquetes/calendario-paquetes.component';
+import { CompraPaquetesComponent } from '../../compra-paquetes/compra-paquetes/compra-paquetes.component';
 
 
 const routes: Routes = [
@@ -38,7 +39,14 @@ const routes: Routes = [
   // CATÁLOGO PÚBLICO DE PAQUETES - ACCESIBLE PARA TODOS
   // ==================================================
 
-  
+  { 
+    path: 'compra-paquetes', 
+    component: CompraPaquetesComponent,
+    canActivate: [AuthGuard], // Solo verificación de autenticación
+    data: { 
+      title: 'Compra de Paquetes'
+    }
+  }, 
   // ==================================================
   // PROCESO DE COMPRA - USUARIOS AUTENTICADOS
   // ==================================================

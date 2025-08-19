@@ -1,0 +1,451 @@
+<!-- src/app/components/mis-compras/mis-compras.component.html -->
+
+<div class="container-fluid px-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-shopping-bag me-2"></i>
+            Mis Compras
+          </h1>
+          <p class="text-muted mb-0">Historial y estado de tus compras de paquetes</p>
+        </div>
+        
+        <!-- Botones de acción -->
+        <div class="d-flex gap-2">
+          <button 
+            type="button" 
+            class="btn btn-outline-primary"
+            (click)="cargarMisCompras()"
+            [disabled]="cargando">
+            <i class="fas fa-sync-alt me-1" [class.fa-spin]="cargando"></i>
+            Actualizar
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            (click)="irAComprarPaquetes()">
+            <i class="fas fa-plus me-1"></i>
+            Comprar Paquetes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estadísticas personales -->
+  <div *ngIf="tieneCompras" class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                Total Compras
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ estadisticasPersonales.total }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-success shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                Validadas
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ estadisticasPersonales.validadas }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-check fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                Pendientes
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ estadisticasPersonales.pendientes }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-clock fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-info shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                Monto Total
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ formatearPrecio(estadisticasPersonales.montoValidado) }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div *ngIf="tieneCompras" class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <label for="filtroEstado" class="form-label">Estado</label>
+      <select 
+        id="filtroEstado"
+        class="form-select"
+        [(ngModel)]="filtroEstado"
+        (change)="onFiltroEstadoChange()">
+        <option *ngFor="let estado of estadosCompra" [value]="estado.value">
+          {{ estado.label }}
+        </option>
+      </select>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <label for="filtroMetodo" class="form-label">Método de Pago</label>
+      <select 
+        id="filtroMetodo"
+        class="form-select"
+        [(ngModel)]="filtroMetodo"
+        (change)="onFiltroMetodoChange()">
+        <option *ngFor="let metodo of metodosPago" [value]="metodo.value">
+          {{ metodo.label }}
+        </option>
+      </select>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <label for="busqueda" class="form-label">Buscar</label>
+      <div class="input-group">
+        <span class="input-group-text">
+          <i class="fas fa-search"></i>
+        </span>
+        <input
+          type="text"
+          id="busqueda"
+          class="form-control"
+          placeholder="Buscar por paquete, transacción..."
+          [(ngModel)]="busqueda"
+          (input)="onBusquedaChange()">
+      </div>
+    </div>
+
+    <div class="col-md-2 mb-3 d-flex align-items-end">
+      <button 
+        type="button" 
+        class="btn btn-outline-secondary w-100"
+        (click)="limpiarFiltros()">
+        <i class="fas fa-times me-1"></i>
+        Limpiar
+      </button>
+    </div>
+  </div>
+
+  <!-- Estado de carga -->
+  <div *ngIf="cargando" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando compras...</span>
+    </div>
+    <p class="mt-2 text-muted">Cargando tus compras...</p>
+  </div>
+
+  <!-- Mensaje de error -->
+  <div *ngIf="error && !cargando" class="alert alert-danger" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    {{ error }}
+    <button 
+      type="button" 
+      class="btn btn-sm btn-outline-danger ms-2"
+      (click)="cargarMisCompras()">
+      <i class="fas fa-redo me-1"></i>
+      Reintentar
+    </button>
+  </div>
+
+  <!-- Sin compras -->
+  <div *ngIf="!cargando && !error && !tieneCompras" class="text-center py-5">
+    <i class="fas fa-shopping-bag fa-4x text-muted mb-4"></i>
+    <h4 class="text-muted mb-3">No tienes compras aún</h4>
+    <p class="text-muted mb-4">¡Explora nuestros paquetes y realiza tu primera compra!</p>
+    <button 
+      type="button" 
+      class="btn btn-primary btn-lg"
+      (click)="irAComprarPaquetes()">
+      <i class="fas fa-shopping-cart me-2"></i>
+      Explorar Paquetes
+    </button>
+  </div>
+
+  <!-- Sin resultados filtrados -->
+  <div *ngIf="!cargando && !error && tieneCompras && !tieneComprasFiltradas" class="text-center py-5">
+    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">No se encontraron compras</h5>
+    <p class="text-muted">No hay compras que coincidan con los filtros aplicados</p>
+    <button 
+      type="button" 
+      class="btn btn-outline-primary"
+      (click)="limpiarFiltros()">
+      <i class="fas fa-times me-1"></i>
+      Limpiar filtros
+    </button>
+  </div>
+
+  <!-- Lista de compras -->
+  <div *ngIf="!cargando && !error && tieneComprasFiltradas">
+    <!-- Contador de resultados -->
+    <div class="row mb-3">
+      <div class="col-12">
+        <span class="text-muted">
+          {{ comprasFiltradas.length }} compra{{ comprasFiltradas.length !== 1 ? 's' : '' }} encontrada{{ comprasFiltradas.length !== 1 ? 's' : '' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Tarjetas de compras -->
+    <div class="row">
+      <div *ngFor="let compra of comprasFiltradas" class="col-lg-6 col-xl-4 mb-4">
+        <div class="card h-100 shadow-sm">
+          <!-- Header de la tarjeta -->
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <div>
+              <strong class="text-primary">#{{ compra.compra_id }}</strong>
+              <small class="text-muted d-block">{{ formatearFechaCorta(compra.fecha_compra) }}</small>
+            </div>
+            <span [ngClass]="obtenerClaseEstado(compra.estado_compra)">
+              <i [class]="obtenerIconoEstado(compra.estado_compra)" class="me-1"></i>
+              {{ compra.estado_compra | titlecase }}
+            </span>
+          </div>
+
+          <div class="card-body">
+            <!-- Información del paquete -->
+            <div class="mb-3">
+              <h6 class="card-title mb-1">{{ compra.paquete_nombre }}</h6>
+              <span class="badge" [ngClass]="{
+                'bg-primary': compra.paquete_tipo === 'rutina',
+                'bg-success': compra.paquete_tipo === 'terapia',
+                'bg-info': compra.paquete_tipo === 'mixto'
+              }">
+                {{ compra.paquete_tipo | titlecase }}
+              </span>
+            </div>
+
+            <!-- Método de pago -->
+            <div class="mb-3">
+              <div class="d-flex align-items-center">
+                <i [class]="obtenerIconoMetodoPago(compra.metodo_pago)" 
+                   [ngClass]="obtenerClaseMetodoPago(compra.metodo_pago)" 
+                   class="me-2"></i>
+                <span class="small">{{ obtenerLabelMetodoPago(compra.metodo_pago) }}</span>
+              </div>
+              <div *ngIf="compra.numero_transaccion" class="small text-muted">
+                Transacción: {{ compra.numero_transaccion }}
+              </div>
+            </div>
+
+            <!-- Precios -->
+            <div class="mb-3">
+              <div *ngIf="compra.descuento_aplicado > 0" class="mb-1">
+                <span class="text-muted text-decoration-line-through small">
+                  {{ formatearPrecio(compra.precio_paquete) }}
+                </span>
+                <span class="badge bg-success ms-2">
+                  -{{ formatearPrecio(compra.descuento_aplicado) }}
+                </span>
+              </div>
+              <div class="h5 mb-0 text-primary fw-bold">
+                {{ formatearPrecio(compra.precio_final) }}
+              </div>
+            </div>
+
+            <!-- Estado y mensaje -->
+            <div class="mb-3">
+              <div class="alert p-2 mb-0" [ngClass]="{
+                'alert-warning': compra.estado_compra === 'pendiente',
+                'alert-success': compra.estado_compra === 'validada',
+                'alert-danger': compra.estado_compra === 'rechazada',
+                'alert-secondary': compra.estado_compra === 'cancelada'
+              }">
+                <small class="mb-0">
+                  <i [class]="obtenerIconoEstado(compra.estado_compra)" class="me-1"></i>
+                  {{ obtenerMensajeEstado(compra) }}
+                </small>
+              </div>
+            </div>
+
+            <!-- Motivo de rechazo -->
+            <div *ngIf="compra.estado_compra === 'rechazada' && compra.motivo_rechazo" class="mb-3">
+              <div class="alert alert-danger p-2">
+                <strong class="small">Motivo del rechazo:</strong>
+                <div class="small">{{ compra.motivo_rechazo }}</div>
+              </div>
+            </div>
+
+            <!-- Tiempo transcurrido -->
+            <div class="mb-3">
+              <small class="text-muted">
+                <i class="fas fa-clock me-1"></i>
+                Hace {{ calcularTiempoTranscurrido(compra.horas_desde_compra) }}
+              </small>
+            </div>
+          </div>
+
+          <!-- Footer con acciones -->
+          <div class="card-footer bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex gap-1">
+                <!-- Ver comprobante -->
+                <button 
+                  *ngIf="mostrarBotonVerComprobante(compra)"
+                  type="button" 
+                  class="btn btn-sm btn-outline-info"
+                  (click)="verComprobante(compra)"
+                  title="Ver comprobante">
+                  <i class="fas fa-file-image me-1"></i>
+                  Comprobante
+                </button>
+
+                <!-- Ir a paquetes (si está validada y asignada) -->
+                <button 
+                  *ngIf="mostrarBotonIrAPaquetes(compra)"
+                  type="button" 
+                  class="btn btn-sm btn-outline-success"
+                  (click)="irAPaquetesAsignados()"
+                  title="Ver en calendario">
+                  <i class="fas fa-calendar me-1"></i>
+                  Ver Calendario
+                </button>
+              </div>
+
+              <!-- Botón ver detalles -->
+              <button 
+                type="button" 
+                class="btn btn-sm btn-outline-secondary"
+                (click)="verDetalleCompra(compra)"
+                title="Ver detalles">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen estadístico al final -->
+    <div *ngIf="comprasFiltradas.length > 3" class="row mt-4">
+      <div class="col-12">
+        <div class="card border-0 bg-light">
+          <div class="card-body text-center">
+            <h6 class="text-muted mb-3">Resumen de tus compras</h6>
+            <div class="row">
+              <div class="col-4">
+                <div class="text-primary h4 mb-0">{{ estadisticasPersonales.validadas }}</div>
+                <small class="text-muted">Compras exitosas</small>
+              </div>
+              <div class="col-4">
+                <div class="text-success h4 mb-0">{{ porcentajeValidadas }}%</div>
+                <small class="text-muted">Tasa de éxito</small>
+              </div>
+              <div class="col-4">
+                <div class="text-info h4 mb-0">{{ formatearPrecio(estadisticasPersonales.montoValidado) }}</div>
+                <small class="text-muted">Invertido</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de comprobante -->
+<div class="modal fade" [class.show]="mostrarModalComprobante" [style.display]="mostrarModalComprobante ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-file-image me-2"></i>
+          Mi Comprobante de Pago
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModalComprobante()"></button>
+      </div>
+
+      <div class="modal-body text-center">
+        <div *ngIf="comprobanteActual" class="comprobante-container">
+          <!-- Mostrar imagen -->
+          <div *ngIf="comprobanteActual.includes('image')" class="mb-3">
+            <img [src]="comprobanteActual" [alt]="comprobanteNombre" class="img-fluid rounded shadow" style="max-height: 500px;">
+          </div>
+
+          <!-- Mostrar PDF -->
+          <div *ngIf="comprobanteActual.includes('pdf')" class="mb-3">
+            <div class="alert alert-info">
+              <i class="fas fa-file-pdf fa-4x mb-3 text-primary"></i>
+              <h5>{{ comprobanteNombre }}</h5>
+              <p class="mb-0">Archivo PDF - Descargar para ver el contenido completo</p>
+            </div>
+          </div>
+
+          <!-- Información del archivo -->
+          <div class="mt-3">
+            <h6 class="text-muted">{{ comprobanteNombre }}</h6>
+          </div>
+        </div>
+
+        <div *ngIf="!comprobanteActual" class="text-center py-4">
+          <i class="fas fa-exclamation-triangle fa-3x text-muted mb-3"></i>
+          <p class="text-muted">No se pudo cargar el comprobante</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModalComprobante()">
+          Cerrar
+        </button>
+        <button 
+          *ngIf="comprobanteActual"
+          type="button" 
+          class="btn btn-primary"
+          (click)="descargarComprobante()">
+          <i class="fas fa-download me-1"></i>
+          Descargar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop del modal -->
+<div *ngIf="mostrarModalComprobante" class="modal-backdrop fade show"></div>

@@ -27,6 +27,8 @@ import { AvatarComponent } from './avatar/avatar/avatar.component';
 import { MotivationalQuotesComponent } from './motivational-quotes/motivational-quotes/motivational-quotes.component';
 import { inject } from '@vercel/analytics';
 import { ChatDiscussionComponent } from './chat-discussion/chat-discussion/chat-discussion.component';
+import { ValidacionComprasComponent } from './validacion-compras/validacion-compras/validacion-compras.component';
+import { MisComprasComponent } from './mis-compras/mis-compras/mis-compras.component';
 
 // Componentes de paquetes
 inject();
@@ -52,6 +54,9 @@ inject();
     AvatarComponent,
     MotivationalQuotesComponent,
     ChatDiscussionComponent,
+    
+    ValidacionComprasComponent,
+    MisComprasComponent,
 
    
   ],

@@ -1,0 +1,579 @@
+<!-- src/app/components/compra-paquetes/compra-paquetes.component.html -->
+<!-- VERSIÓN TAILWIND CSS -->
+
+<div class="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8">
+  <!-- Header -->
+  <div class="mb-8 pt-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div class="mb-4 sm:mb-0">
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+          <i class="fas fa-shopping-cart mr-3 text-blue-600"></i>
+          Comprar Paquetes
+        </h1>
+        <p class="mt-2 text-gray-600">Explora y adquiere paquetes de rutinas y terapias</p>
+      </div>
+      
+      <!-- Controles de vista -->
+      <div class="flex rounded-lg bg-white border border-gray-200 p-1">
+        <button 
+          type="button" 
+          class="px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200"
+          [class]="vistaActual === 'tarjetas' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'"
+          (click)="cambiarVista('tarjetas')">
+          <i class="fas fa-th-large mr-2"></i>Tarjetas
+        </button>
+        <button 
+          type="button" 
+          class="px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ml-1"
+          [class]="vistaActual === 'lista' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'"
+          (click)="cambiarVista('lista')">
+          <i class="fas fa-list mr-2"></i>Lista
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros y búsqueda -->
+  <div class="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Tipo de paquete -->
+      <div>
+        <label for="filtroTipo" class="block text-sm font-semibold text-gray-700 mb-2">
+          Tipo de paquete
+        </label>
+        <select 
+          id="filtroTipo"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+          [(ngModel)]="filtroTipo"
+          (change)="onFiltroTipoChange()">
+          <option value="todos">Todos los tipos</option>
+          <option *ngFor="let tipo of tiposDisponibles" [value]="tipo">
+            {{ tipo | titlecase }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Búsqueda -->
+      <div>
+        <label for="busqueda" class="block text-sm font-semibold text-gray-700 mb-2">
+          Buscar paquetes
+        </label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-search text-gray-400"></i>
+          </div>
+          <input
+            type="text"
+            id="busqueda"
+            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+            placeholder="Buscar por nombre, descripción..."
+            [(ngModel)]="busqueda"
+            (input)="onBusquedaChange()">
+        </div>
+      </div>
+
+      <!-- Limpiar filtros -->
+      <div class="flex items-end">
+        <button 
+          type="button" 
+          class="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors duration-200 flex items-center justify-center"
+          (click)="limpiarFiltros()">
+          <i class="fas fa-times mr-2"></i>
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estado de carga -->
+  <div *ngIf="cargando" class="flex flex-col items-center justify-center py-16">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <p class="mt-4 text-gray-600">Cargando paquetes disponibles...</p>
+  </div>
+
+  <!-- Mensaje de error -->
+  <div *ngIf="error && !cargando" class="mb-8 bg-red-50 border border-red-200 rounded-lg p-4">
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <i class="fas fa-exclamation-triangle text-red-400"></i>
+      </div>
+      <div class="ml-3 flex-1">
+        <p class="text-red-800">{{ error }}</p>
+      </div>
+      <div class="ml-auto">
+        <button 
+          type="button" 
+          class="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200"
+          (click)="cargarPaquetesDisponibles()">
+          <i class="fas fa-redo mr-1"></i>
+          Reintentar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resultados -->
+  <div *ngIf="!cargando && !error">
+    <!-- Contador de resultados -->
+    <div class="mb-6">
+      <p class="text-gray-600">
+        {{ paquetesFiltrados.length }} paquete{{ paquetesFiltrados.length !== 1 ? 's' : '' }} encontrado{{ paquetesFiltrados.length !== 1 ? 's' : '' }}
+      </p>
+    </div>
+
+    <!-- Sin resultados -->
+    <div *ngIf="paquetesFiltrados.length === 0" class="text-center py-16">
+      <i class="fas fa-inbox text-6xl text-gray-400 mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-900 mb-2">No se encontraron paquetes</h3>
+      <p class="text-gray-600 mb-6">Intenta ajustar los filtros de búsqueda</p>
+      <button 
+        type="button" 
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+        (click)="limpiarFiltros()">
+        <i class="fas fa-times mr-2"></i>
+        Limpiar filtros
+      </button>
+    </div>
+
+    <!-- Vista de tarjetas -->
+    <div *ngIf="vistaActual === 'tarjetas' && paquetesFiltrados.length > 0" 
+         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div *ngFor="let paquete of paquetesFiltrados" 
+           class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+           [class.ring-2]="paquete.mejor_descuento"
+           [class.ring-green-500]="paquete.mejor_descuento">
+        
+        <!-- Badge de descuento -->
+        <div *ngIf="paquete.mejor_descuento" class="absolute top-4 right-4 z-10">
+          <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+            -{{ calcularPorcentajeDescuento(paquete) }}%
+          </span>
+        </div>
+
+        <!-- Imagen del paquete -->
+        <div class="h-48 bg-gray-100 flex items-center justify-center relative">
+          <ng-container *ngIf="paquete.imagen_url; else defaultImage">
+            <img [src]="paquete.imagen_url" [alt]="paquete.nombre" 
+                 class="w-full h-full object-cover">
+          </ng-container>
+          <ng-template #defaultImage>
+            <i class="fas fa-box-open text-4xl text-gray-400"></i>
+          </ng-template>
+        </div>
+
+        <div class="p-6">
+          <!-- Tipo de paquete -->
+          <div class="mb-3">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                  [class]="'bg-' + (paquete.tipo === 'rutina' ? 'blue' : paquete.tipo === 'terapia' ? 'green' : 'purple') + '-100 text-' + (paquete.tipo === 'rutina' ? 'blue' : paquete.tipo === 'terapia' ? 'green' : 'purple') + '-800'">
+              {{ paquete.tipo | titlecase }}
+            </span>
+          </div>
+
+          <!-- Nombre y descripción -->
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ paquete.nombre }}</h3>
+          <p class="text-gray-600 text-sm mb-4 h-12 overflow-hidden">
+            {{ paquete.descripcion || 'Sin descripción disponible' }}
+          </p>
+
+          <!-- Contenido del paquete -->
+          <div class="mb-4">
+            <h4 class="text-sm font-semibold text-gray-700 mb-2">Contenido incluido:</h4>
+            <div class="space-y-1">
+              <div *ngFor="let contenido of paquete.contenido_detalle?.slice(0, 3)" 
+                   class="flex items-center text-sm text-gray-600">
+                <i class="fas fa-check-circle text-green-500 mr-2 flex-shrink-0"></i>
+                <span class="truncate">{{ contenido.nombre }}</span>
+                <span *ngIf="contenido.sesiones_asignadas" 
+                      class="ml-auto bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+                  {{ contenido.sesiones_asignadas }} sesiones
+                </span>
+              </div>
+              <div *ngIf="(paquete.contenido_detalle?.length || 0) > 3" 
+                   class="text-sm text-gray-500">
+                + {{ (paquete.contenido_detalle?.length || 0) - 3 }} más...
+              </div>
+            </div>
+          </div>
+
+          <!-- Información del paquete -->
+          <div class="grid grid-cols-2 gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
+            <div class="text-center">
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Sesiones</p>
+              <p class="text-lg font-semibold text-gray-900">{{ paquete.cantidad_sesiones }}</p>
+            </div>
+            <div class="text-center">
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Contenido</p>
+              <p class="text-lg font-semibold text-gray-900">{{ paquete.contenido_detalle?.length || 0 }}</p>
+            </div>
+          </div>
+
+          <!-- Precios -->
+          <div class="text-center mb-4">
+            <ng-container *ngIf="paquete.mejor_descuento; else precioNormal">
+              <div class="mb-1">
+                <span class="text-gray-500 line-through text-sm">
+                  {{ formatearPrecio(paquete.precio) }}
+                </span>
+              </div>
+              <div class="mb-1">
+                <span class="text-2xl font-bold text-green-600">
+                  {{ formatearPrecio(paquete.mejor_descuento.precio_final) }}
+                </span>
+              </div>
+              <div class="text-sm text-green-600">
+                Ahorras {{ formatearPrecio(paquete.ahorro || 0) }}
+              </div>
+            </ng-container>
+            <ng-template #precioNormal>
+              <span class="text-2xl font-bold text-blue-600">
+                {{ formatearPrecio(paquete.precio) }}
+              </span>
+            </ng-template>
+          </div>
+
+          <!-- Botón de compra -->
+          <button 
+            type="button" 
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+            (click)="abrirModalCompra(paquete)">
+            <i class="fas fa-shopping-cart mr-2"></i>
+            Comprar Paquete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vista de lista -->
+    <div *ngIf="vistaActual === 'lista' && paquetesFiltrados.length > 0" 
+         class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paquete</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sesiones</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contenido</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descuento</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Final</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let paquete of paquetesFiltrados" class="hover:bg-blue-50 transition-colors duration-200">
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-10 w-10">
+                    <i class="fas fa-box-open text-2xl text-gray-400"></i>
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900">{{ paquete.nombre }}</div>
+                    <div class="text-sm text-gray-500">{{ paquete.descripcion }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      [class]="'bg-' + (paquete.tipo === 'rutina' ? 'blue' : paquete.tipo === 'terapia' ? 'green' : 'purple') + '-100 text-' + (paquete.tipo === 'rutina' ? 'blue' : paquete.tipo === 'terapia' ? 'green' : 'purple') + '-800'">
+                  {{ paquete.tipo | titlecase }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                {{ paquete.cantidad_sesiones }}
+              </td>
+              <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                {{ paquete.contenido_detalle?.length || 0 }}
+              </td>
+              <td class="px-6 py-4 text-sm">
+                <span [class]="paquete.mejor_descuento ? 'line-through text-gray-500' : 'font-medium text-gray-900'">
+                  {{ formatearPrecio(paquete.precio) }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <span *ngIf="paquete.mejor_descuento" 
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  -{{ calcularPorcentajeDescuento(paquete) }}%
+                </span>
+                <span *ngIf="!paquete.mejor_descuento" class="text-gray-400">-</span>
+              </td>
+              <td class="px-6 py-4 text-sm font-medium"
+                  [class]="paquete.mejor_descuento ? 'text-green-600' : 'text-blue-600'">
+                {{ formatearPrecio(paquete.mejor_descuento?.precio_final || paquete.precio) }}
+              </td>
+              <td class="px-6 py-4">
+                <button 
+                  type="button" 
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                  (click)="abrirModalCompra(paquete)">
+                  <i class="fas fa-shopping-cart mr-1"></i>
+                  Comprar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de compra -->
+<div *ngIf="mostrarModalCompra" 
+     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-screen overflow-y-auto">
+    <!-- Modal Header -->
+    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 rounded-t-xl">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+          <i class="fas fa-shopping-cart mr-2 text-blue-600"></i>
+          Comprar Paquete
+        </h3>
+        <button 
+          type="button" 
+          class="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+          (click)="cerrarModalCompra()">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <!-- Resumen del paquete -->
+      <div *ngIf="resumenCompra" class="bg-gray-50 rounded-lg p-4 mb-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
+          <div class="lg:col-span-2">
+            <h4 class="text-lg font-semibold text-gray-900 mb-1">{{ resumenCompra.paquete.nombre }}</h4>
+            <p class="text-gray-600 mb-3">{{ resumenCompra.paquete.descripcion }}</p>
+            <div class="flex flex-wrap gap-4 text-sm text-gray-500">
+              <span class="flex items-center">
+                <i class="fas fa-calendar mr-1"></i>
+                {{ resumenCompra.paquete.cantidad_sesiones }} sesiones
+              </span>
+              <span class="flex items-center">
+                <i class="fas fa-list mr-1"></i>
+                {{ resumenCompra.paquete.contenido_detalle?.length }} {{ resumenCompra.paquete.tipo }}s
+              </span>
+            </div>
+          </div>
+          <div class="text-center lg:text-right">
+            <div *ngIf="resumenCompra.descuento > 0" class="mb-1">
+              <span class="text-gray-500 line-through text-sm">
+                {{ formatearPrecio(resumenCompra.precio_original) }}
+              </span>
+            </div>
+            <div class="text-2xl font-bold mb-1"
+                 [class]="resumenCompra.descuento > 0 ? 'text-green-600' : 'text-blue-600'">
+              {{ formatearPrecio(resumenCompra.precio_final) }}
+            </div>
+            <div *ngIf="resumenCompra.descuento > 0" class="text-sm text-green-600">
+              Ahorras {{ formatearPrecio(resumenCompra.descuento) }} ({{ resumenCompra.ahorro_porcentaje }}%)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulario de compra -->
+      <form [formGroup]="formularioCompra" (ngSubmit)="realizarCompra()" class="space-y-6">
+        <!-- Método de pago -->
+        <div>
+          <label for="metodo_pago" class="block text-sm font-semibold text-gray-700 mb-2">
+            Método de pago *
+          </label>
+          <select 
+            id="metodo_pago"
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            [class]="metodoPagoInvalido ? 'border-red-500' : 'border-gray-300'"
+            formControlName="metodo_pago">
+            <option value="">Selecciona un método de pago</option>
+            <option *ngFor="let metodo of metodosPago" [value]="metodo.value">
+              {{ metodo.label }}
+            </option>
+          </select>
+          <p *ngIf="metodoPagoInvalido" class="mt-1 text-sm text-red-600">
+            Por favor selecciona un método de pago
+          </p>
+        </div>
+
+        <!-- Información específica del método de pago -->
+        <div *ngIf="metodoPagoSeleccionado" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Banco -->
+          <div *ngIf="requiereBanco">
+            <label for="banco" class="block text-sm font-semibold text-gray-700 mb-2">
+              Banco *
+            </label>
+            <select 
+              id="banco"
+              class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              [class]="bancoInvalido ? 'border-red-500' : 'border-gray-300'"
+              formControlName="banco">
+              <option value="">Selecciona un banco</option>
+              <option *ngFor="let banco of bancosDisponibles" [value]="banco">
+                {{ banco }}
+              </option>
+            </select>
+            <p *ngIf="bancoInvalido" class="mt-1 text-sm text-red-600">
+              Por favor selecciona un banco
+            </p>
+          </div>
+
+          <!-- Número de transacción -->
+          <div *ngIf="requiereNumeroTransaccion">
+            <label for="numero_transaccion" class="block text-sm font-semibold text-gray-700 mb-2">
+              Número de transacción *
+            </label>
+            <input
+              type="text"
+              id="numero_transaccion"
+              class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              [class]="numeroTransaccionInvalido ? 'border-red-500' : 'border-gray-300'"
+              formControlName="numero_transaccion"
+              placeholder="Ingresa el número de transacción">
+            <p *ngIf="numeroTransaccionInvalido" class="mt-1 text-sm text-red-600">
+              El número de transacción es requerido
+            </p>
+          </div>
+        </div>
+
+        <!-- Fecha y hora del pago -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="fecha_pago" class="block text-sm font-semibold text-gray-700 mb-2">
+              Fecha del pago *
+            </label>
+            <input
+              type="date"
+              id="fecha_pago"
+              class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              [class]="fechaPagoInvalida ? 'border-red-500' : 'border-gray-300'"
+              formControlName="fecha_pago"
+              [max]="fechaMaxima">
+            <p *ngIf="fechaPagoInvalida" class="mt-1 text-sm text-red-600">
+              La fecha del pago es requerida
+            </p>
+          </div>
+
+          <div>
+            <label for="hora_pago" class="block text-sm font-semibold text-gray-700 mb-2">
+              Hora del pago
+            </label>
+            <input
+              type="time"
+              id="hora_pago"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              formControlName="hora_pago"
+              placeholder="Opcional">
+          </div>
+        </div>
+
+        <!-- Comprobante -->
+        <div *ngIf="requiereComprobante">
+          <label for="comprobante" class="block text-sm font-semibold text-gray-700 mb-2">
+            Comprobante de pago *
+          </label>
+          <input
+            type="file"
+            id="comprobante"
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            [class]="comprobanteInvalido ? 'border-red-500' : 'border-gray-300'"
+            accept=".jpg,.jpeg,.png,.pdf"
+            (change)="onArchivoSeleccionado($event)">
+          <p class="mt-1 text-xs text-gray-500">
+            Formatos permitidos: JPG, PNG, PDF. Tamaño máximo: {{ tamanoMaximo }}MB
+          </p>
+          
+          <!-- Archivo seleccionado -->
+          <div *ngIf="obtenerNombreArchivo()" class="mt-3">
+            <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <span class="text-sm text-gray-700 flex items-center">
+                <i class="fas fa-file mr-2"></i>
+                {{ obtenerNombreArchivo() }}
+              </span>
+              <button 
+                type="button" 
+                class="text-red-600 hover:text-red-800 transition-colors duration-200"
+                (click)="eliminarArchivo()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          
+          <p *ngIf="comprobanteInvalido" class="mt-1 text-sm text-red-600">
+            El comprobante de pago es requerido
+          </p>
+        </div>
+
+        <!-- Notas adicionales -->
+        <div>
+          <label for="notas_usuario" class="block text-sm font-semibold text-gray-700 mb-2">
+            Notas adicionales
+          </label>
+          <textarea
+            id="notas_usuario"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            formControlName="notas_usuario"
+            rows="3"
+            placeholder="Información adicional sobre el pago (opcional)"></textarea>
+        </div>
+
+        <!-- Términos y condiciones -->
+        <div class="flex items-start">
+          <div class="flex items-center h-5">
+            <input
+              type="checkbox"
+              id="acepta_terminos"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              [class]="terminosInvalidos ? 'border-red-500' : ''"
+              formControlName="acepta_terminos">
+          </div>
+          <div class="ml-3">
+            <label for="acepta_terminos" class="text-sm text-gray-700">
+              Acepto los <a href="#" target="_blank" class="text-blue-600 hover:text-blue-800 underline">términos y condiciones</a> de compra *
+            </label>
+            <p *ngIf="terminosInvalidos" class="mt-1 text-sm text-red-600">
+              Debes aceptar los términos y condiciones
+            </p>
+          </div>
+        </div>
+
+        <!-- Mensaje de error -->
+        <div *ngIf="error" class="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <i class="fas fa-exclamation-triangle text-red-400"></i>
+            </div>
+            <div class="ml-3">
+              <p class="text-red-800">{{ error }}</p>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 rounded-b-xl flex flex-col sm:flex-row sm:justify-end gap-3">
+      <button 
+        type="button" 
+        class="w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors duration-200"
+        (click)="cerrarModalCompra()" 
+        [disabled]="enviandoCompra">
+        Cancelar
+      </button>
+      <button 
+        type="button" 
+        class="w-full sm:w-auto px-6 py-3 font-medium rounded-lg transition-colors duration-200 flex items-center justify-center"
+        [class]="formularioCompra.valid && !enviandoCompra ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
+        (click)="realizarCompra()"
+        [disabled]="!formularioCompra.valid || enviandoCompra">
+        <span *ngIf="enviandoCompra" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+        <span *ngIf="enviandoCompra">Procesando...</span>
+        <span *ngIf="!enviandoCompra" class="flex items-center">
+          <i class="fas fa-credit-card mr-2"></i>
+          Realizar Compra
+        </span>
+      </button>
+    </div>
+  </div>
+</div>

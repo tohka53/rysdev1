@@ -20,6 +20,7 @@ import { CalendarioPaquetesComponent } from '../../calendario-paquetes/calendari
 
 // Servicios
 import { PaquetesService } from '../../services/paquetes.service';
+import { CompraPaquetesComponent } from '../../compra-paquetes/compra-paquetes/compra-paquetes.component';
 
 @NgModule({
   declarations: [
@@ -31,7 +32,8 @@ import { PaquetesService } from '../../services/paquetes.service';
     AsignacionesListaComponent,
     
     // NUEVO: Componentes del sistema de compras
-    CalendarioPaquetesComponent
+    CalendarioPaquetesComponent,
+    CompraPaquetesComponent
             // Catálogo público
   ],
   imports: [

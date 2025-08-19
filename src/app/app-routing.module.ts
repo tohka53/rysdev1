@@ -18,6 +18,10 @@ import { TerapiasComponent } from './terapias/terapias/terapias.component';
 import { TerapiasUsuarioComponent } from './terapias-usuario/terapias-usuario/terapias-usuario.component';
 import { MisTerapiasComponent } from './mis-terapias/mis-terapias/mis-terapias.component';
 import { InformacionMedicaUsuariosComponent } from './informacion-medica-usuarios/informacion-medica-usuarios/informacion-medica-usuarios.component';
+import { CompraPaquetesComponent } from './compra-paquetes/compra-paquetes/compra-paquetes.component';
+import { MisComprasComponent } from './mis-compras/mis-compras/mis-compras.component';
+import { ValidacionComprasComponent } from './validacion-compras/validacion-compras/validacion-compras.component';
+import { AdminGuard } from './guards/admin.guard';
 
 const routes: Routes = [
   // Ruta principal - Landing page
@@ -143,7 +147,29 @@ const routes: Routes = [
         path: 'chat',
         redirectTo: 'chat-discussions',
         pathMatch: 'full'
-      }
+      },
+
+
+{
+    path: 'compra-paquetes',
+    component: CompraPaquetesComponent,
+    canActivate: [AuthGuard],
+    data: { title: 'Comprar Paquetes' }
+  },
+  {
+    path: 'mis-compras',
+    component: MisComprasComponent,
+    canActivate: [AuthGuard],
+    data: { title: 'Mis Compras' }
+  },
+  {
+    path: 'validacion-compras',
+    component: ValidacionComprasComponent,
+    canActivate: [AuthGuard, AdminGuard], // ⚠️ Solo administradores
+    data: { title: 'Validación de Compras' }
+  },
+
+
     ]
   },
   
