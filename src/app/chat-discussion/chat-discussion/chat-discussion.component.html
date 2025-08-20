@@ -14,6 +14,7 @@
         <div class="text-right">
           <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
             <span class="text-sm font-bold">{{ obtenerIniciales(usuarioActual?.nombre || 'U') }}</span>
+          
           </div>
         </div>
       </div>
@@ -330,9 +331,9 @@
       <div class="flex items-center gap-3 mb-3 text-sm text-gray-600">
         <div class="flex items-center gap-2">
           <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
-            <span class="text-xs font-bold text-white">{{ obtenerIniciales(usuarioActual?.nombre || 'U') }}</span>
+            <span class="text-xs font-bold text-white">{{ obtenerIniciales(usuarioActual.nombre || 'U') }}</span>
           </div>
-          <span>Escribiendo como <strong>{{ usuarioActual?.nombre || 'Usuario' }}</strong></span>
+          <span>Escribiendo como <strong>{{ usuarioActual.nombre || 'Usuario' }}</strong></span>
           <span *ngIf="isAdmin" class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
             Admin
           </span>
