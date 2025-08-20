@@ -45,10 +45,12 @@ export class RutinasComponent implements OnInit {
 
   // Secciones disponibles
   seccionesDisponibles: SeccionInfo[] = [
+    { key: 'warm_upg', nombre: 'General Warm Up', descripcion: 'Calentamiento Calendario' },
     { key: 'warm_up', nombre: 'Warm Up', descripcion: 'Calentamiento' },
-    { key: 'met_con', nombre: 'Met-Con', descripcion: 'Metabolic Conditioning' },
+    { key: 'met_con', nombre: 'Metcon', descripcion: 'Metabolic Conditioning' },
     { key: 'strength', nombre: 'Strength', descripcion: 'Entrenamiento de Fuerza' },
     { key: 'core', nombre: 'Core', descripcion: 'Trabajo de Core' },
+    { key: 'skill', nombre: 'Skill', descripcion: 'Skills' },
     { key: 'extra', nombre: 'Extra', descripcion: 'Trabajo Adicional' }
   ];
 
