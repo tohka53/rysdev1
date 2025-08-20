@@ -1,0 +1,469 @@
+/* src/app/rutinas/rutinas/rutinas.component.css */
+
+/* Animaciones personalizadas */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(20px); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+}
+
+/* Transiciones suaves para cards */
+.rutina-card {
+  transition: all 0.3s ease;
+}
+
+.rutina-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Efectos para botones */
+.btn-floating {
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+  transition: all 0.3s ease;
+}
+
+.btn-floating:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 25px rgba(239, 68, 68, 0.6);
+}
+
+/* MODALES CORREGIDOS - Posicionamiento que evita el sidebar */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 9998;
+}
+
+/* Modal Principal - Crear/Editar */
+.modal-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+/* Panel del modal con margen lateral para evitar sidebar */
+.modal-panel {
+  margin-left: 280px; /* Espacio para sidebar expandido */
+  max-width: calc(100vw - 320px); /* Ancho máximo considerando sidebar */
+  width: 100%;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+}
+
+/* Cuando el sidebar está colapsado */
+@media (min-width: 768px) {
+  .sidebar-collapsed .modal-panel {
+    margin-left: 80px; /* Espacio para sidebar colapsado */
+    max-width: calc(100vw - 120px);
+  }
+}
+
+/* Modal de Vista - Más pequeño y centrado a la derecha */
+.modal-view-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 2rem;
+}
+
+.modal-view-panel {
+  margin-left: 300px; /* Más margen para modal de vista */
+  max-width: 900px;
+  width: 100%;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: translateX(20px);
+  transition: all 0.3s ease;
+}
+
+/* Responsive - Móviles */
+@media (max-width: 767px) {
+  .modal-panel,
+  .modal-view-panel {
+    margin-left: 0;
+    max-width: calc(100vw - 2rem);
+    margin: 1rem;
+  }
+  
+  .modal-container,
+  .modal-view-container {
+    padding: 0.5rem;
+  }
+  
+  .modal-view-container {
+    justify-content: center;
+    padding-right: 0.5rem;
+  }
+}
+
+/* Tablet */
+@media (max-width: 1024px) and (min-width: 768px) {
+  .modal-panel {
+    margin-left: 240px;
+    max-width: calc(100vw - 280px);
+  }
+  
+  .modal-view-panel {
+    margin-left: 260px;
+    max-width: calc(100vw - 300px);
+  }
+}
+
+/* Scroll personalizado para modal */
+.modal-content::-webkit-scrollbar,
+.modal-view-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track,
+.modal-view-panel::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb,
+.modal-view-panel::-webkit-scrollbar-thumb {
+  background: #dc2626;
+  border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover,
+.modal-view-panel::-webkit-scrollbar-thumb:hover {
+  background: #b91c1c;
+}
+
+/* Efectos para tags */
+.tag {
+  animation: tagAppear 0.2s ease-out;
+}
+
+@keyframes tagAppear {
+  from { 
+    transform: scale(0.8); 
+    opacity: 0; 
+  }
+  to { 
+    transform: scale(1); 
+    opacity: 1; 
+  }
+}
+
+/* Loading spinner personalizado */
+.custom-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #dc2626;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Efectos para inputs focus */
+.form-input:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  border-color: #dc2626;
+}
+
+/* Grid responsive mejorado */
+.rutinas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .rutinas-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Efectos para checkboxes */
+.checkbox-seccion {
+  transform: scale(1.2);
+  transition: transform 0.2s ease;
+}
+
+.checkbox-seccion:checked {
+  transform: scale(1.3);
+}
+
+/* Animación para empty state */
+.empty-state {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Gradientes personalizados */
+.gradient-red {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.gradient-gray {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+/* Badge styles */
+.badge-status {
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-status::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.badge-status:hover::before {
+  left: 100%;
+}
+
+/* Efectos para botones de acción */
+.action-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.action-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Tooltip personalizado */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: #374151;
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 12px;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Z-index hierarchy para evitar conflictos */
+.floating-action-btn {
+  z-index: 9997; /* Menor que modales pero mayor que contenido */
+}
+
+/* Estados del sidebar para ajustes dinámicos */
+.main-content.sidebar-expanded .modal-panel {
+  margin-left: 280px;
+  max-width: calc(100vw - 320px);
+}
+
+.main-content.sidebar-collapsed .modal-panel {
+  margin-left: 80px;
+  max-width: calc(100vw - 120px);
+}
+
+.main-content.sidebar-expanded .modal-view-panel {
+  margin-left: 300px;
+  max-width: calc(100vw - 340px);
+}
+
+.main-content.sidebar-collapsed .modal-view-panel {
+  margin-left: 100px;
+  max-width: calc(100vw - 140px);
+}
+
+/* Animaciones de entrada para modales */
+.modal-enter {
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-view-enter {
+  animation: modalSlideInRight 0.3s ease-out;
+}
+
+@keyframes modalSlideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .modal-content {
+    max-height: 90vh;
+  }
+  
+  .grid-responsive {
+    grid-template-columns: 1fr;
+  }
+  
+  .text-responsive {
+    font-size: 0.875rem;
+  }
+}
+
+/* Dark mode support (si decides implementarlo) */
+@media (prefers-color-scheme: dark) {
+  .card-dark {
+    background-color: #1f2937;
+    border-color: #374151;
+  }
+  
+  .text-dark {
+    color: #f9fafb;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+}
+
+/* Accessibility improvements */
+.focus-visible:focus {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .btn-primary {
+    border: 2px solid #000;
+  }
+  
+  .card {
+    border: 2px solid #000;
+  }
+}
+
+/* Mejoras específicas para el contenido del modal */
+.modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.modal-footer {
+  border-top: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 0 0 0.5rem 0.5rem;
+}
+
+/* Estados hover mejorados para botones */
+.btn-primary:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.4);
+}
+
+.btn-secondary:hover {
+  background-color: #f3f4f6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
