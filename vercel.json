@@ -1,27 +1,8 @@
 {
-  "version": 2,
-  "buildCommand": "ng build --configuration production",
-  "outputDirectory": "dist/rysdev",
-  "framework": null,
   "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/index.html"
-    }
-  ],
-"routes": [
-    {
-      "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot))$",
-      "headers": {
-        "cache-control": "max-age=31536000"
-      }
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
     }
   ]
 }
