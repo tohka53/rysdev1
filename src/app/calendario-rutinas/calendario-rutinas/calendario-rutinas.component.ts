@@ -116,37 +116,44 @@ export class CalendarioRutinasComponent implements OnInit {
   // =====================================
   // MÉTODO CLAVE: SOLO DÍA DE INICIO
   // =====================================
+  // FIX (bug "rutina se repite todos los días"):
+  // Antes pasábamos `fecha_inicio_programada` por `new Date(...)`, lo que en
+  // strings tipo "2026-04-27" parsea como medianoche UTC y luego getDate()
+  // usa zona local, desfasando el día en GMT-6. Aquí comparamos strings
+  // directamente: la celda y la fecha de inicio siempre en formato YYYY-MM-DD.
+  // Sólo aparece la rutina el día EXACTO de inicio, nunca a lo largo del rango.
   getRutinasDelDia(fecha: Date): RutinaDelDia[] {
     const rutinasDelDia: RutinaDelDia[] = [];
     const fechaStr = this.formatDateForComparison(fecha);
-    
-    console.log(`🗓️ Verificando rutinas para fecha: ${fechaStr}`);
-    
+
     this.rutinas.forEach(seguimiento => {
-      const fechaInicio = new Date(seguimiento.fecha_inicio_programada);
-      const fechaInicioStr = this.formatDateForComparison(fechaInicio);
-      
-      console.log(`   🔍 Rutina: ${seguimiento.rutina_nombre}, Inicio: ${fechaInicioStr}, Comparando con: ${fechaStr}`);
-      
+      const fechaInicioStr = this.normalizarFechaProgramada(seguimiento.fecha_inicio_programada);
+
       // SOLO agregar si es exactamente el día de inicio
-      if (fechaInicioStr === fechaStr) {
-        console.log(`   ✅ COINCIDENCIA! Agregando rutina: ${seguimiento.rutina_nombre}`);
+      if (fechaInicioStr && fechaInicioStr === fechaStr) {
         rutinasDelDia.push({
           seguimiento,
           tipoEvento: 'inicio',
           enRango: true
         });
-      } else {
-        console.log(`   ❌ No coincide. Saltando rutina.`);
       }
     });
-    
-    console.log(`📊 Total rutinas para ${fechaStr}: ${rutinasDelDia.length}`);
+
     return rutinasDelDia;
   }
 
+  // Toma la fecha tal como viene de Supabase ("2026-04-27" o "2026-04-27T00:00:00+00:00")
+  // y devuelve los primeros 10 caracteres (YYYY-MM-DD) sin pasar por Date()
+  // para evitar el shift por zona horaria.
+  private normalizarFechaProgramada(valor: string | null | undefined): string {
+    if (!valor) return '';
+    return String(valor).substring(0, 10);
+  }
+
   formatDateForComparison(date: Date): string {
-    // Asegurar que la fecha esté en formato YYYY-MM-DD para comparación consistente
+    // Asegurar que la fecha esté en formato YYYY-MM-DD para comparación consistente.
+    // Usa componentes LOCALES (mismo huso que muestra la celda del calendario)
+    // — clave para que comparen contra el normalizarFechaProgramada de arriba.
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');

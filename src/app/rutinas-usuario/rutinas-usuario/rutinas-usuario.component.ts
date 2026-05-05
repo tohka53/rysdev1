@@ -48,6 +48,16 @@ export interface AsignacionCompleta {
   es_activa?: boolean; // Nueva propiedad para determinar si está activa
 }
 
+// Tipo de vista (tabla vs calendario)
+export type VistaAsignaciones = 'tabla' | 'calendario';
+
+export interface DiaCalendarioAsignacion {
+  fecha: Date;
+  esMesActual: boolean;
+  esHoy: boolean;
+  asignaciones: AsignacionCompleta[];
+}
+
 @Component({
   selector: 'app-rutinas-usuario',
   standalone: false,
@@ -81,6 +91,16 @@ export class RutinasUsuarioComponent implements OnInit {
   estadoFilter = 'all';
   rutinaFilter = 'all';
   mostrarInactivas = true; // Toggle para mostrar/ocultar inactivas
+
+  // ===== CALENDARIO =====
+  vistaActual: VistaAsignaciones = 'tabla';
+  mesActual: Date = new Date();
+  diasCalendario: DiaCalendarioAsignacion[] = [];
+  meses: string[] = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+  diasSemana: string[] = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
   constructor(
     private supabaseService: SupabaseService,
@@ -230,8 +250,13 @@ export class RutinasUsuarioComponent implements OnInit {
   // Método para procesar asignaciones vencidas automáticamente
   async procesarAsignacionesVencidas(): Promise<void> {
     try {
+      // FIX timezone: usamos componentes locales para "hoy" en vez de toISOString,
+      // que en GMT-6 puede devolver el día siguiente en horas de la tarde/noche.
       const hoy = new Date();
-      const fechaHoy = hoy.toISOString().split('T')[0];
+      const y = hoy.getFullYear();
+      const m = (hoy.getMonth() + 1).toString().padStart(2, '0');
+      const d = hoy.getDate().toString().padStart(2, '0');
+      const fechaHoy = `${y}-${m}-${d}`;
 
       // Buscar asignaciones activas que hayan vencido
       const { data: asignacionesVencidas, error } = await this.supabaseService.client
@@ -367,12 +392,22 @@ export class RutinasUsuarioComponent implements OnInit {
     this.asignacionForm.usuarios_seleccionados = [];
   }
 
-  // Método para calcular fecha fin automáticamente (1 mes después)
+  // Método para calcular fecha fin automáticamente (1 mes después).
+  // FIX timezone: parseamos los componentes Y/M/D directamente (sin pasar por
+  // new Date(string) que asume UTC) y formateamos con getDate local.
+  // Antes: new Date("2026-05-05").toISOString() en GMT-6 podía devolver "2026-05-04".
   calcularFechaFin(fechaInicio: string): string {
     if (!fechaInicio) return '';
-    const fecha = new Date(fechaInicio);
+    const [yStr, mStr, dStr] = fechaInicio.split('-');
+    const y = Number(yStr);
+    const m = Number(mStr) - 1; // 0-based
+    const d = Number(dStr);
+    const fecha = new Date(y, m, d);
     fecha.setMonth(fecha.getMonth() + 1);
-    return fecha.toISOString().split('T')[0];
+    const yy = fecha.getFullYear();
+    const mm = (fecha.getMonth() + 1).toString().padStart(2, '0');
+    const dd = fecha.getDate().toString().padStart(2, '0');
+    return `${yy}-${mm}-${dd}`;
   }
 
   async asignarRutina(): Promise<void> {
@@ -641,10 +676,15 @@ export class RutinasUsuarioComponent implements OnInit {
     });
   }
 
+  // FIX timezone: usamos componentes locales en vez de toISOString,
+  // así "mañana" es realmente mañana en GMT-6 y no se desfasa.
   getTomorrowDate(): string {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
+    const y = tomorrow.getFullYear();
+    const m = (tomorrow.getMonth() + 1).toString().padStart(2, '0');
+    const d = tomorrow.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   // Calcular días restantes para una asignación
@@ -697,6 +737,127 @@ export class RutinasUsuarioComponent implements OnInit {
   canAssignRoutines(): boolean {
     return this.authService.isAdmin() || this.authService.hasProfile(3);
   }
+
+  // ===============================================
+  // CALENDARIO DE ASIGNACIONES
+  // ===============================================
+
+  cambiarVista(vista: VistaAsignaciones): void {
+    this.vistaActual = vista;
+    if (vista === 'calendario') {
+      this.generarCalendario();
+    }
+  }
+
+  get mostrarVistaTabla(): boolean {
+    return this.vistaActual === 'tabla';
+  }
+
+  get mostrarVistaCalendario(): boolean {
+    return this.vistaActual === 'calendario';
+  }
+
+  mesAnterior(): void {
+    this.mesActual = new Date(this.mesActual.getFullYear(), this.mesActual.getMonth() - 1, 1);
+    this.generarCalendario();
+  }
+
+  mesSiguiente(): void {
+    this.mesActual = new Date(this.mesActual.getFullYear(), this.mesActual.getMonth() + 1, 1);
+    this.generarCalendario();
+  }
+
+  irAHoy(): void {
+    this.mesActual = new Date();
+    this.generarCalendario();
+  }
+
+  // Construye 6 semanas (42 celdas) y para cada celda calcula qué asignaciones
+  // empiezan ese día.
+  generarCalendario(): void {
+    this.diasCalendario = [];
+    const año = this.mesActual.getFullYear();
+    const mes = this.mesActual.getMonth();
+    const primerDia = new Date(año, mes, 1);
+    const ultimoDia = new Date(año, mes + 1, 0);
+    const hoyStr = this.fechaLocalStr(new Date());
+
+    // Días del mes anterior para rellenar la primera semana
+    const offsetInicio = primerDia.getDay();
+    for (let i = offsetInicio - 1; i >= 0; i--) {
+      const f = new Date(primerDia);
+      f.setDate(f.getDate() - (i + 1));
+      this.diasCalendario.push({
+        fecha: f,
+        esMesActual: false,
+        esHoy: this.fechaLocalStr(f) === hoyStr,
+        asignaciones: this.getAsignacionesDelDia(f)
+      });
+    }
+
+    // Días del mes actual
+    for (let d = 1; d <= ultimoDia.getDate(); d++) {
+      const f = new Date(año, mes, d);
+      this.diasCalendario.push({
+        fecha: f,
+        esMesActual: true,
+        esHoy: this.fechaLocalStr(f) === hoyStr,
+        asignaciones: this.getAsignacionesDelDia(f)
+      });
+    }
+
+    // Relleno hasta 42 celdas (6 semanas)
+    while (this.diasCalendario.length < 42) {
+      const ultima = this.diasCalendario[this.diasCalendario.length - 1].fecha;
+      const f = new Date(ultima);
+      f.setDate(f.getDate() + 1);
+      this.diasCalendario.push({
+        fecha: f,
+        esMesActual: false,
+        esHoy: this.fechaLocalStr(f) === hoyStr,
+        asignaciones: this.getAsignacionesDelDia(f)
+      });
+    }
+  }
+
+  // FIX bug "se repite todos los días": comparar strings YYYY-MM-DD para que
+  // la asignación aparezca SOLO el día exacto de fecha_inicio, no a lo largo
+  // del rango fecha_inicio..fecha_fin. Sin pasar por new Date() para evitar
+  // shift por zona horaria.
+  private getAsignacionesDelDia(fecha: Date): AsignacionCompleta[] {
+    const fechaStr = this.fechaLocalStr(fecha);
+    return this.filteredAsignaciones.filter(a =>
+      (a.fecha_inicio_programada || '').substring(0, 10) === fechaStr
+    );
+  }
+
+  private fechaLocalStr(fecha: Date): string {
+    const y = fecha.getFullYear();
+    const m = (fecha.getMonth() + 1).toString().padStart(2, '0');
+    const d = fecha.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  // Estilo para el badge de asignación dentro de la celda
+  getColorAsignacion(a: AsignacionCompleta): string {
+    if (!a.es_activa) return 'bg-gray-100 text-gray-600 border-gray-300';
+    switch (a.estado_asignacion) {
+      case 'activa': return 'bg-green-100 text-green-800 border-green-300';
+      case 'completada': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'pausada': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'cancelada':
+      case 'expirada': return 'bg-red-100 text-red-800 border-red-300';
+      default: return 'bg-gray-100 text-gray-700 border-gray-300';
+    }
+  }
+
+  trackByDiaCalendario(index: number, dia: DiaCalendarioAsignacion): number {
+    return dia.fecha.getTime();
+  }
+
+  // ===============================================
+  // TRACKBY ORIGINAL
+  // ===============================================
 
   trackByAsignacionId(index: number, item: AsignacionCompleta): any {
     return item.asignacion_id;

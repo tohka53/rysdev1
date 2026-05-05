@@ -276,8 +276,21 @@ export class CalendarioPaquetesComponent implements OnInit, OnDestroy {
   }
 
   private getSesionesDelDia(fecha: Date): SesionPaqueteCalendario[] {
-    const fechaStr = this.formatearFechaInput(fecha);
-    return this.sesiones.filter(sesion => sesion.fecha_programada === fechaStr);
+    const fechaStr = this.formatearFechaLocal(fecha);
+    // Comparar contra los primeros 10 chars (YYYY-MM-DD) para que funcione
+    // tanto si Supabase devuelve "2026-04-27" como "2026-04-27T00:00:00+00:00"
+    return this.sesiones.filter(sesion =>
+      (sesion.fecha_programada || '').substring(0, 10) === fechaStr
+    );
+  }
+
+  // Igual que formatearFechaInput pero usando componentes locales (no toISOString)
+  // — toISOString en GMT-6 puede devolver el día anterior.
+  private formatearFechaLocal(fecha: Date): string {
+    const y = fecha.getFullYear();
+    const m = (fecha.getMonth() + 1).toString().padStart(2, '0');
+    const d = fecha.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   // Navegación del calendario

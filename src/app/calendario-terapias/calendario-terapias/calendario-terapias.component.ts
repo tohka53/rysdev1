@@ -132,37 +132,44 @@ export class CalendarioTerapiasComponent implements OnInit {
   // =====================================
   // MÉTODO CLAVE: SOLO DÍA DE INICIO
   // =====================================
+  // FIX (bug "terapia se repite todos los días"):
+  // Comparación de strings YYYY-MM-DD para evitar shift por zona horaria
+  // al construir Date() con strings tipo "2026-04-27".
   getTerapiasDelDia(fecha: Date): TerapiaDelDia[] {
     const terapiasDelDia: TerapiaDelDia[] = [];
     const fechaStr = this.formatDateForComparison(fecha);
-    
-    console.log(`🗓️ Verificando terapias para fecha: ${fechaStr}`);
-    
+
     this.terapias.forEach(seguimiento => {
-      const fechaInicio = new Date(seguimiento.fecha_inicio_programada);
-      const fechaInicioStr = this.formatDateForComparison(fechaInicio);
-      
-      console.log(`   🔍 Terapia: ${seguimiento.terapia_nombre}, Inicio: ${fechaInicioStr}, Comparando con: ${fechaStr}`);
-      
+      const fechaInicioStr = this.normalizarFechaProgramada(seguimiento.fecha_inicio_programada);
+
       // SOLO agregar si es exactamente el día de inicio
-      if (fechaInicioStr === fechaStr) {
-        console.log(`   ✅ COINCIDENCIA! Agregando terapia: ${seguimiento.terapia_nombre}`);
+      if (fechaInicioStr && fechaInicioStr === fechaStr) {
         terapiasDelDia.push({
           seguimiento,
           tipoEvento: 'inicio',
           enRango: true
         });
-      } else {
-        console.log(`   ❌ No coincide. Saltando terapia.`);
       }
     });
-    
-    console.log(`📊 Total terapias para ${fechaStr}: ${terapiasDelDia.length}`);
+
     return terapiasDelDia;
   }
 
+  // Toma la fecha tal como viene de Supabase y devuelve YYYY-MM-DD sin pasar por Date(),
+  // evitando el shift de día causado por la zona horaria.
+  private normalizarFechaProgramada(valor: string | Date | null | undefined): string {
+    if (!valor) return '';
+    if (valor instanceof Date) {
+      const y = valor.getFullYear();
+      const m = (valor.getMonth() + 1).toString().padStart(2, '0');
+      const d = valor.getDate().toString().padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+    return String(valor).substring(0, 10);
+  }
+
   formatDateForComparison(date: Date): string {
-    // Asegurar que la fecha esté en formato YYYY-MM-DD para comparación consistente
+    // YYYY-MM-DD usando componentes LOCALES (mismo huso que la celda del calendario).
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
