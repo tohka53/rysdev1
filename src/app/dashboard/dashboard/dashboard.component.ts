@@ -1,6 +1,8 @@
 // src/app/dashboard/dashboard/dashboard.component.ts
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 import { PermissionsService, MenuModule } from '../../services/permissions.service';
 import { Profile } from '../../interfaces/user.interfaces';
@@ -11,20 +13,24 @@ import { Profile } from '../../interfaces/user.interfaces';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   currentUser: Profile | null = null;
   menuItems: MenuModule[] = [];
   isSidebarCollapsed = false;
   loading = true;
   error = '';
+  currentRoute = '';
+  expandedModules: Set<number> = new Set();
 
-  // Stats data (puedes conectar esto a servicios reales)
+  // Stats data para rehabilitación
   stats = {
-    totalUsers: 0,
-    activeProjects: 0,
-    pendingTasks: 0,
-    totalReports: 0
+    todayProgress: 0,
+    sessionsCompleted: 0,
+    daysActive: 0,
+    achievementPoints: 0
   };
+
+  private subscriptions: Subscription = new Subscription();
 
   constructor(
     private authService: AuthService,
@@ -49,8 +55,21 @@ export class DashboardComponent implements OnInit {
       // Cargar menú del usuario
       await this.loadUserMenu();
       
-      // Cargar estadísticas (opcional)
+      // Cargar estadísticas
       await this.loadDashboardStats();
+
+      // Suscribirse a cambios de ruta
+      this.subscriptions.add(
+        this.router.events
+          .pipe(filter(event => event instanceof NavigationEnd))
+          .subscribe((event: NavigationEnd) => {
+            this.currentRoute = event.urlAfterRedirects;
+            console.log('Ruta actual:', this.currentRoute);
+          })
+      );
+
+      // Obtener ruta actual
+      this.currentRoute = this.router.url;
 
     } catch (error) {
       console.error('Error inicializando dashboard:', error);
@@ -60,87 +79,167 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
   async loadUserMenu(): Promise<void> {
     try {
       console.log('Cargando menú del usuario...');
-      // Usar el método correcto que ahora existe
       this.menuItems = await this.permissionsService.loadUserMenu();
       
-      // Inicializar la propiedad expanded para todos los módulos
-      this.initializeExpandedState(this.menuItems);
+      if (!this.menuItems || this.menuItems.length === 0) {
+        console.log('No se obtuvo menú de la BD, usando menú por defecto');
+        this.menuItems = this.createDefaultMenu();
+      }
       
+      this.updateExpandedModules();
       console.log('Menú cargado:', this.menuItems);
     } catch (error) {
       console.error('Error cargando menú:', error);
-      this.menuItems = [];
-      // No mostrar error al usuario por el menú, usar menú por defecto
-      this.createDefaultMenu();
+      this.menuItems = this.createDefaultMenu();
+      this.updateExpandedModules();
     }
   }
 
-  private initializeExpandedState(modules: MenuModule[]): void {
-    modules.forEach(module => {
-      if (module.expanded === undefined) {
-        module.expanded = false;
-      }
-      if (module.children && module.children.length > 0) {
-        this.initializeExpandedState(module.children);
-      }
-    });
-  }
-
-  createDefaultMenu(): void {
-    // Menú por defecto si falla la carga desde la base de datos
-    this.menuItems = [
+  createDefaultMenu(): MenuModule[] {
+    return [
       {
         id_modulo: 1,
+        nombre: 'Dashboard',
+        descripcion: 'Panel principal',
+        icono: 'fas fa-tachometer-alt',
+        ruta: '/dashboard',
+        orden: 1,
+        es_padre: false,
+        modulo_padre_id: null,
+        permisos: ['view'],
+        expanded: false
+      },
+      {
+        id_modulo: 2,
         nombre: 'Usuarios',
         descripcion: 'Gestión de usuarios',
         icono: 'fas fa-users',
         ruta: '/usuarios',
-        orden: 1,
+        orden: 2,
         es_padre: false,
         modulo_padre_id: null,
-        permisos: ['view']
+        permisos: ['view'],
+        expanded: false
       },
       {
-        id_modulo: 2,
+        id_modulo: 3,
         nombre: 'Reportes',
         descripcion: 'Sistema de reportes',
         icono: 'fas fa-chart-bar',
         ruta: '/reportes',
-        orden: 2,
+        orden: 3,
         es_padre: false,
         modulo_padre_id: null,
-        permisos: ['view']
+        permisos: ['view'],
+        expanded: false
       },
       {
-        id_modulo: 3,
+        id_modulo: 4,
         nombre: 'Configuración',
         descripcion: 'Configuración del sistema',
         icono: 'fas fa-cog',
         ruta: '/configuracion',
-        orden: 3,
+        orden: 4,
         es_padre: false,
         modulo_padre_id: null,
-        permisos: ['view']
+        permisos: ['view'],
+        expanded: false
       }
     ];
+  }
+
+  private updateExpandedModules(): void {
+    this.menuItems.forEach(module => {
+      if (module.expanded === undefined) {
+        module.expanded = false;
+      }
+      if (module.children) {
+        module.children.forEach(child => {
+          if (child.expanded === undefined) {
+            child.expanded = false;
+          }
+        });
+      }
+    });
   }
 
   async loadDashboardStats(): Promise<void> {
     try {
       // Aquí puedes hacer llamadas a servicios para obtener estadísticas reales
-      // Por ahora usamos datos de ejemplo
+      // Por ahora, simulamos datos de progreso de rehabilitación
       this.stats = {
-        totalUsers: 1247,
-        activeProjects: 23,
-        pendingTasks: 47,
-        totalReports: 156
+        todayProgress: this.calculateTodayProgress(),
+        sessionsCompleted: this.getSessionsCompleted(),
+        daysActive: this.getDaysActive(),
+        achievementPoints: this.getAchievementPoints()
       };
     } catch (error) {
       console.error('Error cargando estadísticas:', error);
     }
+  }
+
+  /**
+   * Calcular progreso del día basado en actividades
+   */
+  private calculateTodayProgress(): number {
+    // Simular progreso basado en la fecha actual
+    const today = new Date();
+    const hour = today.getHours();
+    
+    // Progreso basado en la hora del día (más realista)
+    if (hour < 8) return 10;
+    if (hour < 12) return 35;
+    if (hour < 16) return 65;
+    if (hour < 20) return 85;
+    return 95;
+  }
+
+  /**
+   * Obtener sesiones completadas (ejemplo)
+   */
+  private getSessionsCompleted(): number {
+    // Simular basado en días desde el registro
+    const daysActive = this.getDaysActive();
+    return Math.floor(daysActive * 0.8) + 15; // Aproximadamente 0.8 sesiones por día activo
+  }
+
+  /**
+   * Calcular días activos desde el registro
+   */
+  private getDaysActive(): number {
+    if (!this.currentUser?.created_at) return 1;
+    
+    const createdDate = new Date(this.currentUser.created_at);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - createdDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return Math.max(1, diffDays);
+  }
+
+  /**
+   * Calcular puntos de logro
+   */
+  private getAchievementPoints(): number {
+    const sessions = this.getSessionsCompleted();
+    const days = this.getDaysActive();
+    
+    // Fórmula simple para calcular puntos
+    return (sessions * 10) + (days * 5) + Math.floor(this.calculateTodayProgress() / 10) * 25;
+  }
+
+  /**
+   * Obtener URL del avatar del usuario
+   */
+  getUserAvatarUrl(): string {
+    return this.authService.getAvatarUrl(this.currentUser || undefined);
   }
 
   toggleSidebar(): void {
@@ -148,29 +247,39 @@ export class DashboardComponent implements OnInit {
     console.log('Sidebar colapsado:', this.isSidebarCollapsed);
   }
 
+  toggleModule(moduleId: number): void {
+    if (this.expandedModules.has(moduleId)) {
+      this.expandedModules.delete(moduleId);
+    } else {
+      this.expandedModules.add(moduleId);
+    }
+
+    const module = this.menuItems.find(m => m.id_modulo === moduleId);
+    if (module) {
+      module.expanded = this.expandedModules.has(moduleId);
+      console.log(`Módulo ${module.nombre} ${module.expanded ? 'expandido' : 'colapsado'}`);
+    }
+  }
+
+  isModuleExpanded(moduleId: number): boolean {
+    return this.expandedModules.has(moduleId);
+  }
+
   logout(): void {
     console.log('Cerrando sesión desde dashboard');
-    
-    // Limpiar datos de permisos y menú
     this.permissionsService.clearUserData();
-    
-    // Limpiar datos locales
     this.currentUser = null;
     this.menuItems = [];
-    
-    // Cerrar sesión
     this.authService.logout();
   }
 
   // Métodos para el menú
   getFilteredMenuItems(): MenuModule[] {
-    // Filtrar solo módulos padre o módulos sin padre
     return this.menuItems.filter(item => !item.modulo_padre_id);
   }
 
   getFilteredChildren(module: MenuModule): MenuModule[] {
     if (!module.children) {
-      // Si no tiene children, buscar en menuItems los que tengan este módulo como padre
       return this.menuItems.filter(item => item.modulo_padre_id === module.id_modulo);
     }
     return module.children;
@@ -180,9 +289,7 @@ export class DashboardComponent implements OnInit {
     if (!route || route === '#') {
       return false;
     }
-    // Obtener la ruta actual
-    const currentPath = this.router.url;
-    return currentPath === route || currentPath.startsWith(route + '/');
+    return this.currentRoute === route || this.currentRoute.startsWith(route + '/');
   }
 
   navigateTo(route: string): void {
@@ -192,93 +299,69 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  toggleModuleExpansion(module: MenuModule): void {
-    // Alternar expansión del módulo
-    if (module.expanded === undefined) {
-      module.expanded = false;
-    }
-    module.expanded = !module.expanded;
-    console.log(`Módulo ${module.nombre} ${module.expanded ? 'expandido' : 'colapsado'}`);
-  }
-
-  // Métodos para verificar permisos
-  async canUserAccess(route: string): Promise<boolean> {
-    try {
-      return await this.permissionsService.canAccessRoute(route);
-    } catch (error) {
-      console.error('Error verificando permisos:', error);
-      return true; // Permitir acceso por defecto en caso de error
-    }
-  }
-
-  async hasPermission(route: string, permission: string): Promise<boolean> {
-    try {
-      return await this.permissionsService.hasPermission(route, permission);
-    } catch (error) {
-      console.error('Error verificando permiso específico:', error);
-      return false;
-    }
-  }
-
   // Métodos de utilidad
   getUserInitials(): string {
-    if (!this.currentUser?.full_name) {
-      return 'U';
-    }
-    const names = this.currentUser.full_name.split(' ');
-    if (names.length >= 2) {
-      return (names[0].charAt(0) + names[1].charAt(0)).toUpperCase();
-    }
-    return this.currentUser.full_name.charAt(0).toUpperCase();
+    return this.authService.getUserInitials(this.currentUser || undefined);
   }
 
   getUserRole(): string {
-    // Mapear id_perfil a nombre de rol
     switch (this.currentUser?.id_perfil) {
-      case 1:
-        return 'Administrador';
-      case 2:
-        return 'Usuario';
-      case 3:
-        return 'Supervisor';
-      case 4:
-        return 'Invitado';
-      default:
-        return 'Usuario';
+      case 1: return 'Administrador';
+      case 2: return 'Usuario';
+      case 3: return 'Supervisor';
+      case 4: return 'Invitado';
+      default: return 'Usuario';
     }
   }
 
-  isAdmin(): boolean {
-    return this.authService.isAdmin();
+  getPageTitle(): string {
+    switch (this.currentRoute) {
+      case '/dashboard': return 'Dashboard';
+      case '/usuarios': return 'Gestión de Usuarios';
+      case '/reportes': return 'Reportes';
+      case '/configuracion': return 'Configuración';
+      default: return 'Dashboard';
+    }
   }
 
-  // Método para refrescar datos
+  // Verificar si estamos en la página principal del dashboard
+  isDashboardHome(): boolean {
+    return this.currentRoute === '/dashboard';
+  }
+
+  // Verificar si estamos en la página de usuarios
+  isUsersPage(): boolean {
+    return this.currentRoute === '/usuarios';
+  }
+
+  formatDate(dateString: string | undefined): string {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  getCurrentTime(): string {
+    return new Date().toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
   async refreshDashboard(): Promise<void> {
     this.loading = true;
     try {
       await this.loadUserMenu();
       await this.loadDashboardStats();
-      // También cargar permisos si es necesario
       await this.permissionsService.loadUserPermissions();
     } catch (error) {
       console.error('Error refrescando dashboard:', error);
     } finally {
       this.loading = false;
     }
-  }
-
-  // Método para manejar errores de navegación
-  handleNavigationError(route: string, error: any): void {
-    console.error('Error navegando a:', route, error);
-    // Puedes mostrar un mensaje de error al usuario aquí
-  }
-
-  // Método para obtener el color del estado del usuario
-  getUserStatusColor(): string {
-    return this.currentUser?.status === 1 ? 'green' : 'red';
-  }
-
-  getUserStatusText(): string {
-    return this.currentUser?.status === 1 ? 'Activo' : 'Inactivo';
   }
 }

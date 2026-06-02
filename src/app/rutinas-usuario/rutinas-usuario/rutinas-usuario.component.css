@@ -1,0 +1,281 @@
+/* src/app/rutinas-usuario/rutinas-usuario.component.css */
+
+/* Animaciones para modales */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-panel {
+  animation: slideInUp 0.3s ease-out;
+}
+
+/* Efectos hover para las tarjetas */
+.asignacion-card {
+  transition: all 0.3s ease;
+}
+
+.asignacion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para checkboxes personalizados */
+.checkbox-usuario {
+  transition: all 0.2s ease;
+}
+
+.checkbox-usuario:checked {
+  transform: scale(1.1);
+}
+
+/* Barra de progreso animada */
+.progress-bar {
+  transition: width 0.8s ease-in-out;
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+}
+
+.progress-container {
+  background-color: #f3f4f6;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+/* Estados de asignación */
+.estado-activa {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.estado-completada {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+
+.estado-pausada {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.estado-cancelada {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+/* Efectos de hover para botones */
+.btn-action {
+  transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Indicadores de estado en tiempo real */
+.estado-badge {
+  position: relative;
+  overflow: hidden;
+}
+
+.estado-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.estado-badge:hover::before {
+  left: 100%;
+}
+
+/* Animación para el loading spinner */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Estilos para la tabla responsive */
+@media (max-width: 768px) {
+  .tabla-responsive {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  .tabla-responsive table {
+    min-width: 600px;
+  }
+}
+
+/* Efectos de focus mejorados */
+.input-focus:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #ef4444;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Estilo para usuarios seleccionados */
+.usuario-seleccionado {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border: 2px solid #ef4444;
+  transform: scale(1.02);
+}
+
+/* Animaciones de entrada */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos para tooltips */
+.tooltip {
+  position: relative;
+}
+
+.tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+}
+
+/* Mejoras visuales para el modal de seguimiento */
+.seguimiento-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.seguimiento-table th,
+.seguimiento-table td {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.seguimiento-table tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Estilo para input de progreso */
+.progress-input {
+  transition: all 0.2s ease;
+}
+
+.progress-input:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Indicadores de tiempo */
+.tiempo-vigente {
+  color: #059669;
+  font-weight: 600;
+}
+
+.tiempo-vencido {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.tiempo-pendiente {
+  color: #d97706;
+  font-weight: 600;
+}
+
+/* Efectos para cards de estadísticas */
+.stat-card {
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  border-color: #ef4444;
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.1);
+}
+
+/* Responsive design mejorado */
+@media (max-width: 640px) {
+  .modal-panel {
+    margin: 0;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .grid-responsive {
+    grid-template-columns: 1fr;
+  }
+  
+  .flex-responsive {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* Animación sutil para elementos que aparecen */
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.slide-in-up {
+  animation: slideInUp 0.5s ease-out;
+}
+
+.slide-in-down {
+  animation: slideInDown 0.5s ease-out;
+}
+
+/* Estilos para estados de carga */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

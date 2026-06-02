@@ -1,0 +1,177 @@
+/* src/app/calendario-terapias/calendario-terapias.component.css */
+
+/* Estilos personalizados para el calendario de terapias */
+.calendario-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Estilos para las celdas del calendario */
+.celda-calendario {
+  transition: all 0.2s ease-in-out;
+}
+
+.celda-calendario:hover {
+  background-color: #f8fafc;
+}
+
+/* Estilos para las terapias en el calendario */
+.terapia-evento {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  border-radius: 0.25rem;
+  transition: all 0.15s ease-in-out;
+}
+
+.terapia-evento:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Estados de terapias */
+.terapia-vigente {
+  border-left: 3px solid #10b981;
+  background-color: #ecfdf5;
+}
+
+.terapia-pendiente {
+  border-left: 3px solid #3b82f6;
+  background-color: #eff6ff;
+}
+
+.terapia-vencida {
+  border-left: 3px solid #ef4444;
+  background-color: #fef2f2;
+}
+
+/* Día actual */
+.dia-actual {
+  background-color: #dbeafe !important;
+  border: 2px solid #3b82f6;
+}
+
+.dia-actual .numero-dia {
+  color: #1d4ed8;
+  font-weight: bold;
+}
+
+/* Efectos hover para navegación */
+.nav-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.nav-button:hover {
+  background-color: #f3f4f6;
+  transform: scale(1.05);
+}
+
+/* Modal styles */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+}
+
+/* Terminal styles */
+.terminal-display {
+  font-family: 'Courier New', Consolas, Monaco, monospace;
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+}
+
+.terminal-display pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Scrollbar personalizado para el terminal */
+.terminal-display::-webkit-scrollbar {
+  width: 8px;
+}
+
+.terminal-display::-webkit-scrollbar-track {
+  background: #374151;
+  border-radius: 4px;
+}
+
+.terminal-display::-webkit-scrollbar-thumb {
+  background: #6b7280;
+  border-radius: 4px;
+}
+
+.terminal-display::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .terapia-evento {
+    font-size: 0.65rem;
+    padding: 0.25rem;
+  }
+  
+  .celda-calendario {
+    min-height: 6rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .nav-button,
+  .modal-backdrop,
+  .modal {
+    display: none !important;
+  }
+  
+  .calendario-container {
+    margin: 0;
+    box-shadow: none;
+  }
+}
+
+/* Accessibility improvements */
+.terapia-evento:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.nav-button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Loading state */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Marca de agua styles */
+.watermark {
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.1;
+  filter: grayscale(100%);
+}

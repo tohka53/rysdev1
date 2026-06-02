@@ -1,0 +1,543 @@
+<!-- src/app/usuarios/usuarios/usuarios.component.html -->
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+  
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
+        <p class="mt-2 text-sm text-gray-600">
+          Administra los usuarios del sistema - Total: {{ usuarios.length }}
+        </p>
+      </div>
+      <div class="flex space-x-2">
+        <button
+          (click)="refreshUsers()"
+          class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          title="Refrescar lista"
+        >
+          <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Refrescar
+        </button>
+        <button
+          (click)="openCreateModal()"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          Nuevo Usuario
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros y Búsqueda -->
+  <div class="bg-white rounded-lg shadow mb-6 p-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Búsqueda -->
+      <div class="md:col-span-2">
+        <label for="search" class="block text-sm font-medium text-gray-700 mb-2">
+          Buscar
+        </label>
+        <div class="relative">
+          <input
+            id="search"
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            placeholder="Buscar por nombre o usuario..."
+            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtro por Estado -->
+      <div>
+        <label for="statusFilter" class="block text-sm font-medium text-gray-700 mb-2">
+          Estado
+        </label>
+        <select
+          id="statusFilter"
+          [(ngModel)]="statusFilter"
+          (change)="onFilterChange()"
+          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+        >
+          <option value="all">Todos</option>
+          <option value="active">Activos</option>
+          <option value="inactive">Inactivos</option>
+        </select>
+      </div>
+
+      <!-- Filtro por Perfil -->
+      <div>
+        <label for="perfilFilter" class="block text-sm font-medium text-gray-700 mb-2">
+          Perfil
+        </label>
+        <select
+          id="perfilFilter"
+          [(ngModel)]="perfilFilter"
+          (change)="onFilterChange()"
+          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+        >
+          <option value="all">Todos</option>
+          <option value="1">Administrador</option>
+          <option value="2">Usuario</option>
+          <option value="3">Supervisor</option>
+          <option value="4">Invitado</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Botón para limpiar filtros -->
+    <div class="mt-4 flex justify-end">
+      <button
+        (click)="clearFilters()"
+        class="text-sm text-indigo-600 hover:text-indigo-800"
+      >
+        Limpiar filtros
+      </button>
+    </div>
+  </div>
+
+  <!-- Mensaje de Error -->
+  <div *ngIf="error" class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+    <div class="flex">
+      <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div class="ml-3">
+        <p class="text-sm text-red-700">{{ error }}</p>
+      </div>
+      <div class="ml-auto pl-3">
+        <button
+          (click)="error = ''"
+          class="text-red-400 hover:text-red-600"
+        >
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="flex justify-center items-center h-64">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+      <p class="mt-4 text-gray-600">Cargando usuarios...</p>
+    </div>
+  </div>
+
+  <!-- Tabla de Usuarios -->
+  <div *ngIf="!loading" class="bg-white shadow overflow-hidden sm:rounded-md">
+    <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg leading-6 font-medium text-gray-900">
+          Lista de Usuarios ({{ filteredUsuarios.length }} de {{ usuarios.length }})
+        </h3>
+        <span class="text-sm text-gray-500">
+          Mostrando {{ filteredUsuarios.length }} resultado{{ filteredUsuarios.length !== 1 ? 's' : '' }}
+        </span>
+      </div>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Usuario
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Nombre Completo
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Perfil
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Estado
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Fecha Creación
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Acciones
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let user of filteredUsuarios; trackBy: trackByUserId" class="hover:bg-gray-50 transition-colors duration-150">
+            
+            <!-- Columna Usuario con Avatar Actualizada -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <!-- Avatar con imagen real o iniciales -->
+                <div class="h-10 w-10 flex-shrink-0 relative">
+                  <div class="h-10 w-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <!-- Imagen de avatar si existe -->
+                    <img 
+                      *ngIf="user.avatar_url; else userInitialsTemplate"
+                      [src]="getUserAvatarUrl(user)" 
+                      [alt]="user.full_name || 'Avatar'"
+                      class="w-full h-full object-cover"
+                      (error)="$any($event.target).style.display='none'"
+                    />
+                    
+                    <!-- Template para iniciales -->
+                    <ng-template #userInitialsTemplate>
+                      <span class="text-sm font-medium text-white">
+                        {{ getUserInitials(user) }}
+                      </span>
+                    </ng-template>
+                  </div>
+
+                  <!-- Indicador de usuario activo/inactivo -->
+                  <div class="absolute -bottom-0 -right-0 h-3 w-3 rounded-full border-2 border-white"
+                       [ngClass]="{
+                         'bg-green-400': user.status === 1,
+                         'bg-red-400': user.status === 0
+                       }">
+                  </div>
+                </div>
+                
+                <!-- Información del usuario -->
+                <div class="ml-4">
+                  <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
+                  <div class="text-sm text-gray-500">ID: {{ user.id }}</div>
+                </div>
+              </div>
+            </td>
+            
+            <!-- Resto de columnas sin cambios -->
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ user.full_name }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    [ngClass]="{
+                      'bg-purple-100 text-purple-800': user.id_perfil === 1,
+                      'bg-blue-100 text-blue-800': user.id_perfil === 2,
+                      'bg-yellow-100 text-yellow-800': user.id_perfil === 3,
+                      'bg-gray-100 text-gray-800': user.id_perfil === 4
+                    }">
+                {{ getPerfilName(user.id_perfil) }}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    [ngClass]="{
+                      'bg-green-100 text-green-800': user.status === 1,
+                      'bg-red-100 text-red-800': user.status === 0
+                    }">
+                <svg class="w-2 h-2 mr-1" fill="currentColor" viewBox="0 0 8 8">
+                  <circle cx="4" cy="4" r="3" />
+                </svg>
+                {{ getStatusText(user.status) }}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {{ formatDate(user.created_at) }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <div class="flex justify-end space-x-2">
+                <!-- Botón para cambiar avatar -->
+                <button
+                  (click)="changeUserAvatar(user)"
+                  class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors duration-150"
+                  title="Cambiar foto de perfil"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+
+                <!-- Botón Editar -->
+                <button
+                  (click)="openEditModal(user)"
+                  class="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50 transition-colors duration-150"
+                  title="Editar usuario"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+
+                <!-- Botón Activar/Desactivar -->
+                <button
+                  *ngIf="user.status === 1"
+                  (click)="deactivateUser(user)"
+                  class="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors duration-150"
+                  title="Desactivar usuario"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636"/>
+                  </svg>
+                </button>
+
+                <button
+                  *ngIf="user.status === 0"
+                  (click)="reactivateUser(user)"
+                  class="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors duration-150"
+                  title="Reactivar usuario"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+      <div *ngIf="filteredUsuarios.length === 0 && !loading" class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No hay usuarios</h3>
+        <p class="mt-1 text-sm text-gray-500">
+          {{ usuarios.length === 0 ? 'No se encontraron usuarios en la base de datos.' : 'No se encontraron usuarios con los filtros aplicados.' }}
+        </p>
+        <div class="mt-6">
+          <button
+            *ngIf="usuarios.length === 0"
+            (click)="openCreateModal()"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Crear primer usuario
+          </button>
+          <button
+            *ngIf="usuarios.length > 0"
+            (click)="clearFilters()"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Limpiar filtros
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Crear/Editar Usuario -->
+<div *ngIf="showModal" class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeModal()"></div>
+
+    <!-- Modal Panel -->
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+    
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+      <!-- Modal Header -->
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">
+            <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+              {{ modalMode === 'create' ? 'Crear Nuevo Usuario' : 'Editar Usuario' }}
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500">
+                {{ modalMode === 'create' ? 'Complete los datos para crear un nuevo usuario.' : 'Modifique los datos del usuario seleccionado.' }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="bg-white px-4 pb-4 sm:px-6">
+        <form class="space-y-4">
+          <!-- Avatar Preview (solo en modo edición) -->
+          <div *ngIf="modalMode === 'edit'" class="flex justify-center">
+            <div class="relative">
+              <div class="h-20 w-20 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <img 
+                  *ngIf="userForm.avatar_url; else modalInitialsTemplate"
+                  [src]="getUserAvatarUrl(userForm)" 
+                  [alt]="userForm.full_name || 'Avatar'"
+                  class="w-full h-full object-cover"
+                  (error)="$any($event.target).style.display='none'"
+                />
+                
+                <ng-template #modalInitialsTemplate>
+                  <span class="text-lg font-medium text-white">
+                    {{ getUserInitials(userForm) }}
+                  </span>
+                </ng-template>
+              </div>
+              
+              <button 
+                type="button"
+                (click)="avatarFileInput.click()"
+                class="absolute bottom-0 right-0 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-1 shadow-lg transition-all duration-200 transform hover:scale-110"
+                title="Cambiar foto"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+              
+              <!-- Input oculto para avatar -->
+              <input 
+                #avatarFileInput
+                type="file" 
+                accept="image/*" 
+                (change)="onAvatarSelected($event)"
+                class="hidden"
+              />
+            </div>
+          </div>
+
+          <!-- Username -->
+          <div>
+            <label for="username" class="block text-sm font-medium text-gray-700">
+              Nombre de Usuario <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="username"
+              type="text"
+              [(ngModel)]="userForm.username"
+              name="username"
+              required
+              placeholder="Ej: juan.perez"
+              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+            <p class="mt-1 text-xs text-gray-500">
+              Solo letras, números, puntos, guiones y guiones bajos
+            </p>
+          </div>
+
+          <!-- Full Name -->
+          <div>
+            <label for="fullName" class="block text-sm font-medium text-gray-700">
+              Nombre Completo <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="fullName"
+              type="text"
+              [(ngModel)]="userForm.full_name"
+              name="fullName"
+              required
+              placeholder="Ej: Juan Pérez García"
+              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+
+          <!-- Password -->
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700">
+              {{ modalMode === 'create' ? 'Contraseña' : 'Nueva Contraseña (opcional)' }}
+              <span *ngIf="modalMode === 'create'" class="text-red-500">*</span>
+            </label>
+            <input
+              id="password"
+              type="password"
+              [(ngModel)]="userForm.password"
+              name="password"
+              [placeholder]="modalMode === 'create' ? 'Mínimo 6 caracteres' : 'Dejar vacío para no cambiar'"
+              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+            <p class="mt-1 text-xs text-gray-500">
+              {{ modalMode === 'create' ? 'Mínimo 6 caracteres' : 'Dejar vacío si no desea cambiar la contraseña' }}
+            </p>
+          </div>
+
+          <!-- Perfil -->
+          <div>
+            <label for="perfil" class="block text-sm font-medium text-gray-700">
+              Perfil de Usuario
+            </label>
+            <select
+              id="perfil"
+              [(ngModel)]="userForm.id_perfil"
+              name="perfil"
+              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            >
+              <option value="1">Administrador</option>
+              <option value="2">Usuario</option>
+              <option value="3">Supervisor</option>
+              <option value="4">Invitado</option>
+            </select>
+          </div>
+
+          <!-- Estado -->
+          <div>
+            <label for="status" class="block text-sm font-medium text-gray-700">
+              Estado
+            </label>
+            <select
+              id="status"
+              [(ngModel)]="userForm.status"
+              name="status"
+              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            >
+              <option value="1">Activo</option>
+              <option value="0">Inactivo</option>
+            </select>
+          </div>
+        </form>
+
+        <!-- Error Message -->
+        <div *ngIf="error" class="mt-4 bg-red-50 border border-red-200 rounded-md p-3">
+          <div class="flex">
+            <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div class="ml-3">
+              <p class="text-sm text-red-700">{{ error }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button
+          type="button"
+          (click)="saveUser()"
+          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="!userForm.username || !userForm.full_name || (modalMode === 'create' && !userForm.password)"
+        >
+          <svg *ngIf="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          {{ modalMode === 'create' ? 'Crear Usuario' : 'Guardar Cambios' }}
+        </button>
+        <button
+          type="button"
+          (click)="closeModal()"
+          class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Input oculto para cambiar avatar desde la tabla -->
+<input 
+  #userAvatarFileInput
+  type="file" 
+  accept="image/*" 
+  (change)="onUserAvatarSelected($event)"
+  class="hidden"
+/>

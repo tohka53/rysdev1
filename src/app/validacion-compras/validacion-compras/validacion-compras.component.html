@@ -1,0 +1,630 @@
+<!-- src/app/components/validacion-compras/validacion-compras.component.html -->
+
+<div class="container-fluid px-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-check-circle me-2"></i>
+            Validación de Compras
+          </h1>
+          <p class="text-muted mb-0">Administración y validación de compras de paquetes</p>
+        </div>
+        
+        <!-- Botón refrescar -->
+        <button 
+          type="button" 
+          class="btn btn-primary"
+          (click)="cargarComprasPendientes()"
+          [disabled]="cargando">
+          <i class="fas fa-sync-alt me-1" [class.fa-spin]="cargando"></i>
+          Actualizar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estadísticas resumen -->
+  <div *ngIf="estadisticas && puedeValidar" class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                Pendientes
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ estadisticas.compras_pendientes }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-clock fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-success shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                Validadas
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ estadisticas.compras_validadas }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-check fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-info shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                Monto Pendiente
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ formatearPrecio(estadisticas.monto_total_pendiente) }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                Tiempo Promedio
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ estadisticas.promedio_tiempo_validacion }}h
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-stopwatch fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensaje de sin permisos -->
+  <div *ngIf="!puedeValidar" class="alert alert-warning" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    No tienes permisos para validar compras. Esta sección es solo para administradores.
+  </div>
+
+  <!-- Contenido principal (solo si tiene permisos) -->
+  <div *ngIf="puedeValidar">
+    <!-- Filtros -->
+    <div class="row mb-4">
+      <div class="col-md-3 mb-3">
+        <label for="filtroEstado" class="form-label">Estado</label>
+        <select 
+          id="filtroEstado"
+          class="form-select"
+          [(ngModel)]="filtros.estado_compra"
+          (change)="aplicarFiltros()">
+          <option *ngFor="let estado of estadosCompra" [value]="estado.value">
+            {{ estado.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="col-md-3 mb-3">
+        <label for="filtroMetodo" class="form-label">Método de Pago</label>
+        <select 
+          id="filtroMetodo"
+          class="form-select"
+          [(ngModel)]="filtros.metodo_pago"
+          (change)="aplicarFiltros()">
+          <option value="">Todos los métodos</option>
+          <option *ngFor="let metodo of metodosPago" [value]="metodo.value">
+            {{ metodo.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="col-md-3 mb-3">
+        <label for="filtroFechaDesde" class="form-label">Desde</label>
+        <input
+          type="date"
+          id="filtroFechaDesde"
+          class="form-control"
+          [(ngModel)]="filtros.fecha_desde"
+          (change)="aplicarFiltros()">
+      </div>
+
+      <div class="col-md-3 mb-3">
+        <label for="filtroFechaHasta" class="form-label">Hasta</label>
+        <input
+          type="date"
+          id="filtroFechaHasta"
+          class="form-control"
+          [(ngModel)]="filtros.fecha_hasta"
+          (change)="aplicarFiltros()">
+      </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="row mb-3">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted">
+            {{ totalItems }} compra{{ totalItems !== 1 ? 's' : '' }} encontrada{{ totalItems !== 1 ? 's' : '' }}
+          </span>
+          <button 
+            type="button" 
+            class="btn btn-outline-secondary"
+            (click)="limpiarFiltros()">
+            <i class="fas fa-times me-1"></i>
+            Limpiar filtros
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estado de carga -->
+    <div *ngIf="cargando" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando compras...</span>
+      </div>
+      <p class="mt-2 text-muted">Cargando compras pendientes...</p>
+    </div>
+
+    <!-- Mensaje de error -->
+    <div *ngIf="error && !cargando" class="alert alert-danger" role="alert">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      {{ error }}
+      <button 
+        type="button" 
+        class="btn btn-sm btn-outline-danger ms-2"
+        (click)="cargarComprasPendientes()">
+        <i class="fas fa-redo me-1"></i>
+        Reintentar
+      </button>
+    </div>
+
+    <!-- Sin resultados -->
+    <div *ngIf="!cargando && !error && comprasFiltradas.length === 0" class="text-center py-5">
+      <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+      <h5 class="text-muted">No se encontraron compras</h5>
+      <p class="text-muted">No hay compras que coincidan con los filtros aplicados</p>
+    </div>
+
+    <!-- Tabla de compras -->
+    <div *ngIf="!cargando && !error && comprasFiltradas.length > 0">
+      <div class="card shadow">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Compra</th>
+                  <th>Usuario</th>
+                  <th>Paquete</th>
+                  <th>Método de Pago</th>
+                  <th>Monto</th>
+                  <th>Fecha</th>
+                  <th>Estado</th>
+                  <th>Comprobante</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let compra of comprasFiltradas">
+                  <td>
+                    <div>
+                      <strong>#{{ compra.compra_id }}</strong>
+                      <br>
+                      <small class="text-muted">{{ calcularTiempoTranscurrido(compra.horas_desde_compra) }} ago</small>
+                    </div>
+                  </td>
+                  <td>
+                    <div>
+                      <strong>{{ compra.usuario_nombre }}</strong>
+                      <br>
+                      <small class="text-muted">{{ compra.usuario_username }}</small>
+                    </div>
+                  </td>
+                  <td>
+                    <div>
+                      <strong>{{ compra.paquete_nombre }}</strong>
+                      <br>
+                      <span class="badge" [ngClass]="{
+                        'bg-primary': compra.paquete_tipo === 'rutina',
+                        'bg-success': compra.paquete_tipo === 'terapia',
+                        'bg-info': compra.paquete_tipo === 'mixto'
+                      }">
+                        {{ compra.paquete_tipo | titlecase }}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <i [class]="obtenerIconoMetodoPago(compra.metodo_pago)" 
+                         [ngClass]="obtenerClaseMetodoPago(compra.metodo_pago)" 
+                         class="me-2"></i>
+                      <div>
+                        <span>{{ obtenerLabelMetodoPago(compra.metodo_pago) }}</span>
+                        <br>
+                        <small class="text-muted" *ngIf="compra.numero_transaccion">
+                          {{ compra.numero_transaccion }}
+                        </small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div>
+                      <strong>{{ formatearPrecio(compra.precio_final) }}</strong>
+                      <div *ngIf="compra.descuento_aplicado > 0">
+                        <small class="text-muted text-decoration-line-through">
+                          {{ formatearPrecio(compra.precio_paquete) }}
+                        </small>
+                        <br>
+                        <small class="text-success">
+                          -{{ formatearPrecio(compra.descuento_aplicado) }}
+                        </small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div>
+                      <span>{{ formatearFecha(compra.fecha_compra) }}</span>
+                      <div *ngIf="compra.fecha_pago">
+                        <small class="text-muted">
+                          Pago: {{ compra.fecha_pago }}
+                          <span *ngIf="compra.hora_pago"> {{ compra.hora_pago }}</span>
+                        </small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span [ngClass]="obtenerClaseEstado(compra.estado_compra)">
+                      {{ compra.estado_descripcion }}
+                    </span>
+                  </td>
+                  <td>
+                    <button 
+                      *ngIf="compra.tiene_comprobante"
+                      type="button" 
+                      class="btn btn-sm btn-outline-info"
+                      (click)="verComprobante(compra)"
+                      title="Ver comprobante">
+                      <i class="fas fa-file-image"></i>
+                    </button>
+                    <span *ngIf="!compra.tiene_comprobante" class="text-muted">
+                      Sin comprobante
+                    </span>
+                  </td>
+                  <td>
+                    <div class="btn-group" role="group">
+                      <button 
+                        *ngIf="compra.estado_compra === 'pendiente'"
+                        type="button" 
+                        class="btn btn-sm btn-success"
+                        (click)="abrirModalValidacion(compra)"
+                        title="Validar/Rechazar">
+                        <i class="fas fa-check"></i>
+                      </button>
+                      <button 
+                        type="button" 
+                        class="btn btn-sm btn-outline-secondary"
+                        title="Ver detalles">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paginación -->
+      <nav *ngIf="totalPaginas > 1" class="mt-4">
+        <ul class="pagination justify-content-center">
+          <li class="page-item" [class.disabled]="paginaActual === 1">
+            <a class="page-link" (click)="cambiarPagina(paginaActual - 1)">Anterior</a>
+          </li>
+          <li *ngFor="let pagina of paginasArray" 
+              class="page-item" 
+              [class.active]="pagina === paginaActual">
+            <a class="page-link" (click)="cambiarPagina(pagina)">{{ pagina }}</a>
+          </li>
+          <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+            <a class="page-link" (click)="cambiarPagina(paginaActual + 1)">Siguiente</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de validación -->
+<div class="modal fade" [class.show]="mostrarModalValidacion" [style.display]="mostrarModalValidacion ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-check-circle me-2"></i>
+          Validar Compra #{{ compraSeleccionada?.compra_id }}
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModalValidacion()"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Información de la compra -->
+        <div *ngIf="compraSeleccionada" class="card mb-4 border-0 bg-light">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="text-muted">Usuario</h6>
+                <p class="mb-2">
+                  <strong>{{ compraSeleccionada.usuario_nombre }}</strong><br>
+                  <small class="text-muted">{{ compraSeleccionada.usuario_username }}</small>
+                </p>
+
+                <h6 class="text-muted">Paquete</h6>
+                <p class="mb-2">
+                  <strong>{{ compraSeleccionada.paquete_nombre }}</strong><br>
+                  <span class="badge" [ngClass]="{
+                    'bg-primary': compraSeleccionada.paquete_tipo === 'rutina',
+                    'bg-success': compraSeleccionada.paquete_tipo === 'terapia',
+                    'bg-info': compraSeleccionada.paquete_tipo === 'mixto'
+                  }">
+                    {{ compraSeleccionada.paquete_tipo | titlecase }}
+                  </span>
+                </p>
+
+                <h6 class="text-muted">Método de Pago</h6>
+                <p class="mb-2">
+                  <i [class]="obtenerIconoMetodoPago(compraSeleccionada.metodo_pago)" class="me-2"></i>
+                  {{ obtenerLabelMetodoPago(compraSeleccionada.metodo_pago) }}
+                  <br>
+                  <small class="text-muted" *ngIf="compraSeleccionada.numero_transaccion">
+                    Transacción: {{ compraSeleccionada.numero_transaccion }}
+                  </small>
+                  <small class="text-muted" *ngIf="compraSeleccionada.banco">
+                    <br>Banco: {{ compraSeleccionada.banco }}
+                  </small>
+                </p>
+              </div>
+
+              <div class="col-md-6">
+                <h6 class="text-muted">Montos</h6>
+                <div class="mb-2">
+                  <div *ngIf="compraSeleccionada.descuento_aplicado > 0">
+                    <span class="text-muted text-decoration-line-through">
+                      Precio original: {{ formatearPrecio(compraSeleccionada.precio_paquete) }}
+                    </span><br>
+                    <span class="text-success">
+                      Descuento: -{{ formatearPrecio(compraSeleccionada.descuento_aplicado) }}
+                    </span><br>
+                  </div>
+                  <strong class="h5">
+                    Total: {{ formatearPrecio(compraSeleccionada.precio_final) }}
+                  </strong>
+                </div>
+
+                <h6 class="text-muted">Fechas</h6>
+                <p class="mb-2">
+                  <strong>Compra:</strong> {{ formatearFecha(compraSeleccionada.fecha_compra) }}<br>
+                  <strong>Pago:</strong> {{ compraSeleccionada.fecha_pago }}
+                  <span *ngIf="compraSeleccionada.hora_pago"> a las {{ compraSeleccionada.hora_pago }}</span>
+                </p>
+
+                <div *ngIf="compraSeleccionada.notas_usuario">
+                  <h6 class="text-muted">Notas del usuario</h6>
+                  <p class="mb-2">{{ compraSeleccionada.notas_usuario }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulario de validación -->
+        <form [formGroup]="formularioValidacion" (ngSubmit)="procesarValidacion()">
+          <!-- Acción -->
+          <div class="mb-3">
+            <label class="form-label">Acción *</label>
+            <div class="row">
+              <div class="col-6">
+                <div class="form-check">
+                  <input
+                    type="radio"
+                    id="validar"
+                    class="form-check-input"
+                    formControlName="accion"
+                    value="validar"
+                    [class.is-invalid]="accionInvalida">
+                  <label for="validar" class="form-check-label">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Validar compra
+                  </label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input
+                    type="radio"
+                    id="rechazar"
+                    class="form-check-input"
+                    formControlName="accion"
+                    value="rechazar"
+                    [class.is-invalid]="accionInvalida">
+                  <label for="rechazar" class="form-check-label">
+                    <i class="fas fa-times text-danger me-2"></i>
+                    Rechazar compra
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="accionInvalida" class="invalid-feedback">
+              Por favor selecciona una acción
+            </div>
+          </div>
+
+          <!-- Motivo de rechazo (solo si se rechaza) -->
+          <div *ngIf="requiereMotivoRechazo" class="mb-3">
+            <label for="motivo_rechazo" class="form-label">Motivo del rechazo *</label>
+            <textarea
+              id="motivo_rechazo"
+              class="form-control"
+              formControlName="motivo_rechazo"
+              rows="3"
+              [class.is-invalid]="motivoRechazoInvalido"
+              placeholder="Explica el motivo por el cual se rechaza la compra..."></textarea>
+            <div *ngIf="motivoRechazoInvalido" class="invalid-feedback">
+              El motivo del rechazo es requerido
+            </div>
+          </div>
+
+          <!-- Notas del administrador -->
+          <div class="mb-3">
+            <label for="notas_admin" class="form-label">Notas del administrador</label>
+            <textarea
+              id="notas_admin"
+              class="form-control"
+              formControlName="notas_admin"
+              rows="3"
+              placeholder="Notas adicionales sobre la validación (opcional)"></textarea>
+          </div>
+
+          <!-- Información de validación -->
+          <div *ngIf="accionSeleccionada === 'validar'" class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Al validar esta compra:</strong>
+            <ul class="mb-0 mt-2">
+              <li>Se asignará automáticamente el paquete al usuario</li>
+              <li>El usuario recibirá una notificación</li>
+              <li>El paquete aparecerá en su calendario</li>
+              <li>Esta acción no se puede deshacer</li>
+            </ul>
+          </div>
+
+          <div *ngIf="accionSeleccionada === 'rechazar'" class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Al rechazar esta compra:</strong>
+            <ul class="mb-0 mt-2">
+              <li>El usuario será notificado del rechazo</li>
+              <li>Deberá especificar un motivo claro</li>
+              <li>El usuario podrá realizar una nueva compra</li>
+              <li>Esta acción no se puede deshacer</li>
+            </ul>
+          </div>
+
+          <!-- Mensaje de error -->
+          <div *ngIf="error" class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            {{ error }}
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModalValidacion()" [disabled]="procesandoValidacion">
+          Cancelar
+        </button>
+        <button 
+          type="button" 
+          class="btn"
+          [ngClass]="accionSeleccionada === 'validar' ? 'btn-success' : 'btn-danger'"
+          (click)="procesarValidacion()"
+          [disabled]="!formularioValidacion.valid || procesandoValidacion">
+          <ng-container *ngIf="procesandoValidacion">
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Procesando...
+          </ng-container>
+          <ng-container *ngIf="!procesandoValidacion">
+            <i [class]="accionSeleccionada === 'validar' ? 'fas fa-check' : 'fas fa-times'" class="me-1"></i>
+            {{ accionSeleccionada === 'validar' ? 'Validar Compra' : 'Rechazar Compra' }}
+          </ng-container>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de comprobante -->
+<div class="modal fade" [class.show]="mostrarModalComprobante" [style.display]="mostrarModalComprobante ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-file-image me-2"></i>
+          Comprobante de Pago
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModalComprobante()"></button>
+      </div>
+
+      <div class="modal-body text-center">
+        <div *ngIf="comprobanteActual" class="comprobante-container">
+          <!-- Mostrar imagen -->
+          <div *ngIf="comprobanteActual.includes('image')" class="mb-3">
+            <img [src]="comprobanteActual" [alt]="comprobanteNombre" class="img-fluid rounded shadow">
+          </div>
+
+          <!-- Mostrar PDF -->
+          <div *ngIf="comprobanteActual.includes('pdf')" class="mb-3">
+            <div class="alert alert-info">
+              <i class="fas fa-file-pdf fa-3x mb-2"></i>
+              <p class="mb-2">{{ comprobanteNombre }}</p>
+              <p class="mb-0">Archivo PDF - Descargar para ver el contenido completo</p>
+            </div>
+          </div>
+
+          <!-- Información del archivo -->
+          <div class="mt-3">
+            <h6 class="text-muted">{{ comprobanteNombre }}</h6>
+          </div>
+        </div>
+
+        <div *ngIf="!comprobanteActual" class="text-center py-4">
+          <i class="fas fa-exclamation-triangle fa-3x text-muted mb-3"></i>
+          <p class="text-muted">No se pudo cargar el comprobante</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModalComprobante()">
+          Cerrar
+        </button>
+        <button 
+          *ngIf="comprobanteActual"
+          type="button" 
+          class="btn btn-primary"
+          (click)="descargarComprobante()">
+          <i class="fas fa-download me-1"></i>
+          Descargar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrops de los modales -->
+<div *ngIf="mostrarModalValidacion" class="modal-backdrop fade show"></div>
+<div *ngIf="mostrarModalComprobante" class="modal-backdrop fade show"></div>

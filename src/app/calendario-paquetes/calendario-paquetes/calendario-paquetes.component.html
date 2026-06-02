@@ -1,0 +1,568 @@
+<!-- src/app/calendario-paquetes/calendario-paquetes/calendario-paquetes.component.html -->
+<div class="min-h-screen bg-gray-50 p-6">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Calendario de Paquetes</h1>
+        <p class="text-gray-600 mt-2">Gestiona y visualiza las sesiones de paquetes asignados</p>
+      </div>
+      
+      <!-- Selector de Vista -->
+      <div class="flex bg-gray-100 rounded-lg p-1">
+        <button
+          (click)="cambiarVista('lista')"
+          class="px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150"
+          [class.bg-white]="mostrarVistaLista"
+          [class.text-gray-900]="mostrarVistaLista"
+          [class.shadow-sm]="mostrarVistaLista"
+          [class.text-gray-500]="!mostrarVistaLista"
+        >
+          <svg class="h-4 w-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+          </svg>
+          Lista
+        </button>
+        <button
+          (click)="cambiarVista('calendario')"
+          class="px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150"
+          [class.bg-white]="mostrarVistaCalendario"
+          [class.text-gray-900]="mostrarVistaCalendario"
+          [class.shadow-sm]="mostrarVistaCalendario"
+          [class.text-gray-500]="!mostrarVistaCalendario"
+        >
+          <svg class="h-4 w-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          Calendario
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Filtro por usuario -->
+      <div *ngIf="puedeVerTodos">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Usuario</label>
+        <select 
+          [(ngModel)]="filtros.usuarioId" 
+          (ngModelChange)="aplicarFiltros()"
+          class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+          <option value="">Todos los usuarios</option>
+          <option *ngFor="let usuario of usuarios" [value]="usuario.id">
+            {{ usuario.nombre }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Filtro por estado -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+        <select 
+          [(ngModel)]="filtros.estado" 
+          (ngModelChange)="aplicarFiltros()"
+          class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+          <option value="">Todos los estados</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="completada">Completada</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+      </div>
+
+      <!-- Filtro por tipo -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+        <select 
+          [(ngModel)]="filtros.tipo" 
+          (ngModelChange)="aplicarFiltros()"
+          class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+          <option value="">Todos los tipos</option>
+          <option value="rutina">Rutinas</option>
+          <option value="terapia">Terapias</option>
+        </select>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="flex items-end space-x-2">
+        <button 
+          (click)="limpiarFiltros()"
+          class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+          Limpiar
+        </button>
+        <button 
+          (click)="actualizarDatos()"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          Actualizar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estadísticas rápidas -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-white rounded-lg shadow-sm p-6">
+      <div class="flex items-center">
+        <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Total Sesiones</p>
+          <p class="text-2xl font-bold text-gray-900">{{ estadisticas.totalSesiones }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm p-6">
+      <div class="flex items-center">
+        <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Pendientes</p>
+          <p class="text-2xl font-bold text-gray-900">{{ estadisticas.pendientes }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm p-6">
+      <div class="flex items-center">
+        <div class="p-3 rounded-full bg-green-100 text-green-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Completadas</p>
+          <p class="text-2xl font-bold text-gray-900">{{ estadisticas.completadas }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm p-6">
+      <div class="flex items-center">
+        <div class="p-3 rounded-full bg-red-100 text-red-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-600">Canceladas</p>
+          <p class="text-2xl font-bold text-gray-900">{{ estadisticas.canceladas }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="cargando" class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  </div>
+
+  <!-- VISTA CALENDARIO -->
+  <div *ngIf="mostrarVistaCalendario && !cargando" class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <!-- Header del calendario -->
+    <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+      <div class="flex items-center space-x-4">
+        <button 
+          (click)="mesAnterior()"
+          class="p-2 rounded-lg hover:bg-gray-200 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+        </button>
+        
+        <h2 class="text-xl font-semibold text-gray-900">
+          {{ getNombreMes() }} {{ getAnio() }}
+        </h2>
+        
+        <button 
+          (click)="mesSiguiente()"
+          class="p-2 rounded-lg hover:bg-gray-200 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <button 
+        (click)="irAHoy()"
+        class="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors">
+        Hoy
+      </button>
+    </div>
+
+    <!-- Días de la semana -->
+    <div class="grid grid-cols-7 bg-gray-100">
+      <div *ngFor="let dia of diasSemana" 
+           class="px-4 py-3 text-center text-sm font-medium text-gray-700 border-r border-gray-200 last:border-r-0">
+        {{ dia }}
+      </div>
+    </div>
+
+    <!-- Grid del calendario -->
+    <div class="grid grid-cols-7">
+      <div *ngFor="let diaCalendario of diasCalendario" 
+           [class]="getClasesDiaCalendario(diaCalendario)">
+        
+        <!-- Número del día -->
+        <div class="flex justify-between items-start mb-1">
+          <span class="text-sm font-medium"
+                [class.text-blue-600]="diaCalendario.esHoy"
+                [class.font-bold]="diaCalendario.esHoy">
+            {{ diaCalendario.fecha.getDate() }}
+          </span>
+          
+          <!-- Indicador de hoy -->
+          <div *ngIf="diaCalendario.esHoy" 
+               class="w-2 h-2 bg-blue-600 rounded-full"></div>
+        </div>
+
+        <!-- Sesiones del día -->
+        <div class="space-y-1">
+          <div *ngFor="let sesion of diaCalendario.sesiones.slice(0, 3); trackBy: trackBySesionId" 
+               class="text-xs p-1 rounded cursor-pointer transition-all hover:scale-105"
+               [class]="getEstadoClasses(sesion.estado)"
+               (click)="verDetalles(sesion)"
+               [title]="sesion.contenido_nombre + ' - ' + getEstadoTexto(sesion.estado)">
+            
+            <div class="flex items-center justify-between">
+              <!-- Icono del tipo -->
+              <span class="mr-1">{{ getTipoIcon(sesion.contenido_tipo) }}</span>
+              
+              <!-- Nombre truncado -->
+              <span class="truncate flex-1 font-medium">
+                {{ sesion.contenido_nombre }}
+              </span>
+              
+              <!-- Indicador del estado -->
+              <div class="w-2 h-2 rounded-full ml-1 flex-shrink-0"
+                   [class]="getColorByEstado(sesion.estado)"></div>
+            </div>
+            
+            <!-- Información adicional -->
+            <div class="text-gray-600 mt-1 truncate">
+              <span class="font-medium">{{ sesion.usuario_nombre }}</span>
+              <span *ngIf="sesion.progreso !== undefined" class="ml-1">({{ sesion.progreso }}%)</span>
+            </div>
+          </div>
+
+          <!-- Indicador si hay más sesiones -->
+          <div *ngIf="diaCalendario.sesiones.length > 3"
+               class="text-xs text-gray-500 text-center py-1 bg-gray-100 rounded">
+            +{{ diaCalendario.sesiones.length - 3 }} más
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VISTA LISTA -->
+  <div *ngIf="mostrarVistaLista && !cargando" class="space-y-4">
+    <!-- Sesiones agrupadas por fecha -->
+    <div *ngFor="let grupo of sesionesFiltradas | keyvalue: ordenarPorFecha" class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <!-- Header del grupo de fecha -->
+      <div class="bg-gray-50 px-6 py-4 border-b">
+        <h3 class="text-lg font-semibold text-gray-900">
+          {{ formatearFechaGrupo(grupo.key) }}
+        </h3>
+        <p class="text-sm text-gray-600">
+          {{ grupo.value.length }} sesión{{ grupo.value.length !== 1 ? 'es' : '' }} programada{{ grupo.value.length !== 1 ? 's' : '' }}
+        </p>
+      </div>
+
+      <!-- Sesiones del día -->
+      <div class="divide-y divide-gray-200">
+        <div *ngFor="let sesion of grupo.value" 
+             class="p-6 hover:bg-gray-50 transition-colors">
+          
+          <div class="flex items-center justify-between">
+            <!-- Información principal -->
+            <div class="flex items-center space-x-4">
+              <!-- Avatar/Icono -->
+              <div class="flex-shrink-0">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center"
+                     [class]="getAvatarClasses(sesion)">
+                  <span class="text-sm font-bold text-white">
+                    {{ getIniciales(sesion.usuario_nombre) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Detalles de la sesión -->
+              <div class="flex-1">
+                <div class="flex items-center space-x-3">
+                  <h4 class="text-lg font-medium text-gray-900">
+                    {{ sesion.contenido_nombre }}
+                  </h4>
+                  <span class="px-2 py-1 rounded-full text-xs font-medium"
+                        [class]="getEstadoClasses(sesion.estado)">
+                    {{ getEstadoTexto(sesion.estado) }}
+                  </span>
+                  <span class="px-2 py-1 rounded-full text-xs"
+                        [class]="getTipoClasses(sesion.contenido_tipo)">
+                    {{ sesion.contenido_tipo | titlecase }}
+                  </span>
+                </div>
+                
+                <div class="mt-1 flex items-center space-x-4 text-sm text-gray-600">
+                  <span class="flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    {{ sesion.usuario_nombre }}
+                  </span>
+                  
+                  <span *ngIf="sesion.terapeuta_nombre" class="flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Dr. {{ sesion.terapeuta_nombre }}
+                  </span>
+                  
+                  <span class="flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    {{ sesion.paquete_nombre }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="flex items-center space-x-2">
+              <!-- Botón ver detalles básicos -->
+              <button 
+                (click)="verDetalles(sesion)"
+                class="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                title="Ver detalles básicos">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </button>
+
+              <!-- NUEVO: Botón ver contenido completo -->
+              <button 
+                (click)="verDetallesCompletos(sesion)"
+                class="p-2 text-gray-400 hover:text-green-600 transition-colors"
+                title="Ver rutina/terapia completa">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+              </button>
+
+              <!-- Botones de acción según estado -->
+              <div *ngIf="sesion.estado === 'pendiente'" class="flex space-x-2">
+                <button 
+                  (click)="completarSesion(sesion)"
+                  class="px-3 py-2 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors">
+                  Completar
+                </button>
+                <button 
+                  (click)="cancelarSesion(sesion)"
+                  class="px-3 py-2 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors">
+                  Cancelar
+                </button>
+              </div>
+
+              <div *ngIf="sesion.estado === 'completada'" class="flex space-x-2">
+                <button 
+                  (click)="verRegistro(sesion)"
+                  class="px-3 py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors">
+                  Ver Registro
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información adicional expandible -->
+          <div *ngIf="sesion.expandido" class="mt-4 pt-4 border-t border-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <span class="font-medium text-gray-700">Fecha programada:</span>
+                <p class="text-gray-600">{{ formatearFecha(sesion.fecha_programada) }}</p>
+              </div>
+              <div>
+                <span class="font-medium text-gray-700">Tipo:</span>
+                <p class="text-gray-600">{{ sesion.tipo_programa | titlecase }}</p>
+              </div>
+              <div>
+                <span class="font-medium text-gray-700">Origen:</span>
+                <p class="text-gray-600">{{ sesion.origen | titlecase }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensaje cuando no hay sesiones -->
+    <div *ngIf="sesionesFiltradas.size === 0" class="text-center py-12">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+      </svg>
+      <h3 class="mt-4 text-lg font-medium text-gray-900">No hay sesiones</h3>
+      <p class="mt-2 text-gray-600">No se encontraron sesiones con los filtros aplicados.</p>
+    </div>
+  </div>
+
+  <!-- Estado vacío para vista calendario -->
+  <div *ngIf="mostrarVistaCalendario && !cargando && sesiones.length === 0" class="bg-white rounded-lg shadow-sm p-12 text-center">
+    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+    </svg>
+    <h3 class="mt-4 text-lg font-medium text-gray-900">No hay sesiones programadas</h3>
+    <p class="mt-2 text-gray-600">No tienes sesiones de paquetes programadas para mostrar en el calendario.</p>
+  </div>
+</div>
+
+<!-- Modal para detalles básicos de sesión -->
+<div *ngIf="modalAbierto" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+    <!-- Header del modal -->
+    <div class="flex justify-between items-center pb-4 border-b">
+      <h3 class="text-lg font-bold text-gray-900">Detalles de Sesión</h3>
+      <button (click)="cerrarModal()" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Contenido del modal -->
+    <div *ngIf="sesionSeleccionada" class="mt-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <h4 class="font-medium text-gray-900">{{ sesionSeleccionada.contenido_nombre }}</h4>
+          <p class="text-gray-600 mt-1">{{ sesionSeleccionada.paquete_nombre }}</p>
+        </div>
+        <div>
+          <span class="px-3 py-1 rounded-full text-sm font-medium"
+                [class]="getEstadoClasses(sesionSeleccionada.estado)">
+            {{ getEstadoTexto(sesionSeleccionada.estado) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h5 class="font-medium text-gray-900 mb-3">Información del Usuario</h5>
+          <div class="space-y-2 text-sm">
+            <p><span class="font-medium">Nombre:</span> {{ sesionSeleccionada.usuario_nombre }}</p>
+            <p><span class="font-medium">ID Usuario:</span> {{ sesionSeleccionada.usuario_id }}</p>
+          </div>
+        </div>
+
+        <div>
+          <h5 class="font-medium text-gray-900 mb-3">Información de la Sesión</h5>
+          <div class="space-y-2 text-sm">
+            <p><span class="font-medium">Fecha:</span> {{ formatearFecha(sesionSeleccionada.fecha_programada) }}</p>
+            <p><span class="font-medium">Tipo:</span> {{ sesionSeleccionada.contenido_tipo | titlecase }}</p>
+            <p><span class="font-medium">Terapeuta:</span> {{ sesionSeleccionada.terapeuta_nombre || 'No asignado' }}</p>
+            <p *ngIf="sesionSeleccionada.progreso !== undefined"><span class="font-medium">Progreso:</span> {{ sesionSeleccionada.progreso }}%</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones de acción en modal -->
+      <div class="mt-6 flex justify-between">
+        <button 
+          (click)="verDetallesCompletos(sesionSeleccionada)"
+          class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+          Ver Rutina/Terapia Completa
+        </button>
+        
+        <div class="flex space-x-3">
+          <button 
+            (click)="cerrarModal()"
+            class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+            Cerrar
+          </button>
+          <button *ngIf="sesionSeleccionada.estado === 'pendiente'"
+            (click)="completarSesion(sesionSeleccionada); cerrarModal()"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+            Marcar como Completada
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NUEVO: Modal para detalles completos del contenido (Rutina/Terapia) -->
+<div *ngIf="modalDetalleAbierto" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="modal-content-detalle border shadow-lg rounded-md bg-white">
+    <!-- Header del modal -->
+    <div class="flex justify-between items-center pb-4 border-b sticky top-0 bg-white z-10">
+      <div>
+        <h3 class="text-xl font-bold text-gray-900">{{ detalleContenido?.nombre }}</h3>
+        <p class="text-sm text-gray-600 mt-1">
+          Vista previa de la {{ detalleContenido?.tipo }} - {{ detalleContenido?.descripcion }}
+        </p>
+      </div>
+      <button (click)="cerrarModalDetalle()" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Terminal-style display con el formato exacto de tu imagen -->
+    <div class="terminal-container mt-6">
+      <!-- Terminal header -->
+      <div class="terminal-header">
+        <div class="terminal-buttons">
+          <div class="terminal-button red"></div>
+          <div class="terminal-button yellow"></div>
+          <div class="terminal-button green"></div>
+        </div>
+        <div class="terminal-filename">
+          {{ getFileName() }}
+        </div>
+      </div>
+      
+      <!-- Contenido formateado -->
+      <div class="terminal-content">{{ getFormattedContent() }}</div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="mt-6 flex justify-between items-center pt-4 border-t sticky bottom-0 bg-white">
+      <div class="text-sm text-gray-500">
+        {{ detalleContenido?.tipo | titlecase }} cargada desde la base de datos
+      </div>
+      <div class="flex space-x-3">
+        <button 
+          (click)="copyToClipboard()"
+          class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+          </svg>
+          Copiar
+        </button>
+        <button 
+          (click)="downloadContent()"
+          class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Descargar
+        </button>
+        <button 
+          (click)="cerrarModalDetalle()"
+          class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+          Cerrar
+        </button>
+      </div>
+    </div>
+
+    <!-- Mensaje de éxito al copiar -->
+    
+  </div>
+</div>

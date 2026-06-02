@@ -1,0 +1,404 @@
+<!-- src/app/calendario-terapias/calendario-terapias/calendario-terapias.component.html -->
+<div class="max-w-7xl mx-auto">
+  
+  <!-- Header del Calendario -->
+  <div class="bg-white rounded-lg shadow mb-6">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <!-- Botón Volver -->
+        <button
+          (click)="onVolverAVista()"
+          class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Volver a tarjetas
+        </button>
+
+        <!-- Navegación del mes -->
+        <div class="flex items-center space-x-4">
+          <button
+            (click)="mesAnterior()"
+            class="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <svg class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          
+          <h2 class="text-xl font-semibold text-gray-900 min-w-0">
+            {{ meses[mesActual.getMonth()] }} {{ mesActual.getFullYear() }}
+          </h2>
+          
+          <button
+            (click)="mesSiguiente()"
+            class="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <svg class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Botón Ir a Hoy -->
+        <button
+          (click)="irAHoy()"
+          class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h8a2 2 0 012 2v4m-4 0V3m-4 4h8m-8 0H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-2"/>
+          </svg>
+          Hoy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grid del Calendario -->
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    
+    <!-- Headers de días de la semana -->
+    <div class="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
+      <div 
+        *ngFor="let dia of diasSemana" 
+        class="px-4 py-3 text-center text-sm font-medium text-gray-700 border-r border-gray-200 last:border-r-0"
+      >
+        {{ dia }}
+      </div>
+    </div>
+    
+    <!-- Grid de días -->
+    <div class="grid grid-cols-7">
+      <div 
+        *ngFor="let dia of diasCalendario; trackBy: trackByDate"
+        class="min-h-[120px] border-r border-b border-gray-200 last:border-r-0 p-2 relative"
+        [class.bg-gray-50]="!dia.esMesActual"
+        [class.bg-blue-50]="esHoy(dia.fecha)"
+      >
+        
+        <!-- Número del día -->
+        <div class="flex items-center justify-between mb-1">
+          <span 
+            class="text-sm font-medium"
+            [class.text-gray-400]="!dia.esMesActual"
+            [class.text-gray-900]="dia.esMesActual && !esHoy(dia.fecha)"
+            [class.text-blue-600]="esHoy(dia.fecha)"
+            [class.font-bold]="esHoy(dia.fecha)"
+          >
+            {{ dia.fecha.getDate() }}
+          </span>
+          
+          <!-- Indicador de hoy -->
+          <div 
+            *ngIf="esHoy(dia.fecha)"
+            class="w-2 h-2 bg-blue-500 rounded-full"
+          ></div>
+        </div>
+        
+        <!-- Terapias del día -->
+        <div class="space-y-1">
+          <div 
+            *ngFor="let terapiaDelDia of dia.terapias; trackBy: trackByTerapia"
+            class="group cursor-pointer"
+            (click)="onClickTerapia(terapiaDelDia)"
+          >
+            
+            <!-- EVENTO: INICIO DE TERAPIA -->
+            <div 
+              *ngIf="terapiaDelDia.tipoEvento === 'inicio'"
+              class="text-xs rounded-lg p-2 border-l-4 hover:shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
+              [ngClass]="getColorTerapia(terapiaDelDia.seguimiento)"
+            >
+              <!-- Header de la terapia -->
+              <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center space-x-1">
+                  <span class="font-medium text-white">
+                    {{ getIconoEstado(terapiaDelDia.seguimiento) }}
+                  </span>
+                  <span class="font-medium text-white text-xs">
+                    {{ getTipoTerapiaCorto(terapiaDelDia.seguimiento.terapia_tipo) }}
+                  </span>
+                </div>
+                <span class="text-white text-xs font-medium">
+                  {{ formatearProgreso(terapiaDelDia.seguimiento.progreso) }}
+                </span>
+              </div>
+              
+              <!-- Nombre de la terapia -->
+              <div class="text-white font-medium mb-1 line-clamp-2" 
+                   [title]="terapiaDelDia.seguimiento.terapia_nombre">
+                {{ terapiaDelDia.seguimiento.terapia_nombre }}
+              </div>
+              
+              <!-- Información adicional -->
+              <div class="text-white text-xs opacity-90 space-y-0.5">
+                <div class="flex items-center justify-between">
+                  <span>{{ terapiaDelDia.seguimiento.terapia_nivel }}</span>
+                  <span *ngIf="terapiaDelDia.seguimiento.dias_restantes !== undefined">
+                    {{ getDiasRestantesTexto(terapiaDelDia.seguimiento.dias_restantes) }}
+                  </span>
+                </div>
+                
+                <!-- Barra de progreso mini -->
+                <div class="w-full bg-white bg-opacity-20 rounded-full h-1 mt-1">
+                  <div 
+                    class="bg-white h-1 rounded-full transition-all duration-300"
+                    [style.width.%]="terapiaDelDia.seguimiento.progreso"
+                  ></div>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+        
+        <!-- Indicator para más terapias si hay muchas -->
+        <div 
+          *ngIf="dia.terapias.length > 3"
+          class="text-xs text-gray-500 text-center mt-1"
+        >
+          +{{ dia.terapias.length - 3 }} más...
+        </div>
+        
+      </div>
+    </div>
+  </div>
+
+  <!-- Leyenda -->
+  <div class="mt-6 bg-white rounded-lg shadow p-4">
+    <h3 class="text-sm font-medium text-gray-900 mb-3">Leyenda</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      
+      <!-- Estados por color -->
+      <div>
+        <h4 class="text-xs font-medium text-gray-700 mb-2">Estado Temporal:</h4>
+        <div class="space-y-1 text-xs">
+          <div class="flex items-center space-x-2">
+            <div class="w-3 h-3 bg-green-500 rounded border border-green-600"></div>
+            <span>Vigente</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <div class="w-3 h-3 bg-blue-500 rounded border border-blue-600"></div>
+            <span>Pendiente</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <div class="w-3 h-3 bg-red-500 rounded border border-red-600"></div>
+            <span>Vencida</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Estados por ícono -->
+      <div>
+        <h4 class="text-xs font-medium text-gray-700 mb-2">Estado Individual:</h4>
+        <div class="space-y-1 text-xs">
+          <div class="flex items-center space-x-2">
+            <span class="font-medium">✓</span>
+            <span>Completada</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-medium">⏳</span>
+            <span>En Progreso</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-medium">○</span>
+            <span>Sin Iniciar</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-medium">✗</span>
+            <span>Abandonada</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tipos de terapia -->
+      <div>
+        <h4 class="text-xs font-medium text-gray-700 mb-2">Tipos de Terapia:</h4>
+        <div class="space-y-1 text-xs">
+          <div class="flex items-center space-x-2">
+            <span class="font-medium">FIS</span>
+            <span>Física</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-medium">OCP</span>
+            <span>Ocupacional</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-medium">RSP</span>
+            <span>Respiratoria</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-medium">NEU</span>
+            <span>Neurológica</span>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- Información adicional -->
+  <div class="mt-4 text-center text-sm text-gray-500">
+    <p>
+      <strong>{{ terapias.length }}</strong> terapia{{ terapias.length !== 1 ? 's' : '' }} asignada{{ terapias.length !== 1 ? 's' : '' }}
+      • Haz clic en una terapia para ver los detalles completos
+    </p>
+  </div>
+
+</div>
+
+<!-- Modal para Ver Terapia Completa -->
+<div *ngIf="showViewModal" class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeViewModal()"></div>
+
+    <!-- Modal Panel -->
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full">
+      <!-- Modal Header -->
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+              {{ selectedTerapia?.nombre || selectedSeguimiento?.terapia_nombre }}
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500">
+                Mi terapia asignada - Progreso: {{ selectedSeguimiento?.progreso }}%
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="bg-white px-4 pb-4 sm:px-6">
+        <!-- Información de seguimiento -->
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span class="font-medium text-gray-700">Mi Progreso:</span>
+              <div class="text-gray-900 flex items-center">
+                <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                  <div class="bg-blue-600 h-2 rounded-full" [style.width.%]="selectedSeguimiento?.progreso"></div>
+                </div>
+                {{ selectedSeguimiento?.progreso }}%
+              </div>
+            </div>
+            <div>
+              <span class="font-medium text-gray-700">Estado:</span>
+              <div class="text-gray-900">{{ getEstadoIndividualText(selectedSeguimiento?.estado_individual || '') }}</div>
+            </div>
+            <div>
+              <span class="font-medium text-gray-700">Período:</span>
+              <div class="text-gray-900">
+                {{ formatDate(selectedSeguimiento?.fecha_inicio_programada) }} - 
+                {{ formatDate(selectedSeguimiento?.fecha_fin_programada) }}
+              </div>
+            </div>
+            <div>
+              <span class="font-medium text-gray-700">Días restantes:</span>
+              <div class="text-gray-900"
+                   [class.text-green-600]="(selectedSeguimiento?.dias_restantes || 0) > 7"
+                   [class.text-yellow-600]="(selectedSeguimiento?.dias_restantes || 0) <= 7 && (selectedSeguimiento?.dias_restantes || 0) > 0"
+                   [class.text-red-600]="(selectedSeguimiento?.dias_restantes || 0) <= 0">
+                {{ formatDiasRestantes(selectedSeguimiento?.dias_restantes || 0) }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terminal-style display CON MARCA DE AGUA -->
+        <div class="bg-gray-900 text-green-400 rounded-lg p-6 font-mono text-sm overflow-auto max-h-96 relative" 
+             style="font-family: 'Courier New', monospace; line-height: 1.6;">
+          
+          <!-- MARCA DE AGUA - Imagen centrada -->
+          <div class="absolute inset-15 flex items-center justify-center pointer-events-none opacity-25">
+            <img src="/rh.png" 
+                 alt="RehabiMovement" 
+                 class="max-w-50 max-h-50 object-contain transform rotate-12 select-none">
+          </div>
+          
+          <!-- Terminal header -->
+          <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-700 relative z-10">
+            <div class="flex space-x-2">
+              <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+              <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+              <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+            </div>
+            <div class="text-gray-400 text-xs">
+              {{ getFileName(selectedTerapia) }}
+            </div>
+          </div>
+          
+          <!-- Contenido de la terapia -->
+          <pre class="whitespace-pre-wrap text-white relative z-10">{{ getFormattedTerapia(selectedTerapia, selectedSeguimiento || undefined) }}</pre>
+        </div>
+        
+        <!-- Mensaje de éxito al copiar -->
+        <div *ngIf="copySuccess" class="mt-4 bg-green-50 border border-green-200 rounded-md p-3">
+          <div class="flex">
+            <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div class="ml-3">
+              <p class="text-sm text-green-700">¡Terapia copiada al portapapeles!</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Botones de acción -->
+        <div class="mt-4 flex justify-between">
+          <button
+            (click)="copyToClipboard(getFormattedTerapia(selectedTerapia, selectedSeguimiento ?? undefined))"
+            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            Copiar
+          </button>
+          
+          <button
+            (click)="copyToClipboard(getFormattedTerapia(selectedTerapia, selectedSeguimiento ?? undefined))"
+            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Descargar
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button
+          type="button"
+          (click)="closeViewModal()"
+          class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Estilos adicionales para line-clamp -->
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>

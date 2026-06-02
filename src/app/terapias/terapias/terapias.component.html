@@ -1,0 +1,866 @@
+<!-- src/app/terapias/terapias.component.html -->
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="mb-6">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Gestión de Terapias</h1>
+        <p class="mt-2 text-sm text-gray-700">
+          Administra las terapias de rehabilitación disponibles en el sistema.
+        </p>
+      </div>
+      <div class="mt-4 sm:mt-0">
+        <button
+          *ngIf="canEditTerapia()"
+          (click)="openCreateModal()"
+          class="hidden md:inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          Nueva Terapia
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensaje de error global -->
+  <div *ngIf="error" class="mb-6 bg-red-50 border border-red-200 rounded-md p-4 fade-in">
+    <div class="flex">
+      <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div class="ml-3">
+        <p class="text-sm text-red-700">{{ error }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="mb-6 bg-white shadow rounded-lg p-4">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <!-- Búsqueda -->
+      <div class="lg:col-span-2">
+        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+        <input
+          type="text"
+          id="search"
+          [(ngModel)]="searchTerm"
+          (input)="applyFilters()"
+          placeholder="Nombre, descripción o área..."
+          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+        >
+      </div>
+
+      <!-- Filtro por Tipo -->
+      <div>
+        <label for="tipo-filter" class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+        <select
+          id="tipo-filter"
+          [(ngModel)]="tipoFilter"
+          (change)="applyFilters()"
+          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+        >
+          <option value="all">Todos los tipos</option>
+          <option *ngFor="let tipo of tiposDisponibles" [value]="tipo.value">
+            {{ tipo.label }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Filtro por Área -->
+      <div>
+        <label for="area-filter" class="block text-sm font-medium text-gray-700 mb-1">Área</label>
+        <select
+          id="area-filter"
+          [(ngModel)]="areaFilter"
+          (change)="applyFilters()"
+          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+        >
+          <option value="all">Todas las áreas</option>
+          <option *ngFor="let area of getAreasUnicas()" [value]="area">
+            {{ area | titlecase }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Filtro por Nivel -->
+      <div>
+        <label for="nivel-filter" class="block text-sm font-medium text-gray-700 mb-1">Nivel</label>
+        <select
+          id="nivel-filter"
+          [(ngModel)]="nivelFilter"
+          (change)="applyFilters()"
+          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+        >
+          <option value="all">Todos los niveles</option>
+          <option *ngFor="let nivel of nivelesDisponibles" [value]="nivel.value">
+            {{ nivel.label }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Botones de acción para filtros -->
+    <div class="mt-4 flex justify-between items-center">
+      <button
+        (click)="clearFilters()"
+        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 action-btn"
+      >
+        Limpiar filtros
+      </button>
+      <span class="text-sm text-gray-500">
+        {{ filteredTerapias.length }} de {{ terapias.length }} terapias
+      </span>
+    </div>
+  </div>
+
+  <!-- Tabla de terapias -->
+  <div class="bg-white shadow overflow-hidden sm:rounded-md">
+    <div *ngIf="loading" class="p-8 text-center">
+      <div class="custom-spinner mx-auto mb-4"></div>
+      <p class="text-sm text-gray-500">Cargando terapias...</p>
+    </div>
+
+    <ul *ngIf="!loading && filteredTerapias.length > 0" class="divide-y divide-gray-200">
+      <li *ngFor="let terapia of filteredTerapias" class="hover:bg-gray-50 transition-colors duration-150">
+        <div class="px-4 py-4 sm:px-6">
+          <div class="flex items-center justify-between">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center space-x-3">
+                <div class="flex-1">
+                  <p class="text-lg font-medium text-gray-900 truncate">
+                    {{ terapia.nombre }}
+                  </p>
+                  <p *ngIf="terapia.descripcion" class="text-sm text-gray-500 mt-1">
+                    {{ terapia.descripcion }}
+                  </p>
+                  <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium tag"
+                          [ngClass]="{
+                            'bg-blue-100 text-blue-800': terapia.tipo === 'fisica',
+                            'bg-green-100 text-green-800': terapia.tipo === 'ocupacional',
+                            'bg-purple-100 text-purple-800': terapia.tipo === 'respiratoria',
+                            'bg-yellow-100 text-yellow-800': terapia.tipo === 'neurologica',
+                            'bg-red-100 text-red-800': terapia.tipo === 'cardiaca'
+                          }">
+                            {{ getTipoLabel(terapia.tipo) }}
+                    </span>
+                    <span *ngIf="terapia.area_especializacion" class="tag">
+                      {{ terapia.area_especializacion | titlecase }}
+                    </span>
+                    <span class="capitalize tag">{{ terapia.nivel }}</span>
+                    <span class="tag">{{ formatDuracion(terapia.duracion_estimada) }}</span>
+                    <span *ngIf="hasEjercicios(terapia)" class="tag">
+                      {{ getTotalEjercicios(terapia) }} ejercicios
+                    </span>
+                  </div>
+                  <div *ngIf="terapia.tags && terapia.tags.length > 0" class="mt-2">
+                    <span *ngFor="let tag of terapia.tags" 
+                          class="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded mr-1 tag">
+                      #{{ tag }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Acciones -->
+            <div class="ml-4 flex-shrink-0 flex items-center space-x-2">
+              <!-- Botón Ver -->
+              <button
+                (click)="openViewModal(terapia)"
+                class="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-blue-50 transition-colors duration-150 action-btn"
+                title="Ver terapia"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </button>
+              
+              <!-- Botón Editar -->
+              <button
+                *ngIf="canEditTerapia()"
+                (click)="openEditModal(terapia)"
+                class="text-indigo-600 hover:text-indigo-900 p-2 rounded-full hover:bg-indigo-50 transition-colors duration-150 action-btn"
+                title="Editar terapia"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+              </button>
+              
+              <!-- Botón Eliminar -->
+              <button
+                *ngIf="canEditTerapia()"
+                (click)="deleteTerapia(terapia)"
+                class="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50 transition-colors duration-150 action-btn"
+                title="Eliminar terapia"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && filteredTerapias.length === 0" class="text-center py-12 empty-state">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">No hay terapias</h3>
+      <p class="mt-1 text-sm text-gray-500">
+        {{ terapias.length === 0 ? 
+          'No se encontraron terapias en la base de datos.' : 
+          'No se encontraron terapias con los filtros aplicados.' }}
+      </p>
+      <div class="mt-6">
+        <button
+          *ngIf="terapias.length === 0 && canEditTerapia()"
+          (click)="openCreateModal()"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 btn-primary"
+        >
+          Crear primera terapia
+        </button>
+        <button
+          *ngIf="terapias.length > 0"
+          (click)="clearFilters()"
+          class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 btn-secondary"
+        >
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Crear/Editar Terapia (CORREGIDO) -->
+<div *ngIf="showModal" class="modal-container modal-backdrop">
+  <div class="flex items-center justify-start min-h-screen">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeModal()"></div>
+
+    <!-- Modal Panel con nueva clase -->
+    <div class="modal-panel modal-enter relative">
+      <!-- Modal Header -->
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+              {{ modalMode === 'create' ? 'Crear Terapia' : 'Editar Terapia' }}
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500">
+                {{ modalMode === 'create' ? 
+                  'Complete la información para crear una nueva terapia de rehabilitación.' : 
+                  'Modifique la información de la terapia seleccionada.' }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <form (ngSubmit)="saveTerapia()">
+          <!-- Información Básica -->
+          <div class="space-y-6">
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <!-- Nombre -->
+              <div class="sm:col-span-2">
+                <label for="nombre" class="block text-sm font-medium text-gray-700">
+                  Nombre de la Terapia *
+                </label>
+                <input
+                  type="text"
+                  id="nombre"
+                  [(ngModel)]="terapiaForm.nombre"
+                  name="nombre"
+                  required
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+                  placeholder="Ej: Rehabilitación de hombro post-cirugía"
+                >
+              </div>
+
+              <!-- Descripción -->
+              <div class="sm:col-span-2">
+                <label for="descripcion" class="block text-sm font-medium text-gray-700">
+                  Descripción
+                </label>
+                <textarea
+                  id="descripcion"
+                  [(ngModel)]="terapiaForm.descripcion"
+                  name="descripcion"
+                  rows="3"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+                  placeholder="Descripción detallada de la terapia..."
+                ></textarea>
+              </div>
+
+              <!-- Tipo -->
+              <div>
+                <label for="tipo" class="block text-sm font-medium text-gray-700">
+                  Tipo de Terapia *
+                </label>
+                <select
+                  id="tipo"
+                  [(ngModel)]="terapiaForm.tipo"
+                  name="tipo"
+                  required
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+                >
+                  <option *ngFor="let tipo of tiposDisponibles" [value]="tipo.value">
+                    {{ tipo.label }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Área de Especialización -->
+              <div>
+                <label for="area_especializacion" class="block text-sm font-medium text-gray-700">
+                  Área de Especialización
+                </label>
+                <select
+                  id="area_especializacion"
+                  [(ngModel)]="terapiaForm.area_especializacion"
+                  name="area_especializacion"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+                >
+                  <option value="">Seleccionar área</option>
+                  <option *ngFor="let area of areasEspecializacion" [value]="area">
+                    {{ area | titlecase }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Nivel -->
+              <div>
+                <label for="nivel" class="block text-sm font-medium text-gray-700">
+                  Nivel *
+                </label>
+                <select
+                  id="nivel"
+                  [(ngModel)]="terapiaForm.nivel"
+                  name="nivel"
+                  required
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+                >
+                  <option *ngFor="let nivel of nivelesDisponibles" [value]="nivel.value">
+                    {{ nivel.label }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Duración Estimada -->
+              <div>
+                <label for="duracion_estimada" class="block text-sm font-medium text-gray-700">
+                  Duración Estimada (minutos)
+                </label>
+                <input
+                  type="number"
+                  id="duracion_estimada"
+                  [(ngModel)]="terapiaForm.duracion_estimada"
+                  name="duracion_estimada"
+                  min="1"
+                  max="300"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+                >
+              </div>
+            </div>
+
+            <!-- Objetivo Principal -->
+            <div>
+              <label for="objetivo_principal" class="block text-sm font-medium text-gray-700">
+                Objetivo Principal
+              </label>
+              <textarea
+                id="objetivo_principal"
+                [(ngModel)]="terapiaForm.objetivo_principal"
+                name="objetivo_principal"
+                rows="2"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+                placeholder="Objetivo principal de la terapia..."
+              ></textarea>
+            </div>
+
+            <!-- Contraindicaciones -->
+            <div>
+              <label for="contraindicaciones" class="block text-sm font-medium text-gray-700">
+                Contraindicaciones
+              </label>
+              <textarea
+                id="contraindicaciones"
+                [(ngModel)]="terapiaForm.contraindicaciones"
+                name="contraindicaciones"
+                rows="2"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+                placeholder="Contraindicaciones y precauciones..."
+              ></textarea>
+            </div>
+
+            <!-- Criterios de Progresión -->
+            <div>
+              <label for="criterios_progresion" class="block text-sm font-medium text-gray-700">
+                Criterios de Progresión
+              </label>
+              <textarea
+                id="criterios_progresion"
+                [(ngModel)]="terapiaForm.criterios_progresion"
+                name="criterios_progresion"
+                rows="2"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+                placeholder="Criterios para avanzar en la terapia..."
+              ></textarea>
+            </div>
+
+            <!-- Tags -->
+            <div>
+              <label for="tags" class="block text-sm font-medium text-gray-700">
+                Tags
+              </label>
+              <div class="mt-1">
+                <input
+                  type="text"
+                  id="tags"
+                  (keydown.enter)="addTag($event); $event.preventDefault()"
+                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+                  placeholder="Presione Enter para agregar tags..."
+                >
+                <div *ngIf="terapiaForm.tags && terapiaForm.tags.length > 0" class="mt-2 flex flex-wrap gap-2">
+                  <span *ngFor="let tag of terapiaForm.tags; let i = index" 
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 tag">
+                    #{{ tag }}
+                    <button
+                      type="button"
+                      (click)="removeTag(i)"
+                      class="flex-shrink-0 ml-1 h-4 w-4 rounded-full inline-flex items-center justify-center text-gray-400 hover:bg-gray-200 hover:text-gray-500 action-btn"
+                    >
+                      <svg class="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+                        <path stroke-linecap="round" d="m1 1 6 6m0-6-6 6"/>
+                      </svg>
+                    </button>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Secciones de Ejercicios -->
+            <div>
+              <h4 class="text-lg font-medium text-gray-900 mb-4">Secciones de Ejercicios</h4>
+              
+              <!-- Selector de secciones -->
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+                <div *ngFor="let seccion of seccionesDisponibles" class="relative">
+                  <label class="flex items-start cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors">
+                    <input
+                      type="checkbox"
+                      [checked]="seccionesActivas.has(seccion.key)"
+                      (change)="toggleSeccion(seccion.key)"
+                      class="mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded checkbox-seccion"
+                    >
+                    <div class="ml-3">
+                      <div class="text-sm font-medium text-gray-900">{{ seccion.nombre }}</div>
+                      <div class="text-sm text-gray-500">{{ seccion.descripcion }}</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Configuración de secciones activas -->
+              <div *ngFor="let seccionKey of Array.from(seccionesActivas)" class="bg-gray-50 rounded-lg p-4 mb-4 slide-up">
+                <ng-container *ngIf="getSeccionData(seccionKey) as seccionData">
+                  <h5 class="text-md font-medium text-gray-900 mb-3">
+                        {{ getSeccionNombre(seccionKey) }}
+                  </h5>
+                  
+                  <div class="space-y-4">
+                    <!-- Descripción de la sección -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Descripción</label>
+                      <textarea
+                        [(ngModel)]="seccionData.descripcion"
+                        [name]="'descripcion_' + seccionKey"
+                        rows="2"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+                        placeholder="Descripción de esta sección..."
+                      ></textarea>
+                    </div>
+
+                    <!-- Tiempo total -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Tiempo Total</label>
+                      <input
+                        type="text"
+                        [(ngModel)]="seccionData.tiempo_total"
+                        [name]="'tiempo_' + seccionKey"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm form-input"
+                        placeholder="Ej: 15:00, 10-15 min"
+                      >
+                    </div>
+
+                    <!-- Ejercicios -->
+                    <div>
+                      <div class="flex justify-between items-center mb-3">
+                        <label class="block text-sm font-medium text-gray-700">Ejercicios</label>
+                        <button
+                          type="button"
+                          (click)="addEjercicio(seccionKey)"
+                          class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 action-btn transition-all"
+                        >
+                          <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                          </svg>
+                          Agregar Ejercicio
+                        </button>
+                      </div>
+
+                      <div *ngIf="seccionData.ejercicios && seccionData.ejercicios.length > 0" class="space-y-3">
+                        <div *ngFor="let ejercicio of seccionData.ejercicios; let i = index" 
+                             class="bg-white border border-gray-200 rounded-lg p-3 fade-in">
+                          <div class="flex justify-between items-start mb-3">
+                            <span class="text-sm font-medium text-gray-500">Ejercicio {{ i + 1 }}</span>
+                            <div class="flex space-x-1">
+                              <button
+                                type="button"
+                                (click)="moveEjercicio(seccionKey, i, i-1)"
+                                [disabled]="i === 0"
+                                class="text-gray-400 hover:text-gray-600 disabled:opacity-30 action-btn"
+                                title="Mover arriba"
+                              >
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                (click)="moveEjercicio(seccionKey, i, i+1)"
+                                [disabled]="i === seccionData.ejercicios.length - 1"
+                                class="text-gray-400 hover:text-gray-600 disabled:opacity-30 action-btn"
+                                title="Mover abajo"
+                              >
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                (click)="removeEjercicio(seccionKey, i)"
+                                class="text-red-400 hover:text-red-600 action-btn"
+                                title="Eliminar ejercicio"
+                              >
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+
+                          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <!-- Nombre del ejercicio -->
+                            <div class="sm:col-span-2">
+                              <label class="block text-xs font-medium text-gray-700">Nombre *</label>
+                              <input
+                                type="text"
+                                [(ngModel)]="ejercicio.nombre"
+                                [name]="'ejercicio_nombre_' + seccionKey + '_' + i"
+                                required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm form-input"
+                                placeholder="Nombre del ejercicio"
+                              >
+                            </div>
+
+                            <!-- Tipo -->
+                            <div>
+                              <label class="block text-xs font-medium text-gray-700">Tipo</label>
+                              <select
+                                [(ngModel)]="ejercicio.tipo"
+                                [name]="'ejercicio_tipo_' + seccionKey + '_' + i"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm form-input"
+                              >
+                                <option *ngFor="let tipo of tiposEjercicios" [value]="tipo.nombre">
+                                  {{ tipo.nombre }}
+                                </option>
+                              </select>
+                            </div>
+
+                            <!-- Intensidad -->
+                            <div>
+                              <label class="block text-xs font-medium text-gray-700">Intensidad</label>
+                              <select
+                                [(ngModel)]="ejercicio.intensidad"
+                                [name]="'ejercicio_intensidad_' + seccionKey + '_' + i"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm form-input"
+                              >
+                                <option *ngFor="let intensidad of intensidadesDisponibles" [value]="intensidad.value">
+                                  {{ intensidad.label }}
+                                </option>
+                              </select>
+                            </div>
+
+                            <!-- Repeticiones -->
+                            <div>
+                              <label class="block text-xs font-medium text-gray-700">Repeticiones</label>
+                              <input
+                                type="number"
+                                [(ngModel)]="ejercicio.repeticiones"
+                                [name]="'ejercicio_repeticiones_' + seccionKey + '_' + i"
+                                min="1"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm form-input"
+                              >
+                            </div>
+
+                            <!-- Series -->
+                            <div>
+                              <label class="block text-xs font-medium text-gray-700">Series</label>
+                              <input
+                                type="number"
+                                [(ngModel)]="ejercicio.series"
+                                [name]="'ejercicio_series_' + seccionKey + '_' + i"
+                                min="1"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm form-input"
+                              >
+                            </div>
+
+                            <!-- Duración -->
+                            <div>
+                              <label class="block text-xs font-medium text-gray-700">Duración</label>
+                              <input
+                                type="text"
+                                [(ngModel)]="ejercicio.duracion"
+                                [name]="'ejercicio_duracion_' + seccionKey + '_' + i"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm form-input"
+                                placeholder="Ej: 2:00, 30 seg"
+                              >
+                            </div>
+
+                            <!-- Descripción -->
+                            <div class="sm:col-span-2">
+                              <label class="block text-xs font-medium text-gray-700">Descripción</label>
+                              <textarea
+                                [(ngModel)]="ejercicio.descripcion"
+                                [name]="'ejercicio_descripcion_' + seccionKey + '_' + i"
+                                rows="2"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm form-input"
+                                placeholder="Descripción del ejercicio..."
+                              ></textarea>
+                            </div>
+
+                            <!-- Precauciones -->
+                            <div class="sm:col-span-2">
+                              <label class="block text-xs font-medium text-gray-700">Precauciones</label>
+                              <textarea
+                                [(ngModel)]="ejercicio.precauciones"
+                                [name]="'ejercicio_precauciones_' + seccionKey + '_' + i"
+                                rows="2"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm form-input"
+                                placeholder="Precauciones específicas..."
+                              ></textarea>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div *ngIf="!seccionData.ejercicios || seccionData.ejercicios.length === 0" 
+                           class="text-center py-4 bg-gray-100 rounded-lg empty-state">
+                        <p class="text-sm text-gray-500">No hay ejercicios en esta sección</p>
+                        <button
+                          type="button"
+                          (click)="addEjercicio(seccionKey)"
+                          class="mt-2 text-red-600 hover:text-red-800 text-sm font-medium action-btn"
+                        >
+                          Agregar primer ejercicio
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <div class="flex flex-col sm:flex-row-reverse gap-3">
+          <button
+            type="button"
+            (click)="saveTerapia()"
+            [disabled]="loading"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed btn-primary"
+          >
+            <span *ngIf="loading" class="mr-2">
+              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            </span>
+            {{ modalMode === 'create' ? 'Crear Terapia' : 'Guardar Cambios' }}
+          </button>
+          <button
+            type="button"
+            (click)="closeModal()"
+            [disabled]="loading"
+            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:mt-0 sm:w-auto sm:text-sm disabled:opacity-50 btn-secondary"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Action Button (móvil) -->
+<button
+  *ngIf="!showModal && !showViewModal && canEditTerapia()"
+  (click)="openCreateModal()"
+  class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-red-600 text-white rounded-full shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 floating-action-btn btn-floating"
+  title="Crear nueva terapia"
+>
+  <svg class="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+  </svg>
+</button>
+
+<!-- MODAL PARA VER TERAPIA (CORREGIDO) -->
+<div *ngIf="showViewModal" class="modal-view-container modal-backdrop">
+  <div class="flex items-center justify-end min-h-screen">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeViewModal()"></div>
+
+    <!-- Modal Panel -->
+    <div class="modal-view-panel modal-view-enter relative">
+      <!-- Modal Header -->
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-200">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+              {{ selectedViewTerapia?.nombre || 'Detalles de la Terapia' }}
+            </h3>
+            <div class="mt-1 flex items-center justify-between">
+              <p class="text-sm text-gray-500">
+                Vista previa de la terapia de rehabilitación
+              </p>
+              <div class="flex items-center space-x-2">
+                <button
+                  *ngIf="copySuccess"
+                  class="text-green-500"
+                  title="¡Copiado!"
+                >
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </button>
+                <button
+                  (click)="copyToClipboard()"
+                  class="text-gray-400 hover:text-gray-600 action-btn"
+                  title="Copiar terapia"
+                >
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Botón de cerrar -->
+          <button
+            type="button"
+            (click)="closeViewModal()"
+            class="ml-auto -mt-2 -mr-2 p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 action-btn"
+          >
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body bg-gray-50">
+        <div *ngIf="selectedViewTerapia">
+          <!-- Vista tipo terminal -->
+          <div class="bg-gray-900 text-green-400 rounded-lg p-6 font-mono text-sm overflow-auto max-h-96 relative" 
+               style="font-family: 'Courier New', monospace; line-height: 1.6;">
+            
+            <!-- Terminal header -->
+            <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-700">
+              <div class="flex space-x-2">
+                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+              </div>
+              <div class="text-gray-400 text-xs">
+                {{ getFileNameSafe(selectedViewTerapia.nombre) }}.txt
+              </div>
+            </div>
+            
+            <!-- Contenido de la terapia formateado -->
+            <pre class="whitespace-pre-wrap text-white">{{ getFormattedTerapia(selectedViewTerapia) }}</pre>
+          </div>
+          
+          <!-- Mensaje de éxito al copiar -->
+          <div *ngIf="copySuccess" class="mt-4 bg-green-50 border border-green-200 rounded-md p-3 fade-in">
+            <div class="flex">
+              <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <div class="ml-3">
+                <p class="text-sm text-green-700">¡Terapia copiada al portapapeles!</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Botones de acción -->
+          <div class="mt-4 flex justify-between">
+            <button
+              (click)="copyToClipboard()"
+              class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 action-btn"
+            >
+              <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              Copiar
+            </button>
+            
+            <button
+              (click)="exportarTerapia(selectedViewTerapia!)"
+              class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 action-btn"
+            >
+              <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Descargar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <div class="flex flex-col sm:flex-row gap-3 justify-end">
+          <button
+            type="button"
+            (click)="closeViewModal()"
+            class="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm btn-secondary"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

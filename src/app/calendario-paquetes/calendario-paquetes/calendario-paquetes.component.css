@@ -1,0 +1,676 @@
+/* src/app/calendario-paquetes/calendario-paquetes/calendario-paquetes.component.css */
+
+/* Animaciones para las transiciones del calendario */
+.calendar-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover effects para los días del calendario */
+.calendar-day {
+  transition: all 0.2s ease-in-out;
+}
+
+.calendar-day:hover {
+  background-color: #f9fafb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para el día actual */
+.calendar-day.today {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 2px solid #3b82f6;
+}
+
+.calendar-day.today::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Estilos para las sesiones en el calendario */
+.session-card {
+  transition: all 0.2s ease-in-out;
+  border-left: 3px solid transparent;
+}
+
+.session-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.session-card.pendiente {
+  border-left-color: #f59e0b;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.session-card.completada {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+}
+
+.session-card.cancelada {
+  border-left-color: #ef4444;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+}
+
+/* Estilos para el indicador de más sesiones */
+.more-sessions-indicator {
+  background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+  border: 1px dashed #9ca3af;
+  transition: all 0.2s ease-in-out;
+}
+
+.more-sessions-indicator:hover {
+  background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+  transform: scale(1.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .calendar-day {
+    height: 100px;
+    padding: 4px;
+  }
+  
+  .session-card {
+    font-size: 10px;
+    padding: 2px;
+    margin-bottom: 2px;
+  }
+}
+
+@media (max-width: 640px) {
+  .calendar-day {
+    height: 80px;
+    padding: 2px;
+  }
+  
+  .session-card {
+    font-size: 9px;
+    padding: 1px;
+  }
+}
+
+/* ESTILOS MEJORADOS PARA LOS MODALES */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease-in-out;
+}
+
+/* MODAL PRINCIPAL - MEJOR CENTRADO */
+.modal-content {
+  animation: modalSlideIn 0.3s ease-out;
+  margin: 2rem auto !important;
+  max-width: 70vw !important;
+  width: 65vw !important;
+  max-height: 85vh !important;
+  position: fixed !important;
+  left: 50% !important;
+  top: 5% !important;
+  transform: translateX(-50%) !important;
+  z-index: 1000 !important;
+}
+
+/* MODAL ESPECÍFICO PARA DETALLES DE CONTENIDO - MÁS PEQUEÑO */
+.modal-content-detalle {
+  margin: 1rem auto !important;
+  max-width: 60vw !important;
+  width: 55vw !important;
+  max-height: 85vh !important;
+  position: fixed !important;
+  left: 50% !important;
+  top: 8% !important;
+  transform: translateX(-50%) !important;
+  z-index: 1000 !important;
+  padding: 20px !important;
+  overflow-y: auto !important;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+/* Estilos para las estadísticas */
+.stats-card {
+  transition: all 0.3s ease-in-out;
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stats-icon {
+  transition: transform 0.3s ease-in-out;
+}
+
+.stats-card:hover .stats-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* Efectos de botones */
+.btn-calendar {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+}
+
+.btn-calendar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-calendar:hover::before {
+  left: 100%;
+}
+
+.btn-calendar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Animación de carga del calendario */
+.calendar-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+}
+
+.calendar-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Estilos para los tipos de contenido */
+.content-type-rutina {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-left: 4px solid #3b82f6;
+}
+
+.content-type-terapia {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+  border-left: 4px solid #8b5cf6;
+}
+
+/* Indicadores de progreso */
+.progress-indicator {
+  position: relative;
+  background: #e5e7eb;
+  border-radius: 10px;
+  height: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.5s ease-in-out;
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.progress-bar.completed {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.progress-bar.in-progress {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+/* Efectos para las acciones de sesión */
+.action-button {
+  transition: all 0.2s ease-in-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-button:hover {
+  transform: scale(1.05);
+}
+
+.action-button:active {
+  transform: scale(0.95);
+}
+
+/* Estilos para los avatares de usuario */
+.user-avatar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: all 0.3s ease-in-out;
+}
+
+.user-avatar:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Grid del calendario responsivo */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background-color: #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.calendar-header {
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+  color: white;
+  font-weight: 600;
+  text-align: center;
+  padding: 12px 8px;
+}
+
+/* Estados hover para navegación del calendario */
+.calendar-nav-button {
+  transition: all 0.2s ease-in-out;
+  border-radius: 8px;
+}
+
+.calendar-nav-button:hover {
+  background-color: #e5e7eb;
+  transform: scale(1.1);
+}
+
+.calendar-nav-button:active {
+  transform: scale(0.95);
+}
+
+/* Mejoras en el modal de detalles */
+.modal-section {
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease-in-out;
+}
+
+.modal-section:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.modal-section-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Tags y badges mejorados */
+.exercise-tag {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 12px;
+  transition: all 0.2s ease-in-out;
+}
+
+.exercise-tag:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Scroll personalizado para modales */
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Estados de error y éxito */
+.error-state {
+  color: #dc2626;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 16px 0;
+}
+
+.success-state {
+  color: #059669;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 16px 0;
+}
+
+/* Mejoras en la vista lista */
+.list-item {
+  transition: all 0.3s ease-in-out;
+  border-left: 4px solid transparent;
+}
+
+.list-item:hover {
+  border-left-color: #3b82f6;
+  background: linear-gradient(90deg, #f8fafc 0%, #ffffff 100%);
+  transform: translateX(4px);
+}
+
+/* Indicadores de carga específicos */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Mejoras en la accesibilidad */
+.focus-visible:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Estados interactivos mejorados */
+.interactive-element {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.interactive-element:hover {
+  opacity: 0.8;
+}
+
+.interactive-element:active {
+  transform: scale(0.98);
+}
+
+/* RESPONSIVE PARA MODALES */
+@media (max-width: 1200px) {
+  .modal-content {
+    width: 90vw !important;
+    margin: 1.5rem auto !important;
+  }
+  
+  .modal-content-detalle {
+    width: 95vw !important;
+    margin: 1rem auto !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-day {
+    height: 100px;
+    padding: 4px;
+  }
+  
+  .session-card {
+    font-size: 10px;
+    padding: 2px;
+    margin-bottom: 2px;
+  }
+  
+  .modal-content {
+    width: 95vw !important;
+    margin: 1rem auto !important;
+    max-height: 90vh !important;
+  }
+  
+  .modal-content-detalle {
+    width: 98vw !important;
+    margin: 0.5rem auto !important;
+    max-height: 95vh !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-day {
+    height: 60px;
+    padding: 1px;
+  }
+  
+  .session-card {
+    font-size: 8px;
+    padding: 1px 2px;
+    margin-bottom: 1px;
+  }
+  
+  .modal-content {
+    margin: 0.5rem auto !important;
+    width: 98vw !important;
+    max-height: 95vh !important;
+  }
+  
+  .modal-content-detalle {
+    margin: 0.25rem auto !important;
+    width: 99vw !important;
+    max-height: 98vh !important;
+  }
+}
+
+/* Animaciones para la aparición de elementos */
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* TERMINAL STYLES - MEJORADOS Y MÁS COMPACTOS */
+.terminal-container {
+  background: #0d1117 !important;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-height: 60vh !important;
+  margin: 0 !important;
+}
+
+.terminal-header {
+  background: #21262d;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #30363d;
+  flex-shrink: 0;
+}
+
+.terminal-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.terminal-button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.terminal-button.red {
+  background: #ff5f56;
+}
+
+.terminal-button.yellow {
+  background: #ffbd2e;
+}
+
+.terminal-button.green {
+  background: #27ca3f;
+}
+
+.terminal-filename {
+  color: #8b949e;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+}
+
+.terminal-content {
+  background: #0d1117;
+  color: #58a6ff;
+  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 12px 16px;
+  max-height: 55vh;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* ESTILOS ESPECÍFICOS PARA EL BACKDROP DEL MODAL */
+.modal-backdrop-custom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+}
+
+/* Tema oscuro (opcional para futuro) */
+@media (prefers-color-scheme: dark) {
+  .calendar-day {
+    background-color: #374151;
+    color: #f9fafb;
+    border-color: #4b5563;
+  }
+  
+  .calendar-day.today {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  }
+  
+  .modal-content {
+    background-color: #1f2937;
+    color: #f9fafb;
+  }
+}
+
+.session-card.cancelada {
+  border-left-color: #ef4444;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+}
+
+/* Estilos para el indicador de más sesiones */
+.more-sessions-indicator {
+  background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+  border: 1px dashed #9ca3af;
+  transition: all 0.2s ease-in-out;
+}
+
+.more-sessions-indicator:hover {
+  background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+  transform: scale(1.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .calendar-day {
+    height: 100px;
+    padding: 4px;
+  }
+  
+  .session-card {
+    font-size: 10px;
+    padding: 2px;
+    margin-bottom: 2px;
+  }
+}
+
+@media (max-width: 640px) {
+  .calendar-day {
+    height: 80px;
+    padding: 2px;
+  }
+  
+  .session-card {
+    font-size: 9px;
+    padding: 1px;
+  }
+}
+
+/* Estilos para los modales */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease-in-out;
+}
+
+.modal-content {
+  animation: modalSlideIn 0.3s ease-out;
+}
+

@@ -1,0 +1,393 @@
+<!-- src/app/tipos-seccion/tipos-seccion.component.html -->
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+  
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Gestión de Tipos de Sección</h1>
+        <p class="mt-2 text-sm text-gray-600">
+          Administra los tipos de sección para entrenamientos - Total: {{ tiposSecciones.length }}
+        </p>
+      </div>
+      <div class="flex space-x-2">
+        <button
+          (click)="refreshTipos()"
+          class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          title="Refrescar lista"
+        >
+          <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Refrescar
+        </button>
+        <button
+          (click)="openCreateModal()"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          Nuevo Tipo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros y Búsqueda -->
+  <div class="bg-white rounded-lg shadow mb-6 p-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Búsqueda -->
+      <div class="md:col-span-2">
+        <label for="search" class="block text-sm font-medium text-gray-700 mb-2">
+          Buscar
+        </label>
+        <div class="relative">
+          <input
+            id="search"
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            placeholder="Buscar por nombre o descripción..."
+            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-500 focus:border-red-500"
+          />
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtro por Estado -->
+      <div>
+        <label for="statusFilter" class="block text-sm font-medium text-gray-700 mb-2">
+          Estado
+        </label>
+        <select
+          id="statusFilter"
+          [(ngModel)]="statusFilter"
+          (change)="onFilterChange()"
+          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+        >
+          <option value="all">Todos</option>
+          <option value="active">Activos</option>
+          <option value="inactive">Inactivos</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Botón para limpiar filtros -->
+    <div class="mt-4 flex justify-end">
+      <button
+        (click)="clearFilters()"
+        class="text-sm text-red-600 hover:text-red-800"
+      >
+        Limpiar filtros
+      </button>
+    </div>
+  </div>
+
+  <!-- Mensaje de Error -->
+  <div *ngIf="error" class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+    <div class="flex">
+      <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div class="ml-3">
+        <p class="text-sm text-red-700">{{ error }}</p>
+      </div>
+      <div class="ml-auto pl-3">
+        <button
+          (click)="error = ''"
+          class="text-red-400 hover:text-red-600"
+        >
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="flex justify-center items-center h-64">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+      <p class="mt-4 text-gray-600">Cargando tipos de sección...</p>
+    </div>
+  </div>
+
+  <!-- Grid de Tipos de Sección -->
+  <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div 
+      *ngFor="let tipo of filteredTiposSecciones; trackBy: trackByTipoId" 
+      class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-200"
+    >
+      <!-- Card Header -->
+      <div class="p-6 text-center">
+        <!-- Icono -->
+        <div class="mx-auto h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+          <i *ngIf="tipo.icono" [class]="tipo.icono + ' text-red-600 text-2xl'"></i>
+          <svg *ngIf="!tipo.icono" class="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2m0 0h14"></path>
+          </svg>
+        </div>
+
+        <!-- Título y Descripción -->
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ tipo.descripcion }}</h3>
+        <p class="text-sm text-gray-500 mb-3">{{ tipo.nombre }}</p>
+
+        <!-- Estado -->
+        <div class="mb-4">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                [ngClass]="{
+                  'bg-green-100 text-green-800': tipo.status === 1,
+                  'bg-red-100 text-red-800': tipo.status === 0
+                }">
+            <svg class="w-2 h-2 mr-1" fill="currentColor" viewBox="0 0 8 8">
+              <circle cx="4" cy="4" r="3" />
+            </svg>
+            {{ getStatusText(tipo.status) }}
+          </span>
+        </div>
+
+        <!-- Fecha de creación -->
+        <p class="text-xs text-gray-400 mb-4">
+          Creado: {{ formatDate(tipo.created_at) }}
+        </p>
+      </div>
+
+      <!-- Card Footer -->
+      <div class="px-6 pb-6">
+        <div class="flex justify-center space-x-2">
+          <!-- Botón Editar -->
+          <button
+            (click)="openEditModal(tipo)"
+            class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            title="Editar tipo"
+          >
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            Editar
+          </button>
+
+          <!-- Botón Activar/Desactivar -->
+          <button
+            *ngIf="tipo.status === 1"
+            (click)="deleteTipo(tipo)"
+            class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            title="Desactivar"
+          >
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636"/>
+            </svg>
+            Desactivar
+          </button>
+
+          <button
+            *ngIf="tipo.status === 0"
+            (click)="reactivateTipo(tipo)"
+            class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-green-300 shadow-sm text-sm font-medium rounded-md text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            title="Reactivar"
+          >
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Reactivar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredTiposSecciones.length === 0" class="col-span-full text-center py-12">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2m0 0h14"></path>
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">No hay tipos de sección</h3>
+      <p class="mt-1 text-sm text-gray-500">
+        {{ tiposSecciones.length === 0 ? 'No se encontraron tipos de sección.' : 'No se encontraron resultados con los filtros aplicados.' }}
+      </p>
+      <div class="mt-6">
+        <button
+          *ngIf="tiposSecciones.length === 0"
+          (click)="openCreateModal()"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          Crear primer tipo
+        </button>
+        <button
+          *ngIf="tiposSecciones.length > 0"
+          (click)="clearFilters()"
+          class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Crear/Editar Tipo de Sección -->
+<div *ngIf="showModal" class="fixed inset-0 z-50 overflow-y-auto">
+  <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeModal()"></div>
+
+    <!-- Modal Panel -->
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+    
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+      <!-- Modal Header -->
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2m0 0h14"></path>
+            </svg>
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+              {{ modalMode === 'create' ? 'Crear Nuevo Tipo de Sección' : 'Editar Tipo de Sección' }}
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500">
+                {{ modalMode === 'create' ? 'Complete los datos para crear un nuevo tipo de sección.' : 'Modifique los datos del tipo de sección seleccionado.' }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="bg-white px-4 pb-4 sm:px-6">
+        <form class="space-y-4">
+          <!-- Nombre -->
+          <div>
+            <label for="nombre" class="block text-sm font-medium text-gray-700">
+              Nombre (Identificador) <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="nombre"
+              type="text"
+              [(ngModel)]="tipoForm.nombre"
+              name="nombre"
+              required
+              placeholder="Ej: warm_up, strength, cardio"
+              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
+            />
+            <p class="mt-1 text-xs text-gray-500">
+              Se convertirá automáticamente a formato snake_case (ej: warm_up)
+            </p>
+          </div>
+
+          <!-- Descripción -->
+          <div>
+            <label for="descripcion" class="block text-sm font-medium text-gray-700">
+              Descripción <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="descripcion"
+              type="text"
+              [(ngModel)]="tipoForm.descripcion"
+              name="descripcion"
+              required
+              placeholder="Ej: Calentamiento, Entrenamiento de Fuerza, Cardiovascular"
+              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
+            />
+          </div>
+
+          <!-- Selección de Icono -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Icono
+            </label>
+            
+            <!-- Icono seleccionado preview -->
+            <div *ngIf="tipoForm.icono" class="mb-3 p-3 bg-gray-50 rounded-md">
+              <div class="flex items-center">
+                <i [class]="tipoForm.icono + ' text-red-600 text-2xl mr-3'"></i>
+                <span class="text-sm text-gray-700">{{ tipoForm.icono }}</span>
+                <button
+                  type="button"
+                  (click)="clearIcon()"
+                  class="ml-auto text-red-600 hover:text-red-800"
+                  title="Limpiar icono"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Grid de iconos disponibles -->
+            <div class="grid grid-cols-5 sm:grid-cols-8 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
+              <button
+                *ngFor="let icono of iconosDisponibles"
+                type="button"
+                (click)="selectIcon(icono.clase)"
+                [class]="getIconButtonClass(icono.clase)"
+                [title]="icono.nombre"
+              >
+                <i [class]="icono.clase"></i>
+              </button>
+            </div>
+            <p class="mt-1 text-xs text-gray-500">
+              Selecciona un icono de la lista o deja vacío para usar el icono por defecto
+            </p>
+          </div>
+
+          <!-- Estado -->
+          <div>
+            <label for="status" class="block text-sm font-medium text-gray-700">
+              Estado
+            </label>
+            <select
+              id="status"
+              [(ngModel)]="tipoForm.status"
+              name="status"
+              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
+            >
+              <option value="1">Activo</option>
+              <option value="0">Inactivo</option>
+            </select>
+          </div>
+        </form>
+
+        <!-- Error Message -->
+        <div *ngIf="error" class="mt-4 bg-red-50 border border-red-200 rounded-md p-3">
+          <div class="flex">
+            <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div class="ml-3">
+              <p class="text-sm text-red-700">{{ error }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button
+          type="button"
+          (click)="saveTipo()"
+          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="!isFormValid()"
+        >
+          {{ modalMode === 'create' ? 'Crear Tipo' : 'Guardar Cambios' }}
+        </button>
+        <button
+          type="button"
+          (click)="closeModal()"
+          class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
